@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-body: "Be Vietnam Pro", system-ui, sans-serif;
+  --font-headline: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-label: "Be Vietnam Pro", system-ui, sans-serif;
+
+  --color-surface: #0c0c1f;
+  --color-surface-container-lowest: #000000;
+  --color-surface-container-low: #111128;
+  --color-surface-container: #161632;
+  --color-surface-container-high: #1c1c3d;
+  --color-surface-container-highest: #222247;
+  --color-surface-bright: #272752;
+  --color-surface-variant: #222247;
+  --color-primary: #a18eff;
+  --color-primary-container: #8369fc;
+  --color-secondary: #dcb8ff;
+  --color-secondary-container: #3a0069;
+  --color-tertiary: #7cfffe;
+  --color-error: #fd6f85;
+  --color-error-container: #8a1632;
+  --color-outline: #72719c;
+  --color-outline-variant: #44446c;
+  --color-on-surface: #e5e3ff;
+  --color-on-surface-variant: #a8a7d5;
+  --color-on-primary-container: #000000;
+  --color-on-secondary-container: #c38aff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: #0c0c1f;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(161, 142, 255, 0.13), transparent 28rem),
+    radial-gradient(circle at 85% 18%, rgba(124, 255, 254, 0.08), transparent 24rem),
+    #0c0c1f;
+  color: #e5e3ff;
+  font-family: "Be Vietnam Pro", system-ui, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.material-symbols-outlined {
+  display: inline-block;
+  font-family: "Material Symbols Outlined";
+  font-size: 1.25em;
+  line-height: 1;
+  vertical-align: middle;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+.glass-panel {
+  background: rgba(34, 34, 71, 0.4);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.noise-grid {
+  background-image: radial-gradient(rgba(161, 142, 255, 0.22) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
