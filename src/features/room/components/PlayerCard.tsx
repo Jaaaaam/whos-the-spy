@@ -1,8 +1,9 @@
+import type { Doc } from '../../../../convex/_generated/dataModel'
 import type { Player } from '../data/mockRoom'
 import { cn } from '../../../shared/lib/cn'
 
 type PlayerCardProps = {
-  player: Player
+  player: Doc<'players'> | Player
   interactive?: boolean
 }
 
@@ -11,23 +12,48 @@ const statusLabel = {
   waiting: 'Waiting',
   speaking: 'Speaking',
   voted: 'Voted',
+  connected: 'Connected',
+  disconnected: 'Disconnected',
+}
+
+function getInitials(name: string) {
+  return name
+    .split(' ')
+    .map((part) => part.at(0))
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+}
+
+function getPlayerAvatar(player: Doc<'players'> | Player) {
+  return 'avatar' in player ? player.avatar : getInitials(player.name)
+}
+
+function getPlayerStatus(player: Doc<'players'> | Player) {
+  if ('status' in player) {
+    return player.status
+  }
+
+  return player.isConnected ? 'connected' : 'disconnected'
 }
 
 export function PlayerCard({ player, interactive = false }: PlayerCardProps) {
+  const status = getPlayerStatus(player)
+
   return (
     <div
       className={cn(
         'relative flex items-center gap-4 rounded-[1.5rem] bg-surface-container p-4 transition ring-1 ring-outline-variant/10',
-        player.status === 'speaking' &&
+        status === 'speaking' &&
           'bg-surface-bright/70 shadow-[0_0_28px_rgba(124,255,254,0.12)] ring-tertiary/25',
         interactive && 'hover:bg-surface-bright',
       )}
     >
-      {player.status === 'speaking' ? (
+      {status === 'speaking' ? (
         <span className="absolute left-0 top-5 h-12 w-1 rounded-full bg-tertiary" />
       ) : null}
       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] bg-gradient-to-br from-primary to-secondary font-headline font-black text-surface">
-        {player.avatar}
+        {getPlayerAvatar(player)}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
@@ -41,18 +67,18 @@ export function PlayerCard({ player, interactive = false }: PlayerCardProps) {
         <p
           className={cn(
             'text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60',
-            player.status === 'speaking' && 'text-tertiary',
+            (status === 'connected' || status === 'speaking') && 'text-tertiary',
           )}
         >
-          {statusLabel[player.status]}
+          {statusLabel[status]}
         </p>
       </div>
       <span
         className={cn(
           'h-2.5 w-2.5 rounded-full bg-outline',
-          player.status === 'ready' && 'bg-primary',
-          player.status === 'speaking' && 'bg-tertiary shadow-[0_0_12px_#7cfffe]',
-          player.status === 'voted' && 'bg-secondary',
+          (status === 'ready' || status === 'connected') && 'bg-primary',
+          status === 'speaking' && 'bg-tertiary shadow-[0_0_12px_#7cfffe]',
+          status === 'voted' && 'bg-secondary',
         )}
       />
     </div>

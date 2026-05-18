@@ -15,6 +15,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/create" element={<CreateRoomPage />} />
         <Route path="/join" element={<JoinRoomPage />} />
+        <Route path="/room/:roomCode" element={<LobbyPage />} />
         <Route path="/room/demo" element={<LobbyPage />} />
         <Route path="/room/demo/role" element={<RoleRevealPage />} />
         <Route path="/room/demo/discussion" element={<DiscussionPage />} />

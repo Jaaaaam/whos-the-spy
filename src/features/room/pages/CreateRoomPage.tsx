@@ -1,11 +1,33 @@
+import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../../shared/components/Button'
 import { Card } from '../../../shared/components/Card'
 import { PageShell } from '../../../shared/layouts/PageShell'
 import { mockRoom } from '../data/mockRoom'
+import { useCreateRoom } from '../hooks/useCreateRoom'
 
 export function CreateRoomPage() {
   const navigate = useNavigate()
+  const { createRoom, isCreating, error } = useCreateRoom()
+  const [playerName, setPlayerName] = useState('Jam')
+  const [validationError, setValidationError] = useState<string | null>(null)
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    const trimmedName = playerName.trim()
+    if (!trimmedName) {
+      setValidationError('Enter your name before creating a room.')
+      return
+    }
+
+    setValidationError(null)
+    const result = await createRoom(trimmedName)
+
+    if (result?.code) {
+      navigate(`/room/${result.code}`)
+    }
+  }
 
   return (
     <PageShell compact>
@@ -23,12 +45,14 @@ export function CreateRoomPage() {
         </div>
 
         <Card className="space-y-6">
+          <form className="space-y-6" onSubmit={handleSubmit}>
           <label className="space-y-2 block">
             <span className="text-xs font-bold uppercase tracking-widest text-tertiary">
               Your Name
             </span>
             <input
-              defaultValue="Jam"
+              value={playerName}
+              onChange={(event) => setPlayerName(event.target.value)}
               className="w-full rounded-[1rem] border-0 bg-surface-container-lowest px-4 py-4 text-on-surface outline-none ring-1 ring-outline-variant/10 focus:ring-2 focus:ring-tertiary"
             />
           </label>
@@ -62,13 +86,17 @@ export function CreateRoomPage() {
           </div>
           <div className="rounded-[1.5rem] bg-surface-container-high p-5">
             <p className="text-sm text-on-surface-variant">
-              Creating a room is mocked. Pressing the button routes to the demo lobby
-              with code <span className="font-bold text-tertiary">{mockRoom.code}</span>.
+              Category and timer are still visual placeholders. The room and players
+              now come from Convex in realtime.
             </p>
           </div>
-          <Button className="w-full py-5 text-base" onClick={() => navigate('/room/demo')}>
-            Create New Game
+          {validationError || error ? (
+            <p className="text-sm font-medium text-error">{validationError ?? error}</p>
+          ) : null}
+          <Button className="w-full py-5 text-base" disabled={isCreating} type="submit">
+            {isCreating ? 'Creating...' : 'Create New Game'}
           </Button>
+          </form>
         </Card>
       </div>
     </PageShell>

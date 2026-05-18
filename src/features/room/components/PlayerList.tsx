@@ -1,12 +1,18 @@
 import { Card } from '../../../shared/components/Card'
+import type { Doc } from '../../../../convex/_generated/dataModel'
 import type { Player } from '../data/mockRoom'
 import { PlayerCard } from './PlayerCard'
 
 type PlayerListProps = {
-  players: Player[]
+  players: Array<Doc<'players'> | Player>
+  isEmpty?: boolean
 }
 
-export function PlayerList({ players }: PlayerListProps) {
+function getPlayerKey(player: Doc<'players'> | Player) {
+  return '_id' in player ? player._id : player.id
+}
+
+export function PlayerList({ players, isEmpty = false }: PlayerListProps) {
   return (
     <Card className="space-y-5">
       <div className="flex items-center justify-between">
@@ -16,8 +22,13 @@ export function PlayerList({ players }: PlayerListProps) {
         </span>
       </div>
       <div className="space-y-3">
+        {isEmpty ? (
+          <p className="rounded-[1.5rem] bg-surface-container p-4 text-sm text-on-surface-variant">
+            No players have joined yet.
+          </p>
+        ) : null}
         {players.map((player) => (
-          <PlayerCard key={player.id} player={player} />
+          <PlayerCard key={getPlayerKey(player)} player={player} />
         ))}
       </div>
     </Card>

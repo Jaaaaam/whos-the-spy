@@ -12,7 +12,6 @@ type PageShellProps = {
 const navItems = [
   { to: '/', label: 'Lobby' },
   { to: '/join', label: 'Join' },
-  { to: '/room/demo', label: 'Demo' },
 ]
 
 export function PageShell({
