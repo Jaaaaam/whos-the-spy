@@ -1,5 +1,16 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
+import { MAX_PLAYERS_PER_ROOM } from "../shared/gameSettings";
+
+async function getPlayersByRoomId
+  (ctx: QueryCtx | MutationCtx, roomId: Id<"rooms">) {
+  return await ctx.db
+    .query("players")
+    .withIndex("by_roomId", (q) => q.eq('roomId', roomId))
+    .collect();
+}
 
 export const joinRoom = mutation({
   args: {
@@ -14,6 +25,20 @@ export const joinRoom = mutation({
 
     if (!room) {
       throw new Error("Room not found");
+    }
+
+    const existingPlayers = await getPlayersByRoomId(ctx, room._id);
+
+    const normalizedPlayerName = args.playerName.trim();
+
+    const doesPlayerNameExist = existingPlayers.some(player => player.name === normalizedPlayerName);
+
+    if (doesPlayerNameExist) {
+      throw new Error("Player name already taken in this room");
+    }
+
+    if (existingPlayers.length >= MAX_PLAYERS_PER_ROOM) {
+      throw new Error("Room is full");
     }
 
     const playerId = await ctx.db.insert("players", {
@@ -37,9 +62,6 @@ export const getPlayersInRoom = query({
     roomId: v.id("rooms"),
   },
   handler: async (ctx, args) => {
-    return await ctx.db
-      .query("players")
-      .withIndex("by_roomId", (q) => q.eq("roomId", args.roomId))
-      .collect();
+    return getPlayersByRoomId(ctx, args.roomId);
   }
 })

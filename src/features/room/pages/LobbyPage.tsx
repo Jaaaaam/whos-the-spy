@@ -7,6 +7,7 @@ import { RoomCode } from '../components/RoomCode'
 import { mockRoom } from '../data/mockRoom'
 import { usePlayersByRoom } from '../hooks/usePlayersByRoom'
 import { useRoomByCode } from '../hooks/useRoomByCode'
+import { MAX_PLAYERS_PER_ROOM } from '../../../../shared/gameSettings'
 
 export function LobbyPage() {
   const { roomCode } = useParams()
@@ -62,7 +63,7 @@ export function LobbyPage() {
             {[
               ['Category', mockRoom.category, 'category'],
               ['Timer', mockRoom.timer, 'schedule'],
-              ['Players', arePlayersLoading ? '...' : `${playerCount}/8`, 'groups'],
+              ['Players', arePlayersLoading ? '...' : `${playerCount}/${MAX_PLAYERS_PER_ROOM}`, 'groups'],
             ].map(([label, value, icon]) => (
               <Card key={label} tone="low" className="rounded-[1.5rem]">
                 <span className="material-symbols-outlined text-tertiary">{icon}</span>

@@ -2,6 +2,7 @@ import { useMutation } from 'convex/react'
 import { useState } from 'react'
 import { api } from '../../../../convex/_generated/api'
 import { saveCurrentPlayerId } from '../lib/currentPlayer'
+import { getConvexErrorMessage } from '../../../shared/lib/getConvexErrorMessage'
 
 export function useJoinRoom() {
   const joinRoomMutation = useMutation(api.players.joinRoom)
@@ -29,7 +30,7 @@ export function useJoinRoom() {
       return result
     } catch (error) {
       console.error('[Convex] joinRoom mutation failed', error)
-      setError('Could not join that room. Check the code and try again.')
+      setError(getConvexErrorMessage(error))
       return null
     } finally {
       setIsJoining(false)
