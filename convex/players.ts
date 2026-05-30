@@ -48,6 +48,7 @@ export const joinRoom = mutation({
       isConnected: true,
       joinedAt: Date.now(),
     })
+    console.log(playerId, room._id, 'join room')
 
     return {
       playerId,

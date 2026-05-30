@@ -21,4 +21,19 @@ export default defineSchema({
     isConnected: v.boolean(),
     joinedAt: v.number(),
   }).index("by_roomId", ["roomId"]),
+  rounds: defineTable({
+    roomId: v.id("rooms"),
+    spyCount: v.number(),
+    roundNumber: v.number(),
+    startedAt: v.number(),
+  }).index('by_roomId', ['roomId']),
+  roleAssignments: defineTable({
+    roundId: v.id("rounds"),
+    roomId: v.id("rooms"),
+    playerId: v.id("players"),
+    role: v.union(v.literal("spy"), v.literal("civilian")),
+  })
+    .index('by_roundId', ['roundId'])
+    .index('by_roundId_playerId', ['roundId', 'playerId'])
+    .index('by_roomId', ['roomId']),
 })

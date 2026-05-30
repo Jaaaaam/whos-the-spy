@@ -1,13 +1,15 @@
-import { Link, useParams } from 'react-router-dom'
-import { ButtonLink } from '../../../shared/components/Button'
+import { Link, Navigate, useParams } from 'react-router-dom'
+import { Button, ButtonLink } from '../../../shared/components/Button'
 import { Card } from '../../../shared/components/Card'
 import { PageShell } from '../../../shared/layouts/PageShell'
 import { PlayerList } from '../components/PlayerList'
 import { RoomCode } from '../components/RoomCode'
 import { mockRoom } from '../data/mockRoom'
+import { useStartRound } from '../hooks/useStartRound'
 import { usePlayersByRoom } from '../hooks/usePlayersByRoom'
 import { useRoomByCode } from '../hooks/useRoomByCode'
 import { MAX_PLAYERS_PER_ROOM } from '../../../../shared/gameSettings'
+import { getCurrentPlayerId } from '../lib/currentPlayer'
 
 export function LobbyPage() {
   const { roomCode } = useParams()
@@ -17,6 +19,7 @@ export function LobbyPage() {
     isLoading: arePlayersLoading,
     isEmpty,
   } = usePlayersByRoom(room?._id)
+  const { startRound, isStarting, error } = useStartRound()
 
   if (isRoomLoading) {
     return (
@@ -40,7 +43,29 @@ export function LobbyPage() {
     )
   }
 
+  const currentRoom = room
   const playerCount = players?.length ?? 0
+  const currentPlayerId = getCurrentPlayerId()
+  const currentPlayer = players?.find((player) => player._id === currentPlayerId)
+  const isCurrentPlayerHost = currentPlayer?.isHost ?? false
+  const canStartRound = isCurrentPlayerHost && playerCount >= 3 && !arePlayersLoading
+  const startButtonLabel = isStarting
+    ? 'Starting...'
+    : isCurrentPlayerHost
+      ? playerCount >= 3
+        ? 'Start Game'
+        : 'Need 3 Players'
+      : 'Waiting for Host'
+
+  async function handleStartRound() {
+    if (!canStartRound || !currentPlayer) return
+
+    await startRound(currentRoom._id, currentPlayer._id)
+  }
+
+  if (currentRoom.status === 'role_reveal') {
+    return <Navigate to={`/room/${currentRoom.code}/role`} replace />
+  }
 
   return (
     <PageShell>
@@ -58,7 +83,7 @@ export function LobbyPage() {
               is ready.
             </p>
           </div>
-          <RoomCode code={room.code} />
+          <RoomCode code={currentRoom.code} />
           <div className="grid gap-5 md:grid-cols-3">
             {[
               ['Category', mockRoom.category, 'category'],
@@ -75,17 +100,23 @@ export function LobbyPage() {
             ))}
           </div>
           <div className="flex flex-col gap-4 sm:flex-row">
-            <button
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-surface-container-highest px-6 py-5 font-headline text-base font-extrabold uppercase tracking-widest text-on-surface-variant opacity-70 ring-1 ring-outline-variant/10 sm:flex-1"
-              disabled
+            <Button
+              className="py-5 text-base sm:flex-1"
+              disabled={!canStartRound || isStarting}
+              onClick={handleStartRound}
               type="button"
             >
-              Start Game Soon
-            </button>
+              {startButtonLabel}
+            </Button>
             <ButtonLink to="/" variant="secondary" className="py-5 text-base sm:flex-1">
               Leave Game
             </ButtonLink>
           </div>
+          {error ? (
+            <p className="text-sm font-semibold text-error" role="alert">
+              {error}
+            </p>
+          ) : null}
         </section>
         <aside className="xl:col-span-4">
           {arePlayersLoading ? (
