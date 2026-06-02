@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Doc, Id } from './_generated/dataModel'
 import type { MutationCtx, QueryCtx } from './_generated/server'
-import { getMyRoleHandler, startRoundHandler } from './game'
+import { getMyRevealHandler, getMyRoleHandler, startRoundHandler } from './game'
 
 type TableName = 'rooms' | 'players' | 'rounds' | 'roleAssignments'
 
@@ -79,6 +79,23 @@ function createRoleAssignment(
     roundId: round,
     playerId: player,
     role,
+  }
+}
+
+function createRound(
+  id: Id<'rounds'>,
+  room: Id<'rooms'>,
+): Doc<'rounds'> {
+  return {
+    _id: id,
+    _creationTime: 0,
+    roomId: room,
+    mode: 'similar_words',
+    civilianWord: 'Burger',
+    spyWord: 'Sandwich',
+    spyCount: 1,
+    roundNumber: 1,
+    startedAt: 0,
   }
 }
 
@@ -209,6 +226,9 @@ describe('startRoundHandler', () => {
     expect(tables.rounds[0]).toMatchObject({
       _id: result.roundId,
       roomId: currentRoomId,
+      mode: 'similar_words',
+      civilianWord: expect.any(String),
+      spyWord: expect.any(String),
       spyCount: 2,
       roundNumber: 1,
     })
@@ -216,6 +236,7 @@ describe('startRoundHandler', () => {
     expect(tables.roleAssignments.filter(({ role }) => role === 'spy')).toHaveLength(2)
     expect(tables.roleAssignments.filter(({ role }) => role === 'civilian')).toHaveLength(3)
     expect(tables.rooms[0].status).toBe('role_reveal')
+    expect(tables.rooms[0].currentRoundId).toBe(result.roundId)
   })
 
   it('uses recommended spy count when spy count is not provided', async () => {
@@ -379,16 +400,7 @@ describe('getMyRoleHandler', () => {
         createPlayer(currentPlayerId, currentRoomId, true),
         createPlayer(playerId('player_2'), currentRoomId),
       ],
-      rounds: [
-        {
-          _id: currentRoundId,
-          _creationTime: 0,
-          roomId: currentRoomId,
-          spyCount: 1,
-          roundNumber: 1,
-          startedAt: 0,
-        },
-      ],
+      rounds: [createRound(currentRoundId, currentRoomId)],
       roleAssignments: [
         createRoleAssignment(
           roleAssignmentId('roleAssignment_1'),
@@ -425,16 +437,7 @@ describe('getMyRoleHandler', () => {
     const tables: StoredTables = {
       rooms: [createRoom(currentRoomId)],
       players: [createPlayer(playerId('player_1'), currentRoomId, true)],
-      rounds: [
-        {
-          _id: currentRoundId,
-          _creationTime: 0,
-          roomId: currentRoomId,
-          spyCount: 1,
-          roundNumber: 1,
-          startedAt: 0,
-        },
-      ],
+      rounds: [createRound(currentRoundId, currentRoomId)],
       roleAssignments: [],
     }
     const ctx = createCtx(tables)
@@ -445,5 +448,82 @@ describe('getMyRoleHandler', () => {
     })
 
     expect(roleAssignment).toBeNull()
+  })
+})
+
+describe('getMyRevealHandler', () => {
+  it('returns the spy word for a spy', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const currentPlayerId = playerId('player_1')
+    const tables: StoredTables = {
+      rooms: [createRoom(currentRoomId)],
+      players: [createPlayer(currentPlayerId, currentRoomId, true)],
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments: [
+        createRoleAssignment(
+          roleAssignmentId('roleAssignment_1'),
+          currentRoomId,
+          currentRoundId,
+          currentPlayerId,
+          'spy',
+        ),
+      ],
+    }
+    const ctx = createCtx(tables)
+
+    const reveal = await getMyRevealHandler(ctx, {
+      roundId: currentRoundId,
+      playerId: currentPlayerId,
+    })
+
+    expect(reveal).toEqual({ word: 'Sandwich' })
+  })
+
+  it('returns the civilian word for a civilian', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const currentPlayerId = playerId('player_1')
+    const tables: StoredTables = {
+      rooms: [createRoom(currentRoomId)],
+      players: [createPlayer(currentPlayerId, currentRoomId, true)],
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments: [
+        createRoleAssignment(
+          roleAssignmentId('roleAssignment_1'),
+          currentRoomId,
+          currentRoundId,
+          currentPlayerId,
+          'civilian',
+        ),
+      ],
+    }
+    const ctx = createCtx(tables)
+
+    const reveal = await getMyRevealHandler(ctx, {
+      roundId: currentRoundId,
+      playerId: currentPlayerId,
+    })
+
+    expect(reveal).toEqual({ word: 'Burger' })
+  })
+
+  it('returns null when the player has no role assignment', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const tables: StoredTables = {
+      rooms: [createRoom(currentRoomId)],
+      players: [createPlayer(playerId('player_1'), currentRoomId, true)],
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments: [],
+    }
+    const ctx = createCtx(tables)
+
+    const reveal = await getMyRevealHandler(ctx, {
+      roundId: currentRoundId,
+      playerId: playerId('missing_player'),
+    })
+
+    expect(reveal).toBeNull()
   })
 })

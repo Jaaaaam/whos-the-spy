@@ -12,6 +12,7 @@ export default defineSchema({
       v.literal("results")
     ),
     hostPlayerId: v.optional(v.id("players")),
+    currentRoundId: v.optional(v.id("rounds")),
     createdAt: v.number(),
   }).index("by_code", ["code"]),
   players: defineTable({
@@ -23,6 +24,9 @@ export default defineSchema({
   }).index("by_roomId", ["roomId"]),
   rounds: defineTable({
     roomId: v.id("rooms"),
+    mode: v.literal("similar_words"),
+    civilianWord: v.string(),
+    spyWord: v.string(),
     spyCount: v.number(),
     roundNumber: v.number(),
     startedAt: v.number(),

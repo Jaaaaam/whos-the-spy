@@ -7,6 +7,7 @@ import {
   getRecommendedSpyCount,
   isValidPlayerCount,
 } from "./gameRules";
+import { getRandomWordPair } from "./wordPairs";
 
 type StartRoundArgs = {
   roomId: Id<'rooms'>
@@ -15,6 +16,11 @@ type StartRoundArgs = {
 }
 
 type GetMyRoleArgs = {
+  roundId: Id<'rounds'>
+  playerId: Id<'players'>
+}
+
+type GetMyRevealArgs = {
   roundId: Id<'rounds'>
   playerId: Id<'players'>
 }
@@ -58,8 +64,12 @@ export async function startRoundHandler(ctx: MutationCtx, args: StartRoundArgs) 
     .collect()
 
   const roundNumber = existingRounds.length + 1
+  const wordPair = getRandomWordPair()
   const roundId = await ctx.db.insert('rounds', {
     roomId: args.roomId,
+    mode: 'similar_words',
+    civilianWord: wordPair.civilianWord,
+    spyWord: wordPair.spyWord,
     spyCount: currentSpyCount,
     roundNumber,
     startedAt: Date.now(),
@@ -76,12 +86,13 @@ export async function startRoundHandler(ctx: MutationCtx, args: StartRoundArgs) 
 
   await ctx.db.patch(args.roomId, {
     status: 'role_reveal',
+    currentRoundId: roundId,
   })
 
   return {
     roundId,
     spyCount: currentSpyCount,
-    roundNumber,
+    roundNumber
   }
 }
 
@@ -109,4 +120,30 @@ export const getMyRole = query({
     playerId: v.id('players'),
   },
   handler: getMyRoleHandler,
+})
+
+export async function getMyRevealHandler(ctx: QueryCtx, args: GetMyRevealArgs) {
+  const round = await ctx.db.get(args.roundId)
+
+  if (!round) {
+    return null
+  }
+
+  const roleAssignment = await getMyRoleHandler(ctx, args)
+
+  if (!roleAssignment) {
+    return null
+  }
+
+  return {
+    word: roleAssignment.role === 'spy' ? round.spyWord : round.civilianWord,
+  }
+}
+
+export const getMyReveal = query({
+  args: {
+    roundId: v.id('rounds'),
+    playerId: v.id('players'),
+  },
+  handler: getMyRevealHandler,
 })
