@@ -7,7 +7,7 @@ import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { RevealCard } from '../components/RevealCard'
 import { useMyReveal } from '../hooks/useMyReveal'
 import { useMarkRoleSeen } from '../hooks/useMarkRoleSeen'
-import { useRound } from '../hooks/useRound'
+import { useRevealState } from '../hooks/useRevealState'
 import { useAdvanceRevealIfExpired } from '../hooks/useAdvanceRevealIfExpired'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
 
@@ -28,13 +28,13 @@ export function RoleRevealPage() {
     error: advanceError,
   } = useAdvanceRevealIfExpired()
   const {
-    round,
+    revealState,
     isLoading: isRoundLoading,
     notFound: isRoundNotFound,
-  } = useRound({ roundId: room?.currentRoundId })
+  } = useRevealState({ roundId: room?.currentRoundId })
   const [now, setNow] = useState(() => Date.now())
   const hasRequestedAdvanceRef = useRef(false)
-  const secondsRemaining = getSecondsRemaining(round?.revealEndsAt, now)
+  const secondsRemaining = getSecondsRemaining(revealState?.revealEndsAt, now)
 
   const {
     reveal,
@@ -55,16 +55,16 @@ export function RoleRevealPage() {
 
   useEffect(() => {
     hasRequestedAdvanceRef.current = false
-  }, [round?.revealEndsAt])
+  }, [revealState?.revealEndsAt])
 
   useEffect(() => {
     if (!room || !room.currentRoundId || room.status !== GAME_STATUS.ROLE_REVEAL) return
-    if (!round?.revealEndsAt || secondsRemaining > 0 || isAdvancing) return
+    if (!revealState?.revealEndsAt || secondsRemaining > 0 || isAdvancing) return
     if (hasRequestedAdvanceRef.current) return
 
     hasRequestedAdvanceRef.current = true
     void advanceRevealIfExpired(room._id, room.currentRoundId)
-  }, [advanceRevealIfExpired, isAdvancing, room, round?.revealEndsAt, secondsRemaining])
+  }, [advanceRevealIfExpired, isAdvancing, room, revealState?.revealEndsAt, secondsRemaining])
 
   async function handleMarkRoleSeen() {
     if (!room?.currentRoundId || !currentPlayerId) return
@@ -108,7 +108,7 @@ export function RoleRevealPage() {
     )
   }
 
-  if (isRoundNotFound || !round) {
+  if (isRoundNotFound || !revealState) {
     return <Navigate to={`/room/${room.code}`} replace />
   }
 

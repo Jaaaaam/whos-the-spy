@@ -8,13 +8,13 @@ import { saveCurrentPlayerId } from '../../room/lib/currentPlayer'
 import { useAdvanceRevealIfExpired } from '../hooks/useAdvanceRevealIfExpired'
 import { useMarkRoleSeen } from '../hooks/useMarkRoleSeen'
 import { useMyReveal } from '../hooks/useMyReveal'
-import { useRound } from '../hooks/useRound'
+import { useRevealState } from '../hooks/useRevealState'
 import { RoleRevealPage } from './RoleRevealPage'
 
 vi.mock('../../room/hooks/useRoomByCode')
 vi.mock('../hooks/useMyReveal')
 vi.mock('../hooks/useMarkRoleSeen')
-vi.mock('../hooks/useRound')
+vi.mock('../hooks/useRevealState')
 vi.mock('../hooks/useAdvanceRevealIfExpired')
 
 const roomId = 'room_1' as Id<'rooms'>
@@ -75,8 +75,11 @@ describe('RoleRevealPage', () => {
       isMarkingSeen: false,
       error: null,
     })
-    vi.mocked(useRound).mockReturnValue({
-      round,
+    vi.mocked(useRevealState).mockReturnValue({
+      revealState: {
+        roundNumber: round.roundNumber,
+        revealEndsAt: round.revealEndsAt,
+      },
       isLoading: false,
       notFound: false,
     })
@@ -220,9 +223,9 @@ describe('RoleRevealPage', () => {
     vi.useFakeTimers()
     vi.setSystemTime(1_000)
     const advanceRevealIfExpired = vi.fn().mockResolvedValue({ advanced: true })
-    vi.mocked(useRound).mockReturnValue({
-      round: {
-        ...round,
+    vi.mocked(useRevealState).mockReturnValue({
+      revealState: {
+        roundNumber: round.roundNumber,
         revealEndsAt: 2_000,
       },
       isLoading: false,

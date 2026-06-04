@@ -114,15 +114,24 @@ export const startRound = mutation({
   handler: startRoundHandler,
 })
 
-export async function getRoundHandler(ctx: QueryCtx, args: GetRoundArgs) {
-  return await ctx.db.get(args.roundId)
+export async function getRevealStateHandler(ctx: QueryCtx, args: GetRoundArgs) {
+  const round = await ctx.db.get(args.roundId)
+
+  if (!round) {
+    return null
+  }
+
+  return {
+    roundNumber: round.roundNumber,
+    revealEndsAt: round.revealEndsAt,
+  }
 }
 
-export const getRound = query({
+export const getRevealState = query({
   args: {
     roundId: v.id('rounds'),
   },
-  handler: getRoundHandler,
+  handler: getRevealStateHandler,
 })
 
 export async function getMyRoleHandler(ctx: QueryCtx, args: RoundPlayerArgs) {
