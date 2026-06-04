@@ -1,0 +1,2 @@
+export const REVEAL_DURATION_MS = 30_000
+export const DISCUSSION_TURN_DURATION_MS = 30_000

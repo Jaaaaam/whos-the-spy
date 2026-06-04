@@ -1,5 +1,6 @@
 import { MAX_PLAYERS_PER_ROOM, MIN_PLAYERS_PER_ROOM } from "../shared/gameSettings"
 import type { Id } from "./_generated/dataModel"
+import { GAME_ERROR } from "./game/errors"
 import { shuffle } from "./lib/shuffle"
 
 export type PlayerRole = 'spy' | 'civilian'
@@ -27,7 +28,7 @@ export function assignRandomRoles(playerIds: Id<'players'>[], spyCount: number |
   const currentSpyCount = spyCount ?? getRecommendedSpyCount(playerIds.length)
 
   if (!isValidSpyCount(playerIds.length, currentSpyCount)) {
-    throw new Error('Invalid spy count')
+    throw new Error(GAME_ERROR.INVALID_SPY_COUNT)
   }
 
   const shuffledPlayerIds = shuffle(playerIds);

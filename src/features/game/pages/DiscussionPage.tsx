@@ -274,7 +274,7 @@ export function DiscussionPage() {
                   Round {discussionState.round.roundNumber}
                 </span>
                 <span className="rounded-full bg-secondary-container px-5 py-3 text-sm font-medium text-on-secondary-container">
-                  Voting starts after every turn
+                  Voting starts after every player has had a turn
                 </span>
               </div>
             </div>

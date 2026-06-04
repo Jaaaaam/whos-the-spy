@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { GAME_STATUS } from '../../shared/gameStatus'
+import { GAME_ERROR } from '../game/errors'
 import {
   advanceDiscussionIfExpiredHandler,
   endDiscussionTurnHandler,
   getDiscussionStateHandler,
-} from '../game'
+} from '../game/discussion'
 import {
   createCtx,
   createPlayer,
@@ -282,7 +283,7 @@ describe('endDiscussionTurnHandler', () => {
         roundId: currentRoundId,
         playerId: otherPlayerId,
       }),
-    ).rejects.toThrow('Only the active player can end their turn.')
+    ).rejects.toThrow(GAME_ERROR.NOT_ACTIVE_DISCUSSION_PLAYER)
 
     expect(tables.rounds[0].currentTurnIndex).toBe(0)
   })

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getMyRevealHandler, getMyRoleHandler } from '../game'
+import { getMyRevealHandler, getMyRoleHandler } from '../game/reveal'
 import {
   createCtx,
   createPlayer,

@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { advanceRevealIfExpiredHandler, markRoleSeenHandler } from '../game'
+import { GAME_ERROR } from '../game/errors'
+import {
+  advanceRevealIfExpiredHandler,
+  markRoleSeenHandler,
+} from '../game/reveal'
 import {
   createCtx,
   createPlayer,
@@ -162,7 +166,7 @@ describe('markRoleSeenHandler', () => {
         roundId: currentRoundId,
         playerId: playerId('missing_player'),
       }),
-    ).rejects.toThrow('Role assignment not found.')
+    ).rejects.toThrow(GAME_ERROR.ROLE_ASSIGNMENT_NOT_FOUND)
   })
 })
 
@@ -274,7 +278,7 @@ describe('advanceRevealIfExpiredHandler', () => {
         roomId: currentRoomId,
         roundId: currentRoundId,
       }),
-    ).rejects.toThrow('Cannot start discussion without players.')
+    ).rejects.toThrow(GAME_ERROR.CANNOT_START_DISCUSSION_WITHOUT_PLAYERS)
   })
 
   it('does nothing when the room is already out of role reveal', async () => {
@@ -340,6 +344,6 @@ describe('advanceRevealIfExpiredHandler', () => {
         roomId: currentRoomId,
         roundId: otherRoundId,
       }),
-    ).rejects.toThrow('Round does not belong to current room state.')
+    ).rejects.toThrow(GAME_ERROR.NOT_CURRENT_ROOM_ROUND)
   })
 })

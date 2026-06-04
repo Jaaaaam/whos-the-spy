@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { startRoundHandler } from '../game'
+import { GAME_ERROR } from '../game/errors'
+import { startRoundHandler } from '../game/startRound'
 import {
   createCtx,
   createPlayer,
@@ -104,7 +105,7 @@ describe('startRoundHandler', () => {
         roomId: currentRoomId,
         hostPlayerId: guestPlayerId,
       }),
-    ).rejects.toThrow('Only the host can start the game')
+    ).rejects.toThrow(GAME_ERROR.NOT_HOST)
   })
 
   it('prevents starting a round with fewer than 3 players', async () => {
@@ -126,7 +127,7 @@ describe('startRoundHandler', () => {
         roomId: currentRoomId,
         hostPlayerId,
       }),
-    ).rejects.toThrow('Invalid player count')
+    ).rejects.toThrow(GAME_ERROR.INVALID_PLAYER_COUNT)
   })
 
   it('prevents starting a round with spy count of 0', async () => {
@@ -150,7 +151,7 @@ describe('startRoundHandler', () => {
         hostPlayerId,
         spyCount: 0,
       }),
-    ).rejects.toThrow('Invalid spy count')
+    ).rejects.toThrow(GAME_ERROR.INVALID_SPY_COUNT)
   })
 
   it('prevents starting a round when spy count is equal to half of players', async () => {
@@ -175,7 +176,7 @@ describe('startRoundHandler', () => {
         hostPlayerId,
         spyCount: 2,
       }),
-    ).rejects.toThrow('Invalid spy count')
+    ).rejects.toThrow(GAME_ERROR.INVALID_SPY_COUNT)
   })
 
   it('prevents a host from another room from starting the round', async () => {
@@ -200,6 +201,6 @@ describe('startRoundHandler', () => {
         roomId: currentRoomId,
         hostPlayerId: otherRoomHostPlayerId,
       }),
-    ).rejects.toThrow('Host does not belong to this room')
+    ).rejects.toThrow(GAME_ERROR.HOST_NOT_IN_ROOM)
   })
 })

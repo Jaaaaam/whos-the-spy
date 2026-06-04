@@ -1,0 +1,15 @@
+export const GAME_ERROR = {
+  CANNOT_START_DISCUSSION_WITHOUT_PLAYERS: 'Cannot start discussion without players.',
+  DISCUSSION_STATE_INCOMPLETE: 'Discussion state is incomplete.',
+  HOST_NOT_IN_ROOM: 'Host does not belong to this room.',
+  HOST_PLAYER_NOT_FOUND: 'Host player not found.',
+  INVALID_PLAYER_COUNT: 'Invalid player count.',
+  INVALID_SPY_COUNT: 'Invalid spy count.',
+  NOT_ACTIVE_DISCUSSION_PLAYER: 'Only the active player can end their turn.',
+  NOT_CURRENT_ROOM_ROUND: 'Round does not belong to current room state.',
+  NOT_HOST: 'Only the host can start the game.',
+  ROLE_ASSIGNMENT_NOT_FOUND: 'Role assignment not found.',
+  ROOM_NOT_FOUND: 'Room not found.',
+  ROOM_NOT_IN_CURRENT_DISCUSSION: 'Room is not in the current discussion.',
+  ROUND_NOT_FOUND: 'Round not found.',
+} as const

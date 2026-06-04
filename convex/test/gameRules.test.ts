@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { GAME_ERROR } from '../game/errors'
 import {
   assignRandomRoles,
   getRecommendedSpyCount,
@@ -97,7 +98,7 @@ describe('assignRandomRoles', () => {
       playerId('p4'),
     ]
 
-    expect(() => assignRandomRoles(playerIds, 0)).toThrow('Invalid spy count')
+    expect(() => assignRandomRoles(playerIds, 0)).toThrow(GAME_ERROR.INVALID_SPY_COUNT)
   })
 
   it('rejects a spy count equal to half of players', () => {
@@ -108,7 +109,7 @@ describe('assignRandomRoles', () => {
       playerId('p4'),
     ]
 
-    expect(() => assignRandomRoles(playerIds, 2)).toThrow('Invalid spy count')
+    expect(() => assignRandomRoles(playerIds, 2)).toThrow(GAME_ERROR.INVALID_SPY_COUNT)
   })
 
   it('uses the recommended spy count when spy count is not provided', () => {

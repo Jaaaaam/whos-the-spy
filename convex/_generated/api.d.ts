@@ -9,6 +9,12 @@
  */
 
 import type * as game from "../game.js";
+import type * as game_constants from "../game/constants.js";
+import type * as game_discussion from "../game/discussion.js";
+import type * as game_errors from "../game/errors.js";
+import type * as game_reveal from "../game/reveal.js";
+import type * as game_startRound from "../game/startRound.js";
+import type * as game_types from "../game/types.js";
 import type * as gameRules from "../gameRules.js";
 import type * as lib_shuffle from "../lib/shuffle.js";
 import type * as players from "../players.js";
@@ -24,6 +30,12 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   game: typeof game;
+  "game/constants": typeof game_constants;
+  "game/discussion": typeof game_discussion;
+  "game/errors": typeof game_errors;
+  "game/reveal": typeof game_reveal;
+  "game/startRound": typeof game_startRound;
+  "game/types": typeof game_types;
   gameRules: typeof gameRules;
   "lib/shuffle": typeof lib_shuffle;
   players: typeof players;
