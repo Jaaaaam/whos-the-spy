@@ -4,8 +4,8 @@ import {
   getRecommendedSpyCount,
   isValidPlayerCount,
   isValidSpyCount,
-} from './gameRules'
-import type { Id } from './_generated/dataModel'
+} from '../gameRules'
+import type { Id } from '../_generated/dataModel'
 
 function playerId(id: string) {
   return id as Id<'players'>

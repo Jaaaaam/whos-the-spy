@@ -12,6 +12,7 @@ import type * as game from "../game.js";
 import type * as gameRules from "../gameRules.js";
 import type * as players from "../players.js";
 import type * as rooms from "../rooms.js";
+import type * as test_gameTestUtils from "../test/gameTestUtils.js";
 import type * as wordPairs from "../wordPairs.js";
 
 import type {
@@ -25,6 +26,7 @@ declare const fullApi: ApiFromModules<{
   gameRules: typeof gameRules;
   players: typeof players;
   rooms: typeof rooms;
+  "test/gameTestUtils": typeof test_gameTestUtils;
   wordPairs: typeof wordPairs;
 }>;
 

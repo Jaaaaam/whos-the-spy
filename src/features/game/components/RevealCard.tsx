@@ -1,12 +1,22 @@
-import { ButtonLink } from '../../../shared/components/Button'
+import { Button } from '../../../shared/components/Button'
 import { Card } from '../../../shared/components/Card'
 
 type RevealCardProps = {
   word: string
-  roomCode: string
+  secondsRemaining: number
+  onMarkRoleSeen: () => void
+  isMarkingSeen: boolean
+  hasMarkedRoleSeen: boolean
 }
 
-export function RevealCard({ word, roomCode }: RevealCardProps) {
+export function RevealCard({
+  word,
+  secondsRemaining,
+  onMarkRoleSeen,
+  isMarkingSeen,
+  hasMarkedRoleSeen,
+}: RevealCardProps) {
+
   return (
     <Card tone="glass" className="relative overflow-hidden text-center">
       <div className="absolute inset-0 noise-grid opacity-10" />
@@ -33,9 +43,23 @@ export function RevealCard({ word, roomCode }: RevealCardProps) {
             {word}
           </div>
         </div>
-        <ButtonLink to={`/room/${roomCode}/discussion`} className="w-full py-5 text-base">
-          I Understand
-        </ButtonLink>
+        <div className="rounded-[1.5rem] bg-surface-container-highest/40 px-6 py-4 ring-1 ring-outline-variant/10">
+          <p className="text-xs font-bold uppercase tracking-[0.35em] text-on-surface-variant">
+            Discussion starts in
+          </p>
+          <p className="mt-2 font-headline text-4xl font-black text-tertiary">
+            {secondsRemaining}s
+          </p>
+        </div>
+        {hasMarkedRoleSeen ? (
+          <p className="rounded-[1.5rem] bg-tertiary/10 px-6 py-4 text-sm font-semibold text-tertiary">
+            Ready. Waiting for the rest of the players...
+          </p>
+        ) : (
+          <Button onClick={onMarkRoleSeen} disabled={isMarkingSeen}>
+            {isMarkingSeen ? 'Confirming...' : 'I Understand'}
+          </Button>
+        )}
       </div>
     </Card>
   )

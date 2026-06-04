@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Doc, Id } from '../../../../convex/_generated/dataModel'
+import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { MAX_PLAYERS_PER_ROOM } from '../../../../shared/gameSettings'
 import { usePlayersByRoom } from '../hooks/usePlayersByRoom'
 import { useRoomByCode } from '../hooks/useRoomByCode'
@@ -17,7 +18,7 @@ const room: Doc<'rooms'> = {
   _id: 'room_1' as Id<'rooms'>,
   _creationTime: 0,
   code: 'SPY247',
-  status: 'lobby',
+  status: GAME_STATUS.LOBBY,
   createdAt: 0,
 }
 

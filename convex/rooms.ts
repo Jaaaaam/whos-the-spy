@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { GAME_STATUS } from "../shared/gameStatus";
 
 function generateRoomCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -12,7 +13,7 @@ export const createRoom = mutation({
   handler: async (ctx, args) => {
     const roomId = await ctx.db.insert("rooms", {
       code: generateRoomCode(),
-      status: "lobby",
+      status: GAME_STATUS.LOBBY,
       createdAt: Date.now(),
     });
 

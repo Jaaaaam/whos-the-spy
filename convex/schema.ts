@@ -1,15 +1,16 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
+import { GAME_STATUS } from '../shared/gameStatus'
 
 export default defineSchema({
   rooms: defineTable({
     code: v.string(),
     status: v.union(
-      v.literal("lobby"),
-      v.literal("role_reveal"),
-      v.literal("discussion"),
-      v.literal("voting"),
-      v.literal("results")
+      v.literal(GAME_STATUS.LOBBY),
+      v.literal(GAME_STATUS.ROLE_REVEAL),
+      v.literal(GAME_STATUS.DISCUSSION),
+      v.literal(GAME_STATUS.VOTING),
+      v.literal(GAME_STATUS.RESULTS)
     ),
     hostPlayerId: v.optional(v.id("players")),
     currentRoundId: v.optional(v.id("rounds")),
@@ -30,12 +31,14 @@ export default defineSchema({
     spyCount: v.number(),
     roundNumber: v.number(),
     startedAt: v.number(),
+    revealEndsAt: v.optional(v.number())
   }).index('by_roomId', ['roomId']),
   roleAssignments: defineTable({
     roundId: v.id("rounds"),
     roomId: v.id("rooms"),
     playerId: v.id("players"),
     role: v.union(v.literal("spy"), v.literal("civilian")),
+    seenAt: v.optional(v.number())
   })
     .index('by_roundId', ['roundId'])
     .index('by_roundId_playerId', ['roundId', 'playerId'])

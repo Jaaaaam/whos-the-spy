@@ -8,6 +8,7 @@ import {
   isValidPlayerCount,
 } from "./gameRules";
 import { getRandomWordPair } from "./wordPairs";
+import { GAME_STATUS } from "../shared/gameStatus";
 
 type StartRoundArgs = {
   roomId: Id<'rooms'>
@@ -15,15 +16,21 @@ type StartRoundArgs = {
   spyCount?: number
 }
 
-type GetMyRoleArgs = {
+type AdvanceRevealIfExpiredArgs = {
+  roomId: Id<'rooms'>
+  roundId: Id<'rounds'>
+}
+
+type GetRoundArgs = {
+  roundId: Id<'rounds'>
+}
+
+type RoundPlayerArgs = {
   roundId: Id<'rounds'>
   playerId: Id<'players'>
 }
 
-type GetMyRevealArgs = {
-  roundId: Id<'rounds'>
-  playerId: Id<'players'>
-}
+const REVEAL_DURATION_MS = 30_000
 
 export async function startRoundHandler(ctx: MutationCtx, args: StartRoundArgs) {
   const currentRoom = await ctx.db.get(args.roomId);
@@ -65,6 +72,7 @@ export async function startRoundHandler(ctx: MutationCtx, args: StartRoundArgs) 
 
   const roundNumber = existingRounds.length + 1
   const wordPair = getRandomWordPair()
+  const startedAt = Date.now()
   const roundId = await ctx.db.insert('rounds', {
     roomId: args.roomId,
     mode: 'similar_words',
@@ -72,7 +80,8 @@ export async function startRoundHandler(ctx: MutationCtx, args: StartRoundArgs) 
     spyWord: wordPair.spyWord,
     spyCount: currentSpyCount,
     roundNumber,
-    startedAt: Date.now(),
+    startedAt,
+    revealEndsAt: startedAt + REVEAL_DURATION_MS
   })
 
   for (const assignedRole of assignedRoles) {
@@ -85,7 +94,7 @@ export async function startRoundHandler(ctx: MutationCtx, args: StartRoundArgs) 
   }
 
   await ctx.db.patch(args.roomId, {
-    status: 'role_reveal',
+    status: GAME_STATUS.ROLE_REVEAL,
     currentRoundId: roundId,
   })
 
@@ -105,7 +114,18 @@ export const startRound = mutation({
   handler: startRoundHandler,
 })
 
-export async function getMyRoleHandler(ctx: QueryCtx, args: GetMyRoleArgs) {
+export async function getRoundHandler(ctx: QueryCtx, args: GetRoundArgs) {
+  return await ctx.db.get(args.roundId)
+}
+
+export const getRound = query({
+  args: {
+    roundId: v.id('rounds'),
+  },
+  handler: getRoundHandler,
+})
+
+export async function getMyRoleHandler(ctx: QueryCtx, args: RoundPlayerArgs) {
   return await ctx.db
     .query('roleAssignments')
     .withIndex('by_roundId_playerId', (q) =>
@@ -122,7 +142,7 @@ export const getMyRole = query({
   handler: getMyRoleHandler,
 })
 
-export async function getMyRevealHandler(ctx: QueryCtx, args: GetMyRevealArgs) {
+export async function getMyRevealHandler(ctx: QueryCtx, args: RoundPlayerArgs) {
   const round = await ctx.db.get(args.roundId)
 
   if (!round) {
@@ -137,6 +157,7 @@ export async function getMyRevealHandler(ctx: QueryCtx, args: GetMyRevealArgs) {
 
   return {
     word: roleAssignment.role === 'spy' ? round.spyWord : round.civilianWord,
+    seenAt: roleAssignment.seenAt,
   }
 }
 
@@ -146,4 +167,85 @@ export const getMyReveal = query({
     playerId: v.id('players'),
   },
   handler: getMyRevealHandler,
+})
+
+export async function markRoleSeenHandler(ctx: MutationCtx, args: RoundPlayerArgs) {
+  const roleAssignment = await getMyRoleHandler(ctx, args)
+
+  if (!roleAssignment) {
+    throw new Error('Role assignment not found.')
+  }
+
+  const seenAt = roleAssignment.seenAt ?? Date.now()
+
+  if (!roleAssignment.seenAt) {
+    await ctx.db.patch(roleAssignment._id, { seenAt })
+  }
+
+  const roleAssignments = await ctx.db
+    .query('roleAssignments')
+    .withIndex('by_roundId', (q) => q.eq("roundId", args.roundId))
+    .collect()
+
+  const haveAllPlayersSeenRole = roleAssignments.every(
+    (assignment) => assignment.seenAt,
+  )
+
+  if (haveAllPlayersSeenRole) {
+    await ctx.db.patch(roleAssignment.roomId, {
+      status: GAME_STATUS.DISCUSSION
+    })
+  }
+  return { seenAt }
+}
+
+export const markRoleSeen = mutation({
+  args: {
+    roundId: v.id('rounds'),
+    playerId: v.id('players'),
+  },
+  handler: markRoleSeenHandler
+})
+
+export async function advanceRevealIfExpiredHandler(
+  ctx: MutationCtx,
+  args: AdvanceRevealIfExpiredArgs,
+) {
+  const room = await ctx.db.get(args.roomId)
+
+  if (!room) {
+    throw new Error('Room not found.')
+  }
+
+  if (room.status !== GAME_STATUS.ROLE_REVEAL) {
+    return { advanced: false }
+  }
+
+  if (room.currentRoundId !== args.roundId) {
+    throw new Error('Round does not belong to current room state.')
+  }
+
+  const round = await ctx.db.get(args.roundId)
+
+  if (!round) {
+    throw new Error('Round not found.')
+  }
+
+  if (!round.revealEndsAt || Date.now() < round.revealEndsAt) {
+    return { advanced: false }
+  }
+
+  await ctx.db.patch(args.roomId, {
+    status: GAME_STATUS.DISCUSSION,
+  })
+
+  return { advanced: true }
+}
+
+export const advanceRevealIfExpired = mutation({
+  args: {
+    roomId: v.id('rooms'),
+    roundId: v.id('rounds'),
+  },
+  handler: advanceRevealIfExpiredHandler,
 })

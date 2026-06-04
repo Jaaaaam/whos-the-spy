@@ -9,6 +9,7 @@ import { useStartRound } from '../hooks/useStartRound'
 import { usePlayersByRoom } from '../hooks/usePlayersByRoom'
 import { useRoomByCode } from '../hooks/useRoomByCode'
 import { MAX_PLAYERS_PER_ROOM } from '../../../../shared/gameSettings'
+import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { getCurrentPlayerId } from '../lib/currentPlayer'
 
 export function LobbyPage() {
@@ -63,7 +64,7 @@ export function LobbyPage() {
     await startRound(currentRoom._id, currentPlayer._id)
   }
 
-  if (currentRoom.status === 'role_reveal') {
+  if (currentRoom.status === GAME_STATUS.ROLE_REVEAL) {
     return <Navigate to={`/room/${currentRoom.code}/role`} replace />
   }
 
