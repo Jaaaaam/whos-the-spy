@@ -1,15 +1,187 @@
+import { Navigate, useParams } from 'react-router-dom'
 import { Button } from '../../../shared/components/Button'
 import { Card } from '../../../shared/components/Card'
 import { PageShell } from '../../../shared/layouts/PageShell'
 import { PlayerList } from '../../room/components/PlayerList'
-import { mockPlayers } from '../../room/data/mockRoom'
 import { IntelFeed } from '../components/IntelFeed'
 import { Timer } from '../components/Timer'
-import { mockGame } from '../data/mockGame'
+import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
+import { useRoomByCode } from '../../room/hooks/useRoomByCode'
+import { useDiscussionState } from '../hooks/useDiscussionState'
+import { usePlayersByRoom } from '../../room/hooks/usePlayersByRoom'
+import { useMyReveal } from '../hooks/useMyReveal'
+import { useEffect, useRef, useState } from 'react'
+import { GAME_STATUS } from '../../../../shared/gameStatus'
+import { useEndDiscussionTurn } from '../hooks/useEndDiscussionTurn'
+import { useAdvanceDiscussionIfExpired } from '../hooks/useAdvanceDiscussionIfExpired'
+
+function getSecondsRemaining(turnEndsAt: number, now: number) {
+  return Math.max(0, Math.ceil((turnEndsAt - now) / 1_000))
+}
+
+function formatSeconds(seconds: number) {
+  return `00:${seconds.toString().padStart(2, '0')}`
+}
+
+function getTimerProgress(
+  turnStartedAt: number,
+  turnEndsAt: number,
+  now: number
+) {
+  const turnDuration = turnEndsAt - turnStartedAt
+
+  if (turnDuration <= 0) return 0
+
+  const remainingDuration = turnEndsAt - now
+
+  return Math.max(
+    0,
+    Math.min(100, (remainingDuration / turnDuration) * 100)
+  )
+}
 
 export function DiscussionPage() {
-  const isCurrentPlayerActive = mockGame.currentPlayer === mockGame.activePlayer
-  const turnProgress = (mockGame.currentTurn / mockGame.totalTurns) * 100
+  const { roomCode } = useParams()
+  const currentPlayerId = getCurrentPlayerId()
+  const { room, isLoading: isRoomLoading, notFound: isRoomNotFound } = useRoomByCode(roomCode)
+  const {
+    endDiscussionTurn,
+    isEndingTurn,
+    error: endTurnError,
+  } = useEndDiscussionTurn()
+  const {
+    advanceDiscussionIfExpired,
+    isAdvancing,
+    error: advanceError,
+  } = useAdvanceDiscussionIfExpired()
+  const hasRequestedAdvanceRef = useRef(false)
+
+  const {
+    discussionState,
+    isLoading: isDiscussionLoading,
+    notFound: isDiscussionNotFound
+  } = useDiscussionState({
+    roomId: room?._id,
+    roundId: room?.currentRoundId
+  })
+
+  const {
+    players,
+    isLoading: arePlayersLoading,
+    isEmpty,
+  } = usePlayersByRoom(room?._id)
+
+  const {
+    reveal,
+    isLoading: isRevealLoading,
+    notFound: isRevealNotFound,
+  } = useMyReveal({
+    roundId: room?.currentRoundId,
+    playerId: currentPlayerId,
+  })
+
+  const [now, setNow] = useState(() => Date.now())
+  const turnEndsAt = discussionState?.round.turnEndsAt
+  const secondsRemaining = turnEndsAt
+    ? getSecondsRemaining(turnEndsAt, now)
+    : 0
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setNow(Date.now())
+    }, 1_000)
+
+    return () => window.clearInterval(intervalId)
+  }, [])
+
+  useEffect(() => {
+    hasRequestedAdvanceRef.current = false
+  }, [turnEndsAt])
+
+  useEffect(() => {
+    if (!room || !room.currentRoundId || room.status !== GAME_STATUS.DISCUSSION) return
+    if (!turnEndsAt) return
+    if (secondsRemaining > 0 || isAdvancing) return
+    if (hasRequestedAdvanceRef.current) return
+
+    hasRequestedAdvanceRef.current = true
+    void advanceDiscussionIfExpired(room._id, room.currentRoundId).catch(() => {
+      hasRequestedAdvanceRef.current = false
+    })
+  }, [
+    advanceDiscussionIfExpired,
+    isAdvancing,
+    room,
+    secondsRemaining,
+    turnEndsAt,
+  ])
+
+  if (isRoomLoading) {
+    return (
+      <PageShell compact>
+        <Card className="my-8 text-center text-on-surface-variant">
+          Loading room...
+        </Card>
+      </PageShell>
+    )
+  }
+
+  if (isRoomNotFound || !room || !currentPlayerId) {
+    return <Navigate to="/join" replace />
+  }
+
+  if (!room.currentRoundId) {
+    return <Navigate to={`/room/${room.code}`} replace />
+  }
+
+  if (room.status === GAME_STATUS.ROLE_REVEAL) {
+    return <Navigate to={`/room/${room.code}/role`} replace />
+  }
+
+  if (room.status === GAME_STATUS.VOTING) {
+    return <Navigate to={`/room/${room.code}/voting`} replace />
+  }
+
+  if (isDiscussionLoading || arePlayersLoading || isRevealLoading) {
+    return (
+      <PageShell compact>
+        <Card className="my-8 text-center text-on-surface-variant">
+          Loading discussion...
+        </Card>
+      </PageShell>
+    )
+  }
+
+  if (
+    isDiscussionNotFound ||
+    !discussionState ||
+    isRevealNotFound ||
+    !reveal
+  ) {
+    return <Navigate to={`/room/${room.code}`} replace />
+  }
+
+  const {
+    activePlayerId,
+    activePlayerName,
+    currentTurn,
+    totalTurns,
+    turnStartedAt,
+    turnEndsAt: currentTurnEndsAt,
+  } = discussionState.round
+
+  const isCurrentPlayerActive = activePlayerId === currentPlayerId
+  const timerProgress = getTimerProgress(turnStartedAt, currentTurnEndsAt, now)
+  const turnProgress = (currentTurn / totalTurns) * 100
+  const roomId = room._id
+  const roundId = room.currentRoundId
+  const playerId = currentPlayerId
+
+  async function handleEndTurn() {
+    if (!isCurrentPlayerActive) return
+
+    await endDiscussionTurn(roomId, roundId, playerId)
+  }
 
   return (
     <PageShell showFooter={false}>
@@ -25,27 +197,37 @@ export function DiscussionPage() {
                   Active Player
                 </p>
                 <h2 className="font-headline text-lg font-extrabold">
-                  {mockGame.activePlayer}
+                  {activePlayerName}
                 </h2>
                 <p className="mt-1 text-xs text-on-surface-variant">
-                  Turn {mockGame.currentTurn} of {mockGame.totalTurns}
+                  Turn {currentTurn} of {totalTurns}
                 </p>
               </div>
             </Card>
             <Timer
               label="Turn Time"
-              value={mockGame.discussionTimer}
-              progress={60}
-              urgent
+              value={formatSeconds(secondsRemaining)}
+              progress={timerProgress}
+              urgent={secondsRemaining <= 10}
             />
             <Button
               className="min-h-24 rounded-[2rem] py-6 text-base md:h-full"
-              disabled={!isCurrentPlayerActive}
+              disabled={!isCurrentPlayerActive || isEndingTurn}
+              onClick={handleEndTurn}
               type="button"
             >
-              {isCurrentPlayerActive ? 'End My Turn' : `Waiting for ${mockGame.activePlayer}`}
+              {isEndingTurn
+                ? 'Ending Turn...'
+                : isCurrentPlayerActive
+                  ? 'End My Turn'
+                  : `Waiting for ${activePlayerName}`}
             </Button>
           </div>
+          {endTurnError || advanceError ? (
+            <p className="text-center text-sm font-semibold text-error" role="alert">
+              {endTurnError ?? advanceError}
+            </p>
+          ) : null}
 
           <Card
             tone="low"
@@ -56,14 +238,9 @@ export function DiscussionPage() {
               <div className="mb-6 flex items-center justify-center gap-3 text-tertiary">
                 <span className="material-symbols-outlined">mic</span>
                 <p className="text-xs font-semibold uppercase tracking-[0.35em]">
-                  {isCurrentPlayerActive ? 'Your Turn' : 'Discussion In Progress'}
+                  {isCurrentPlayerActive ? 'Give one clue about your word' : `${activePlayerName} is giving a clue`}
                 </p>
               </div>
-              <h1 className="font-headline text-4xl font-black tracking-tight sm:text-6xl">
-                {isCurrentPlayerActive
-                  ? 'Give one clue about your word'
-                  : `${mockGame.activePlayer} is giving a clue`}
-              </h1>
               <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-on-surface-variant">
                 Listen closely, compare each clue, and keep your own word secret.
               </p>
@@ -73,7 +250,7 @@ export function DiscussionPage() {
                   Your Secret Word
                 </p>
                 <p className="mt-3 font-headline text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-on-surface-variant sm:text-7xl">
-                  {mockGame.secretWord}
+                  {reveal.word}
                 </p>
               </div>
 
@@ -81,7 +258,7 @@ export function DiscussionPage() {
                 <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-on-surface-variant">
                   <span>Turn Progress</span>
                   <span>
-                    {mockGame.currentTurn}/{mockGame.totalTurns}
+                    {currentTurn}/{totalTurns}
                   </span>
                 </div>
                 <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-container-highest">
@@ -94,7 +271,7 @@ export function DiscussionPage() {
 
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 <span className="rounded-full bg-surface-container-highest px-5 py-3 text-sm font-medium text-on-surface">
-                  Round 1
+                  Round {discussionState.round.roundNumber}
                 </span>
                 <span className="rounded-full bg-secondary-container px-5 py-3 text-sm font-medium text-on-secondary-container">
                   Voting starts after every turn
@@ -104,7 +281,7 @@ export function DiscussionPage() {
           </Card>
         </section>
         <aside className="grid gap-6 xl:grid-rows-[auto_1fr]">
-          <PlayerList players={mockPlayers} />
+          <PlayerList players={players ?? []} isEmpty={isEmpty} />
           <IntelFeed />
         </aside>
       </div>

@@ -1,23 +1,12 @@
 import { MAX_PLAYERS_PER_ROOM, MIN_PLAYERS_PER_ROOM } from "../shared/gameSettings"
 import type { Id } from "./_generated/dataModel"
+import { shuffle } from "./lib/shuffle"
 
 export type PlayerRole = 'spy' | 'civilian'
 
 export type PlayerRoleAssignment = {
   playerId: Id<'players'>
   role: PlayerRole
-}
-
-function shuffle<T>(items: T[]) {
-  const shuffled = [...items]
-
-  for (let index = shuffled.length - 1; index > 0; index--) {
-    const randomIndex = Math.floor(Math.random() * (index + 1))
-    const currentItem = shuffled[index]
-    shuffled[index] = shuffled[randomIndex]
-    shuffled[randomIndex] = currentItem
-  }
-  return shuffled
 }
 
 export function getRecommendedSpyCount(playerCount: number) {

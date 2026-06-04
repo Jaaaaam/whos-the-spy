@@ -27,7 +27,13 @@ describe('markRoleSeenHandler', () => {
     const currentRoundId = roundId('round_1')
     const currentPlayerId = playerId('player_1')
     const tables: StoredTables = {
-      rooms: [{ ...createRoom(currentRoomId), status: 'role_reveal' }],
+      rooms: [
+        {
+          ...createRoom(currentRoomId),
+          status: 'role_reveal',
+          currentRoundId,
+        },
+      ],
       players: [createPlayer(currentPlayerId, currentRoomId, true)],
       rounds: [createRound(currentRoundId, currentRoomId)],
       roleAssignments: [
@@ -94,7 +100,13 @@ describe('markRoleSeenHandler', () => {
     const currentRoundId = roundId('round_1')
     const currentPlayerId = playerId('player_1')
     const tables: StoredTables = {
-      rooms: [{ ...createRoom(currentRoomId), status: 'role_reveal' }],
+      rooms: [
+        {
+          ...createRoom(currentRoomId),
+          status: 'role_reveal',
+          currentRoundId,
+        },
+      ],
       players: [
         createPlayer(currentPlayerId, currentRoomId, true),
         createPlayer(playerId('player_2'), currentRoomId),
@@ -126,6 +138,12 @@ describe('markRoleSeenHandler', () => {
     })
 
     expect(tables.rooms[0].status).toBe('discussion')
+    expect(tables.rounds[0].discussionOrder).toHaveLength(tables.players.length)
+    expect(new Set(tables.rounds[0].discussionOrder)).toEqual(
+      new Set(tables.players.map((player) => player._id)),
+    )
+    expect(tables.rounds[0].currentTurnIndex).toBe(0)
+    expect(tables.rounds[0].turnEndsAt).toEqual(expect.any(Number))
   })
 
   it('throws when the player has no role assignment', async () => {
@@ -162,7 +180,10 @@ describe('advanceRevealIfExpiredHandler', () => {
           currentRoundId,
         },
       ],
-      players: [],
+      players: [
+        createPlayer(playerId('player_1'), currentRoomId, true),
+        createPlayer(playerId('player_2'), currentRoomId),
+      ],
       rounds: [
         {
           ...createRound(currentRoundId, currentRoomId),
@@ -195,7 +216,10 @@ describe('advanceRevealIfExpiredHandler', () => {
           currentRoundId,
         },
       ],
-      players: [],
+      players: [
+        createPlayer(playerId('player_1'), currentRoomId, true),
+        createPlayer(playerId('player_2'), currentRoomId),
+      ],
       rounds: [
         {
           ...createRound(currentRoundId, currentRoomId),
@@ -213,6 +237,44 @@ describe('advanceRevealIfExpiredHandler', () => {
 
     expect(result).toEqual({ advanced: true })
     expect(tables.rooms[0].status).toBe('discussion')
+    expect(tables.rounds[0].discussionOrder).toHaveLength(tables.players.length)
+    expect(new Set(tables.rounds[0].discussionOrder)).toEqual(
+      new Set(tables.players.map((player) => player._id)),
+    )
+    expect(tables.rounds[0].currentTurnIndex).toBe(0)
+    expect(tables.rounds[0].turnEndsAt).toEqual(expect.any(Number))
+  })
+
+  it('does not start discussion without players', async () => {
+    vi.setSystemTime(2_001)
+
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const tables: StoredTables = {
+      rooms: [
+        {
+          ...createRoom(currentRoomId),
+          status: 'role_reveal',
+          currentRoundId,
+        },
+      ],
+      players: [],
+      rounds: [
+        {
+          ...createRound(currentRoundId, currentRoomId),
+          revealEndsAt: 2_000,
+        },
+      ],
+      roleAssignments: [],
+    }
+    const ctx = createCtx(tables)
+
+    await expect(
+      advanceRevealIfExpiredHandler(ctx, {
+        roomId: currentRoomId,
+        roundId: currentRoundId,
+      }),
+    ).rejects.toThrow('Cannot start discussion without players.')
   })
 
   it('does nothing when the room is already out of role reveal', async () => {

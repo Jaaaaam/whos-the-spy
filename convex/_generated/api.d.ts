@@ -10,6 +10,7 @@
 
 import type * as game from "../game.js";
 import type * as gameRules from "../gameRules.js";
+import type * as lib_shuffle from "../lib/shuffle.js";
 import type * as players from "../players.js";
 import type * as rooms from "../rooms.js";
 import type * as test_gameTestUtils from "../test/gameTestUtils.js";
@@ -24,6 +25,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   game: typeof game;
   gameRules: typeof gameRules;
+  "lib/shuffle": typeof lib_shuffle;
   players: typeof players;
   rooms: typeof rooms;
   "test/gameTestUtils": typeof test_gameTestUtils;

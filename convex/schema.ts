@@ -31,7 +31,11 @@ export default defineSchema({
     spyCount: v.number(),
     roundNumber: v.number(),
     startedAt: v.number(),
-    revealEndsAt: v.optional(v.number())
+    revealEndsAt: v.optional(v.number()),
+    discussionOrder: v.optional(v.array(v.id('players'))),
+    currentTurnIndex: v.optional(v.number()),
+    turnStartedAt: v.optional(v.number()),
+    turnEndsAt: v.optional(v.number()),
   }).index('by_roomId', ['roomId']),
   roleAssignments: defineTable({
     roundId: v.id("rounds"),
