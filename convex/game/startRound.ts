@@ -6,6 +6,7 @@ import {
 } from "../gameRules"
 import { getRandomWordPair } from "../wordPairs"
 import { GAME_STATUS } from "../../shared/gameStatus"
+import { INDEX, TABLE } from "../lib/db"
 import { REVEAL_DURATION_MS } from "./constants"
 import { GAME_ERROR } from "./errors"
 import type { StartRoundArgs } from "./types"
@@ -34,8 +35,8 @@ export async function startRoundHandler(
   }
 
   const roomPlayers = await ctx.db
-    .query('players')
-    .withIndex('by_roomId', (q) => q.eq('roomId', roomId))
+    .query(TABLE.PLAYERS)
+    .withIndex(INDEX.PLAYERS_BY_ROOM_ID, (q) => q.eq('roomId', roomId))
     .collect()
 
   if (!isValidPlayerCount(roomPlayers.length)) {
@@ -47,14 +48,14 @@ export async function startRoundHandler(
   const assignedRoles = assignRandomRoles(roomPlayerIds, currentSpyCount)
 
   const existingRounds = await ctx.db
-    .query('rounds')
-    .withIndex('by_roomId', (q) => q.eq('roomId', roomId))
+    .query(TABLE.ROUNDS)
+    .withIndex(INDEX.ROUNDS_BY_ROOM_ID, (q) => q.eq('roomId', roomId))
     .collect()
 
   const roundNumber = existingRounds.length + 1
   const wordPair = getRandomWordPair()
   const startedAt = Date.now()
-  const roundId = await ctx.db.insert('rounds', {
+  const roundId = await ctx.db.insert(TABLE.ROUNDS, {
     roomId,
     mode: 'similar_words',
     civilianWord: wordPair.civilianWord,
@@ -66,7 +67,7 @@ export async function startRoundHandler(
   })
 
   for (const assignedRole of assignedRoles) {
-    await ctx.db.insert('roleAssignments', {
+    await ctx.db.insert(TABLE.ROLE_ASSIGNMENTS, {
       roomId,
       roundId,
       playerId: assignedRole.playerId,

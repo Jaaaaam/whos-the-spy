@@ -1,20 +1,23 @@
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 import { GAME_STATUS } from '../../shared/gameStatus'
+import { TABLE } from '../lib/db'
 
-type TableName = 'rooms' | 'players' | 'rounds' | 'roleAssignments'
+type TableName = typeof TABLE[keyof typeof TABLE]
 
 type StoredDocument =
   | Doc<'rooms'>
   | Doc<'players'>
   | Doc<'rounds'>
   | Doc<'roleAssignments'>
+  | Doc<'votes'>
 
 export type StoredTables = {
   rooms: Doc<'rooms'>[]
   players: Doc<'players'>[]
   rounds: Doc<'rounds'>[]
   roleAssignments: Doc<'roleAssignments'>[]
+  votes?: Doc<'votes'>[]
 }
 
 type QueryFilter = {
@@ -36,6 +39,10 @@ export function roundId(id: string) {
 
 export function roleAssignmentId(id: string) {
   return id as Id<'roleAssignments'>
+}
+
+export function voteId(id: string) {
+  return id as Id<'votes'>
 }
 
 export function createRoom(id: Id<'rooms'>): Doc<'rooms'> {
@@ -100,12 +107,36 @@ export function createRound(
   }
 }
 
+export function createVote(
+  id: Id<'votes'>,
+  room: Id<'rooms'>,
+  round: Id<'rounds'>,
+  voterPlayerId: Id<'players'>,
+  targetPlayerId: Id<'players'>,
+): Doc<'votes'> {
+  return {
+    _id: id,
+    _creationTime: 0,
+    roomId: room,
+    roundId: round,
+    voterPlayerId,
+    targetPlayerId,
+    createdAt: 0,
+    updatedAt: 0,
+  }
+}
+
 export function createCtx(tables: StoredTables) {
+  const storedTables = {
+    ...tables,
+    votes: tables.votes ?? [],
+  }
   let nextRound = 1
   let nextRoleAssignment = 1
+  let nextVote = 1
 
   const findDocument = (id: string) => {
-    for (const documents of Object.values(tables)) {
+    for (const documents of Object.values(storedTables)) {
       const document = documents.find(({ _id }) => _id === id)
 
       if (document) {
@@ -139,7 +170,7 @@ export function createCtx(tables: StoredTables) {
             buildFilter(queryBuilder)
 
             const collect = async () =>
-              tables[table].filter((document) =>
+              storedTables[table].filter((document) =>
                 filters.every((filter) => {
                   const value = document[filter.field as keyof StoredDocument]
                   return value === filter.value
@@ -162,10 +193,10 @@ export function createCtx(tables: StoredTables) {
         }
       },
       async insert(table: TableName, value: Record<string, unknown>) {
-        if (table === 'rounds') {
+        if (table === TABLE.ROUNDS) {
           const id = `round_${nextRound++}` as Id<'rounds'>
 
-          tables.rounds.push({
+          storedTables.rounds.push({
             _id: id,
             _creationTime: 0,
             ...value,
@@ -174,9 +205,21 @@ export function createCtx(tables: StoredTables) {
           return id
         }
 
+        if (table === TABLE.VOTES) {
+          const id = `vote_${nextVote++}` as Id<'votes'>
+
+          storedTables.votes.push({
+            _id: id,
+            _creationTime: 0,
+            ...value,
+          } as Doc<'votes'>)
+
+          return id
+        }
+
         const id = `roleAssignment_${nextRoleAssignment++}` as Id<'roleAssignments'>
 
-        tables.roleAssignments.push({
+        storedTables.roleAssignments.push({
           _id: id,
           _creationTime: 0,
           ...value,

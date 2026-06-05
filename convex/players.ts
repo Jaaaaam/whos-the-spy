@@ -3,12 +3,13 @@ import { mutation, query } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { MAX_PLAYERS_PER_ROOM } from "../shared/gameSettings";
+import { INDEX, TABLE } from "./lib/db";
 
 async function getPlayersByRoomId
-  (ctx: QueryCtx | MutationCtx, roomId: Id<"rooms">) {
+  (ctx: QueryCtx | MutationCtx, roomId: Id<typeof TABLE.ROOMS>) {
   return await ctx.db
-    .query("players")
-    .withIndex("by_roomId", (q) => q.eq('roomId', roomId))
+    .query(TABLE.PLAYERS)
+    .withIndex(INDEX.PLAYERS_BY_ROOM_ID, (q) => q.eq('roomId', roomId))
     .collect();
 }
 
@@ -19,8 +20,8 @@ export const joinRoom = mutation({
   },
   handler: async (ctx, args) => {
     const room = await ctx.db
-      .query("rooms")
-      .withIndex("by_code", (q) => q.eq("code", args.roomCode))
+      .query(TABLE.ROOMS)
+      .withIndex(INDEX.ROOMS_BY_CODE, (q) => q.eq("code", args.roomCode))
       .unique();
 
     if (!room) {
@@ -41,7 +42,7 @@ export const joinRoom = mutation({
       throw new Error("Room is full");
     }
 
-    const playerId = await ctx.db.insert("players", {
+    const playerId = await ctx.db.insert(TABLE.PLAYERS, {
       roomId: room._id,
       name: args.playerName,
       isHost: false,
@@ -60,7 +61,7 @@ export const joinRoom = mutation({
 
 export const getPlayersInRoom = query({
   args: {
-    roomId: v.id("rooms"),
+    roomId: v.id(TABLE.ROOMS),
   },
   handler: async (ctx, args) => {
     return getPlayersByRoomId(ctx, args.roomId);

@@ -1,5 +1,6 @@
 import type { MutationCtx, QueryCtx } from "../_generated/server"
 import { GAME_STATUS } from "../../shared/gameStatus"
+import { INDEX, TABLE } from "../lib/db"
 import { startDiscussion } from "./discussion"
 import { GAME_ERROR } from "./errors"
 import type { GetRoundArgs, RoomRoundArgs, RoundPlayerArgs } from "./types"
@@ -25,8 +26,8 @@ export async function getMyRoleHandler(
   { roundId, playerId }: RoundPlayerArgs,
 ) {
   return await ctx.db
-    .query('roleAssignments')
-    .withIndex('by_roundId_playerId', (q) =>
+    .query(TABLE.ROLE_ASSIGNMENTS)
+    .withIndex(INDEX.ROLE_ASSIGNMENTS_BY_ROUND_ID_PLAYER_ID, (q) =>
       q.eq('roundId', roundId).eq('playerId', playerId)
     )
     .unique()
@@ -71,8 +72,8 @@ export async function markRoleSeenHandler(
   }
 
   const roleAssignments = await ctx.db
-    .query('roleAssignments')
-    .withIndex('by_roundId', (q) => q.eq("roundId", roundId))
+    .query(TABLE.ROLE_ASSIGNMENTS)
+    .withIndex(INDEX.ROLE_ASSIGNMENTS_BY_ROUND_ID, (q) => q.eq("roundId", roundId))
     .collect()
 
   const haveAllPlayersSeenRole = roleAssignments.every(

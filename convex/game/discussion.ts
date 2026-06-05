@@ -1,5 +1,6 @@
 import type { MutationCtx, QueryCtx } from "../_generated/server"
 import { GAME_STATUS } from "../../shared/gameStatus"
+import { INDEX, TABLE } from "../lib/db"
 import { shuffle } from "../lib/shuffle"
 import { DISCUSSION_TURN_DURATION_MS } from "./constants"
 import { GAME_ERROR } from "./errors"
@@ -199,8 +200,8 @@ export async function startDiscussion(
   { roomId, roundId }: RoomRoundArgs,
 ) {
   const players = await ctx.db
-    .query('players')
-    .withIndex('by_roomId', (q) => q.eq('roomId', roomId))
+    .query(TABLE.PLAYERS)
+    .withIndex(INDEX.PLAYERS_BY_ROOM_ID, (q) => q.eq('roomId', roomId))
     .collect()
 
   const discussionOrder = shuffle(players.map(player => player._id))
