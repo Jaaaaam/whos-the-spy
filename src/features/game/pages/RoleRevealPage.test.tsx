@@ -58,7 +58,7 @@ function renderRoleRevealPage() {
 
 describe('RoleRevealPage', () => {
   beforeEach(() => {
-    sessionStorage.clear()
+    localStorage.clear()
     saveCurrentPlayerId(playerId)
     vi.mocked(useRoomByCode).mockReturnValue({
       room,
@@ -119,7 +119,7 @@ describe('RoleRevealPage', () => {
   })
 
   it('redirects to join when there is no current player', () => {
-    sessionStorage.clear()
+    localStorage.clear()
 
     renderRoleRevealPage()
 

@@ -2,7 +2,7 @@ export type Player = {
   id: string
   name: string
   isHost?: boolean
-  status: 'ready' | 'waiting' | 'speaking' | 'voted'
+  status: 'ready' | 'waiting' | 'speaking' | 'voted' | 'disconnected'
   avatar: string
 }
 

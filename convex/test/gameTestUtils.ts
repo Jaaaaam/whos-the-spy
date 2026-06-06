@@ -132,6 +132,8 @@ export function createCtx(tables: StoredTables) {
     votes: tables.votes ?? [],
   }
   let nextRound = 1
+  let nextRoom = 1
+  let nextPlayer = 1
   let nextRoleAssignment = 1
   let nextVote = 1
 
@@ -193,6 +195,30 @@ export function createCtx(tables: StoredTables) {
         }
       },
       async insert(table: TableName, value: Record<string, unknown>) {
+        if (table === TABLE.ROOMS) {
+          const id = `room_${nextRoom++}` as Id<typeof TABLE.ROOMS>
+
+          storedTables.rooms.push({
+            _id: id,
+            _creationTime: 0,
+            ...value,
+          } as Doc<typeof TABLE.ROOMS>)
+
+          return id
+        }
+
+        if (table === TABLE.PLAYERS) {
+          const id = `player_${nextPlayer++}` as Id<typeof TABLE.PLAYERS>
+
+          storedTables.players.push({
+            _id: id,
+            _creationTime: 0,
+            ...value,
+          } as Doc<typeof TABLE.PLAYERS>)
+
+          return id
+        }
+
         if (table === TABLE.ROUNDS) {
           const id = `round_${nextRound++}` as Id<typeof TABLE.ROUNDS>
 

@@ -1,7 +1,7 @@
 import { useMutation } from 'convex/react'
 import { useState } from 'react'
 import { api } from '../../../../convex/_generated/api'
-import { saveCurrentPlayerId } from '../lib/currentPlayer'
+import { getCurrentPlayerId, saveCurrentPlayerId } from '../lib/currentPlayer'
 import { getConvexErrorMessage } from '../../../shared/lib/getConvexErrorMessage'
 
 export function useJoinRoom() {
@@ -23,6 +23,7 @@ export function useJoinRoom() {
       const result = await joinRoomMutation({
         roomCode: normalizedRoomCode,
         playerName,
+        currentPlayerId: getCurrentPlayerId() ?? undefined,
       })
       console.log('[Convex] joinRoom mutation result', result)
 

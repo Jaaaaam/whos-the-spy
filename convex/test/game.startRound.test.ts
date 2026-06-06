@@ -179,6 +179,38 @@ describe('startRoundHandler', () => {
     ).rejects.toThrow(GAME_ERROR.INVALID_SPY_COUNT)
   })
 
+  it('assigns roles only to connected players', async () => {
+    const currentRoomId = roomId('room_1')
+    const hostPlayerId = playerId('player_1')
+    const disconnectedPlayerId = playerId('player_4')
+    const tables: StoredTables = {
+      rooms: [createRoom(currentRoomId)],
+      players: [
+        createPlayer(hostPlayerId, currentRoomId, true),
+        createPlayer(playerId('player_2'), currentRoomId),
+        createPlayer(playerId('player_3'), currentRoomId),
+        {
+          ...createPlayer(disconnectedPlayerId, currentRoomId),
+          isConnected: false,
+        },
+      ],
+      rounds: [],
+      roleAssignments: [],
+    }
+    const ctx = createCtx(tables)
+
+    await startRoundHandler(ctx, {
+      roomId: currentRoomId,
+      hostPlayerId,
+      spyCount: 1,
+    })
+
+    expect(tables.roleAssignments).toHaveLength(3)
+    expect(tables.roleAssignments.map(({ playerId }) => playerId)).not.toContain(
+      disconnectedPlayerId,
+    )
+  })
+
   it('prevents a host from another room from starting the round', async () => {
     const currentRoomId = roomId('room_1')
     const otherRoomId = roomId('room_2')

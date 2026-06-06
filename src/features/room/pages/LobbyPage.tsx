@@ -1,4 +1,5 @@
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Button, ButtonLink } from '../../../shared/components/Button'
 import { Card } from '../../../shared/components/Card'
 import { PageShell } from '../../../shared/layouts/PageShell'
@@ -7,13 +8,15 @@ import { RoomCode } from '../components/RoomCode'
 import { mockRoom } from '../data/mockRoom'
 import { useStartRound } from '../hooks/useStartRound'
 import { usePlayersByRoom } from '../hooks/usePlayersByRoom'
+import { usePlayerConnection } from '../hooks/usePlayerConnection'
 import { useRoomByCode } from '../hooks/useRoomByCode'
 import { MAX_PLAYERS_PER_ROOM } from '../../../../shared/gameSettings'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
-import { getCurrentPlayerId } from '../lib/currentPlayer'
+import { clearCurrentPlayerId, getCurrentPlayerId } from '../lib/currentPlayer'
 
 export function LobbyPage() {
   const { roomCode } = useParams()
+  const navigate = useNavigate()
   const { room, isLoading: isRoomLoading, notFound } = useRoomByCode(roomCode)
   const {
     players,
@@ -21,6 +24,16 @@ export function LobbyPage() {
     isEmpty,
   } = usePlayersByRoom(room?._id)
   const { startRound, isStarting, error } = useStartRound()
+  const { reconnectPlayer, disconnectPlayer } = usePlayerConnection()
+  const currentPlayerId = getCurrentPlayerId()
+
+  useEffect(() => {
+    if (!room?._id || !currentPlayerId) return
+
+    void reconnectPlayer(room._id, currentPlayerId).catch((error) => {
+      console.error('[Convex] reconnect player failed', error)
+    })
+  }, [currentPlayerId, reconnectPlayer, room?._id])
 
   if (isRoomLoading) {
     return (
@@ -45,15 +58,15 @@ export function LobbyPage() {
   }
 
   const currentRoom = room
-  const playerCount = players?.length ?? 0
-  const currentPlayerId = getCurrentPlayerId()
+  const connectedPlayerCount = players?.filter((player) => player.isConnected).length ?? 0
   const currentPlayer = players?.find((player) => player._id === currentPlayerId)
   const isCurrentPlayerHost = currentPlayer?.isHost ?? false
-  const canStartRound = isCurrentPlayerHost && playerCount >= 3 && !arePlayersLoading
+  const canStartRound =
+    isCurrentPlayerHost && Boolean(currentPlayer?.isConnected) && connectedPlayerCount >= 3 && !arePlayersLoading
   const startButtonLabel = isStarting
     ? 'Starting...'
     : isCurrentPlayerHost
-      ? playerCount >= 3
+      ? connectedPlayerCount >= 3
         ? 'Start Game'
         : 'Need 3 Players'
       : 'Waiting for Host'
@@ -62,6 +75,17 @@ export function LobbyPage() {
     if (!canStartRound || !currentPlayer) return
 
     await startRound(currentRoom._id, currentPlayer._id)
+  }
+
+  async function handleLeaveGame() {
+    if (currentPlayerId) {
+      await disconnectPlayer(currentRoom._id, currentPlayerId).catch((error) => {
+        console.error('[Convex] disconnect player failed', error)
+      })
+    }
+
+    clearCurrentPlayerId()
+    navigate('/')
   }
 
   if (currentRoom.status === GAME_STATUS.ROLE_REVEAL) {
@@ -89,7 +113,7 @@ export function LobbyPage() {
             {[
               ['Category', mockRoom.category, 'category'],
               ['Timer', mockRoom.timer, 'schedule'],
-              ['Players', arePlayersLoading ? '...' : `${playerCount}/${MAX_PLAYERS_PER_ROOM}`, 'groups'],
+              ['Players', arePlayersLoading ? '...' : `${connectedPlayerCount}/${MAX_PLAYERS_PER_ROOM}`, 'groups'],
             ].map(([label, value, icon]) => (
               <Card key={label} tone="low" className="rounded-[1.5rem]">
                 <span className="material-symbols-outlined text-tertiary">{icon}</span>
@@ -109,9 +133,14 @@ export function LobbyPage() {
             >
               {startButtonLabel}
             </Button>
-            <ButtonLink to="/" variant="secondary" className="py-5 text-base sm:flex-1">
+            <Button
+              className="py-5 text-base sm:flex-1"
+              onClick={handleLeaveGame}
+              type="button"
+              variant="secondary"
+            >
               Leave Game
-            </ButtonLink>
+            </Button>
           </div>
           {error ? (
             <p className="text-sm font-semibold text-error" role="alert">

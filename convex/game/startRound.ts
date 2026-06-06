@@ -39,12 +39,14 @@ export async function startRoundHandler(
     .withIndex(INDEX.PLAYERS_BY_ROOM_ID, (q) => q.eq('roomId', roomId))
     .collect()
 
-  if (!isValidPlayerCount(roomPlayers.length)) {
+  const connectedPlayers = roomPlayers.filter(player => player.isConnected)
+
+  if (!isValidPlayerCount(connectedPlayers.length)) {
     throw new Error(GAME_ERROR.INVALID_PLAYER_COUNT)
   }
 
-  const roomPlayerIds = roomPlayers.map(({ _id }) => _id)
-  const currentSpyCount = spyCount ?? getRecommendedSpyCount(roomPlayers.length)
+  const roomPlayerIds = connectedPlayers.map(({ _id }) => _id)
+  const currentSpyCount = spyCount ?? getRecommendedSpyCount(connectedPlayers.length)
   const assignedRoles = assignRandomRoles(roomPlayerIds, currentSpyCount)
 
   const existingRounds = await ctx.db

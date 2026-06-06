@@ -46,6 +46,7 @@ export function PlayerCard({ player, interactive = false }: PlayerCardProps) {
         'relative flex items-center gap-4 rounded-[1.5rem] bg-surface-container p-4 transition ring-1 ring-outline-variant/10',
         status === 'speaking' &&
           'bg-surface-bright/70 shadow-[0_0_28px_rgba(124,255,254,0.12)] ring-tertiary/25',
+        status === 'disconnected' && 'opacity-60',
         interactive && 'hover:bg-surface-bright',
       )}
     >
@@ -68,6 +69,7 @@ export function PlayerCard({ player, interactive = false }: PlayerCardProps) {
           className={cn(
             'text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60',
             (status === 'connected' || status === 'speaking') && 'text-tertiary',
+            status === 'disconnected' && 'text-on-surface-variant/50',
           )}
         >
           {statusLabel[status]}

@@ -15,6 +15,7 @@ import type * as game_errors from "../game/errors.js";
 import type * as game_reveal from "../game/reveal.js";
 import type * as game_startRound from "../game/startRound.js";
 import type * as game_types from "../game/types.js";
+import type * as game_voting from "../game/voting.js";
 import type * as gameRules from "../gameRules.js";
 import type * as lib_db from "../lib/db.js";
 import type * as lib_shuffle from "../lib/shuffle.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   "game/reveal": typeof game_reveal;
   "game/startRound": typeof game_startRound;
   "game/types": typeof game_types;
+  "game/voting": typeof game_voting;
   gameRules: typeof gameRules;
   "lib/db": typeof lib_db;
   "lib/shuffle": typeof lib_shuffle;

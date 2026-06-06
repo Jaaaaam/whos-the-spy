@@ -24,4 +24,19 @@ describe('PlayerList', () => {
     expect(screen.getByText('0 Active')).toBeInTheDocument()
     expect(screen.getByText('No players have joined yet.')).toBeInTheDocument()
   })
+
+  it('groups disconnected players separately from active players', () => {
+    render(
+      <PlayerList
+        players={[
+          ...players,
+          { id: 'disconnected', name: 'Mika', status: 'disconnected', avatar: 'MK' },
+        ]}
+      />,
+    )
+
+    expect(screen.getByText('2 Active')).toBeInTheDocument()
+    expect(screen.getAllByText('Disconnected')).toHaveLength(2)
+    expect(screen.getByText('Mika')).toBeInTheDocument()
+  })
 })

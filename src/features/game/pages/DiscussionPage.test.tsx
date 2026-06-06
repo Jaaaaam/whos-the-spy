@@ -88,7 +88,7 @@ describe('DiscussionPage', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     vi.setSystemTime(1_000)
-    sessionStorage.clear()
+    localStorage.clear()
     saveCurrentPlayerId(playerId)
     vi.mocked(useRoomByCode).mockReturnValue({
       room,
@@ -151,7 +151,7 @@ describe('DiscussionPage', () => {
   })
 
   it('redirects to join when there is no current player', () => {
-    sessionStorage.clear()
+    localStorage.clear()
 
     renderDiscussionPage()
 
