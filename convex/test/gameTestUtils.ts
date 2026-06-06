@@ -6,18 +6,18 @@ import { TABLE } from '../lib/db'
 type TableName = typeof TABLE[keyof typeof TABLE]
 
 type StoredDocument =
-  | Doc<'rooms'>
-  | Doc<'players'>
-  | Doc<'rounds'>
-  | Doc<'roleAssignments'>
-  | Doc<'votes'>
+  | Doc<typeof TABLE.ROOMS>
+  | Doc<typeof TABLE.PLAYERS>
+  | Doc<typeof TABLE.ROUNDS>
+  | Doc<typeof TABLE.ROLE_ASSIGNMENTS>
+  | Doc<typeof TABLE.VOTES>
 
 export type StoredTables = {
-  rooms: Doc<'rooms'>[]
-  players: Doc<'players'>[]
-  rounds: Doc<'rounds'>[]
-  roleAssignments: Doc<'roleAssignments'>[]
-  votes?: Doc<'votes'>[]
+  rooms: Doc<typeof TABLE.ROOMS>[]
+  players: Doc<typeof TABLE.PLAYERS>[]
+  rounds: Doc<typeof TABLE.ROUNDS>[]
+  roleAssignments: Doc<typeof TABLE.ROLE_ASSIGNMENTS>[]
+  votes?: Doc<typeof TABLE.VOTES>[]
 }
 
 type QueryFilter = {
@@ -26,26 +26,26 @@ type QueryFilter = {
 }
 
 export function roomId(id: string) {
-  return id as Id<'rooms'>
+  return id as Id<typeof TABLE.ROOMS>
 }
 
 export function playerId(id: string) {
-  return id as Id<'players'>
+  return id as Id<typeof TABLE.PLAYERS>
 }
 
 export function roundId(id: string) {
-  return id as Id<'rounds'>
+  return id as Id<typeof TABLE.ROUNDS>
 }
 
 export function roleAssignmentId(id: string) {
-  return id as Id<'roleAssignments'>
+  return id as Id<typeof TABLE.ROLE_ASSIGNMENTS>
 }
 
 export function voteId(id: string) {
-  return id as Id<'votes'>
+  return id as Id<typeof TABLE.VOTES>
 }
 
-export function createRoom(id: Id<'rooms'>): Doc<'rooms'> {
+export function createRoom(id: Id<typeof TABLE.ROOMS>): Doc<typeof TABLE.ROOMS> {
   return {
     _id: id,
     _creationTime: 0,
@@ -56,10 +56,10 @@ export function createRoom(id: Id<'rooms'>): Doc<'rooms'> {
 }
 
 export function createPlayer(
-  id: Id<'players'>,
-  room: Id<'rooms'>,
+  id: Id<typeof TABLE.PLAYERS>,
+  room: Id<typeof TABLE.ROOMS>,
   isHost = false,
-): Doc<'players'> {
+): Doc<typeof TABLE.PLAYERS> {
   return {
     _id: id,
     _creationTime: 0,
@@ -72,13 +72,13 @@ export function createPlayer(
 }
 
 export function createRoleAssignment(
-  id: Id<'roleAssignments'>,
-  room: Id<'rooms'>,
-  round: Id<'rounds'>,
-  player: Id<'players'>,
+  id: Id<typeof TABLE.ROLE_ASSIGNMENTS>,
+  room: Id<typeof TABLE.ROOMS>,
+  round: Id<typeof TABLE.ROUNDS>,
+  player: Id<typeof TABLE.PLAYERS>,
   role: 'spy' | 'civilian',
   seenAt?: number,
-): Doc<'roleAssignments'> {
+): Doc<typeof TABLE.ROLE_ASSIGNMENTS> {
   return {
     _id: id,
     _creationTime: 0,
@@ -91,9 +91,9 @@ export function createRoleAssignment(
 }
 
 export function createRound(
-  id: Id<'rounds'>,
-  room: Id<'rooms'>,
-): Doc<'rounds'> {
+  id: Id<typeof TABLE.ROUNDS>,
+  room: Id<typeof TABLE.ROOMS>,
+): Doc<typeof TABLE.ROUNDS> {
   return {
     _id: id,
     _creationTime: 0,
@@ -108,12 +108,12 @@ export function createRound(
 }
 
 export function createVote(
-  id: Id<'votes'>,
-  room: Id<'rooms'>,
-  round: Id<'rounds'>,
-  voterPlayerId: Id<'players'>,
-  targetPlayerId: Id<'players'>,
-): Doc<'votes'> {
+  id: Id<typeof TABLE.VOTES>,
+  room: Id<typeof TABLE.ROOMS>,
+  round: Id<typeof TABLE.ROUNDS>,
+  voterPlayerId: Id<typeof TABLE.PLAYERS>,
+  targetPlayerId: Id<typeof TABLE.PLAYERS>,
+): Doc<typeof TABLE.VOTES> {
   return {
     _id: id,
     _creationTime: 0,
@@ -194,36 +194,36 @@ export function createCtx(tables: StoredTables) {
       },
       async insert(table: TableName, value: Record<string, unknown>) {
         if (table === TABLE.ROUNDS) {
-          const id = `round_${nextRound++}` as Id<'rounds'>
+          const id = `round_${nextRound++}` as Id<typeof TABLE.ROUNDS>
 
           storedTables.rounds.push({
             _id: id,
             _creationTime: 0,
             ...value,
-          } as Doc<'rounds'>)
+          } as Doc<typeof TABLE.ROUNDS>)
 
           return id
         }
 
         if (table === TABLE.VOTES) {
-          const id = `vote_${nextVote++}` as Id<'votes'>
+          const id = `vote_${nextVote++}` as Id<typeof TABLE.VOTES>
 
           storedTables.votes.push({
             _id: id,
             _creationTime: 0,
             ...value,
-          } as Doc<'votes'>)
+          } as Doc<typeof TABLE.VOTES>)
 
           return id
         }
 
-        const id = `roleAssignment_${nextRoleAssignment++}` as Id<'roleAssignments'>
+        const id = `roleAssignment_${nextRoleAssignment++}` as Id<typeof TABLE.ROLE_ASSIGNMENTS>
 
         storedTables.roleAssignments.push({
           _id: id,
           _creationTime: 0,
           ...value,
-        } as Doc<'roleAssignments'>)
+        } as Doc<typeof TABLE.ROLE_ASSIGNMENTS>)
 
         return id
       },

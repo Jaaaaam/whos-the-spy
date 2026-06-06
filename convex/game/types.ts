@@ -1,30 +1,36 @@
 import type { Id } from "../_generated/dataModel"
+import { TABLE } from "../lib/db"
 
 export type StartRoundArgs = {
-  roomId: Id<'rooms'>
-  hostPlayerId: Id<'players'>
+  roomId: Id<typeof TABLE.ROOMS>
+  hostPlayerId: Id<typeof TABLE.PLAYERS>
   spyCount?: number
 }
 
 export type RoomRoundArgs = {
-  roomId: Id<'rooms'>
-  roundId: Id<'rounds'>
+  roomId: Id<typeof TABLE.ROOMS>
+  roundId: Id<typeof TABLE.ROUNDS>
 }
 
 export type GetRoundArgs = {
-  roundId: Id<'rounds'>
+  roundId: Id<typeof TABLE.ROUNDS>
 }
 
 export type RoundPlayerArgs = {
-  roundId: Id<'rounds'>
-  playerId: Id<'players'>
+  roundId: Id<typeof TABLE.ROUNDS>
+  playerId: Id<typeof TABLE.PLAYERS>
 }
 
 export type EndDiscussionTurnArgs = RoomRoundArgs & {
-  playerId: Id<'players'>
+  playerId: Id<typeof TABLE.PLAYERS>
 }
 
 export type AdvanceDiscussionTurnArgs = RoomRoundArgs & {
-  discussionOrder: Id<'players'>[]
+  discussionOrder: Id<typeof TABLE.PLAYERS>[]
   currentTurnIndex: number
+}
+
+export type CastVoteArgs = RoomRoundArgs & {
+  voterPlayerId: Id<typeof TABLE.PLAYERS>
+  targetPlayerId: Id<typeof TABLE.PLAYERS>
 }

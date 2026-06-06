@@ -14,6 +14,11 @@ import {
   markRoleSeenHandler,
 } from "./game/reveal"
 import { startRoundHandler } from "./game/startRound"
+import {
+  castVoteHandler,
+  getVoteProgressHandler,
+  getVotingResultsHandler,
+} from "./game/voting"
 
 export const startRound = mutation({
   args: {
@@ -86,4 +91,30 @@ export const advanceRevealIfExpired = mutation({
     roundId: v.id(TABLE.ROUNDS),
   },
   handler: advanceRevealIfExpiredHandler,
+})
+
+export const castVote = mutation({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+    voterPlayerId: v.id(TABLE.PLAYERS),
+    targetPlayerId: v.id(TABLE.PLAYERS),
+  },
+  handler: castVoteHandler
+})
+
+export const getVoteProgress = query({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+  },
+  handler: getVoteProgressHandler,
+})
+
+export const getVotingResults = query({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+  },
+  handler: getVotingResultsHandler,
 })
