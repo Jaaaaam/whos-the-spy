@@ -65,6 +65,23 @@ src/
 - Use early returns
 - Explain major architectural decisions before changing them
 
+## Code Review Preference
+
+When I ask you to review my code:
+- Do not edit files unless I explicitly ask.
+- Inspect the changed file plus adjacent hooks/components/types it depends on.
+- Prioritize correctness, React hook rules, Convex query/mutation patterns, TypeScript types, loading/error states, and maintainability.
+- Lead with findings ordered by severity.
+- Include file/line references.
+- If the code is mostly good, say that clearly and suggest the next implementation step.
+- Keep recommendations simple and aligned with the existing codebase.
+
+## Convex Frontend Patterns
+
+- Query hooks may accept `undefined` or `null` inputs so they can use Convex `'skip'`.
+- Mutation functions should require definite IDs and should not run during render.
+- Frontend hooks should prefer feature-local types from `src/features/...` instead of importing backend handler types from `convex/...`.
+
 ## Commands
 - npm run dev
 - npm run lint

@@ -459,6 +459,7 @@ describe('getVoteProgressHandler', () => {
       votedCount: 1,
       eligibleVoterCount: 2,
       isComplete: false,
+      selectedTargetPlayerId: null,
     })
   })
 
@@ -509,6 +510,125 @@ describe('getVoteProgressHandler', () => {
       votedCount: 2,
       eligibleVoterCount: 2,
       isComplete: true,
+      selectedTargetPlayerId: null,
+    })
+  })
+
+  it('returns the current voter selected target', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const voterId = playerId('player_1')
+    const targetId = playerId('player_2')
+    const tables: StoredTables = {
+      rooms: [
+        {
+          ...createRoom(currentRoomId),
+          status: GAME_STATUS.VOTING,
+          currentRoundId,
+        },
+      ],
+      players: [
+        createPlayer(voterId, currentRoomId, true),
+        createPlayer(targetId, currentRoomId),
+      ],
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments: [],
+      votes: [
+        createVote(
+          voteId('vote_1'),
+          currentRoomId,
+          currentRoundId,
+          voterId,
+          targetId,
+        ),
+      ],
+    }
+    const ctx = createCtx(tables)
+
+    const progress = await getVoteProgressHandler(ctx, {
+      roomId: currentRoomId,
+      roundId: currentRoundId,
+      voterPlayerId: voterId,
+    })
+
+    expect(progress).toEqual({
+      votedCount: 1,
+      eligibleVoterCount: 2,
+      isComplete: false,
+      selectedTargetPlayerId: targetId,
+    })
+  })
+
+  it('does not return a selected target for inactive voter or target records', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const voterId = playerId('player_1')
+    const targetId = playerId('player_2')
+    const disconnectedVoterId = playerId('player_3')
+    const disconnectedTargetId = playerId('player_4')
+    const tables: StoredTables = {
+      rooms: [
+        {
+          ...createRoom(currentRoomId),
+          status: GAME_STATUS.VOTING,
+          currentRoundId,
+        },
+      ],
+      players: [
+        createPlayer(voterId, currentRoomId, true),
+        createPlayer(targetId, currentRoomId),
+        {
+          ...createPlayer(disconnectedVoterId, currentRoomId),
+          isConnected: false,
+        },
+        {
+          ...createPlayer(disconnectedTargetId, currentRoomId),
+          isConnected: false,
+        },
+      ],
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments: [],
+      votes: [
+        createVote(
+          voteId('vote_1'),
+          currentRoomId,
+          currentRoundId,
+          voterId,
+          disconnectedTargetId,
+        ),
+        createVote(
+          voteId('vote_2'),
+          currentRoomId,
+          currentRoundId,
+          disconnectedVoterId,
+          targetId,
+        ),
+      ],
+    }
+    const ctx = createCtx(tables)
+
+    const activeVoterProgress = await getVoteProgressHandler(ctx, {
+      roomId: currentRoomId,
+      roundId: currentRoundId,
+      voterPlayerId: voterId,
+    })
+    const inactiveVoterProgress = await getVoteProgressHandler(ctx, {
+      roomId: currentRoomId,
+      roundId: currentRoundId,
+      voterPlayerId: disconnectedVoterId,
+    })
+
+    expect(activeVoterProgress).toEqual({
+      votedCount: 0,
+      eligibleVoterCount: 2,
+      isComplete: false,
+      selectedTargetPlayerId: null,
+    })
+    expect(inactiveVoterProgress).toEqual({
+      votedCount: 0,
+      eligibleVoterCount: 2,
+      isComplete: false,
+      selectedTargetPlayerId: null,
     })
   })
 })

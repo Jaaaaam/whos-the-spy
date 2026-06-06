@@ -1,13 +1,8 @@
 import { useQuery } from 'convex/react'
 import { api } from '../../../../convex/_generated/api'
-import type { Id } from '../../../../convex/_generated/dataModel'
+import type { RoundPlayerIdArgs } from '../types'
 
-type UseMyRevealArgs = {
-  roundId: Id<'rounds'> | undefined
-  playerId: Id<'players'> | null
-}
-
-export function useMyReveal({ roundId, playerId }: UseMyRevealArgs) {
+export function useMyReveal({ roundId, playerId }: RoundPlayerIdArgs) {
   const reveal = useQuery(
     api.game.getMyReveal,
     roundId && playerId ? { roundId, playerId } : 'skip',

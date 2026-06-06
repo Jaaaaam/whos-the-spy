@@ -2,7 +2,7 @@ import { GAME_STATUS } from "../../shared/gameStatus"
 import type { MutationCtx, QueryCtx } from "../_generated/server"
 import { INDEX, TABLE } from "../lib/db"
 import { GAME_ERROR } from "./errors"
-import type { CastVoteArgs, RoomRoundArgs } from "./types"
+import type { CastVoteArgs, RoomRoundArgs, VoteProgressArgs } from "./types"
 
 async function getCurrentVotingRound(ctx: QueryCtx | MutationCtx, { roomId, roundId }: RoomRoundArgs) {
   const room = await ctx.db.get(roomId)
@@ -96,18 +96,34 @@ export async function castVoteHandler(ctx: MutationCtx, { roundId, roomId, voter
   }
 }
 
-export async function getVoteProgressHandler(ctx: QueryCtx, { roomId, roundId }: RoomRoundArgs) {
+export async function getVoteProgressHandler(ctx: QueryCtx, { roomId, roundId, voterPlayerId }: VoteProgressArgs) {
   await getCurrentVotingRound(ctx, { roomId, roundId })
   const activePlayers = await getActivePlayersByRoom(ctx, roomId)
   const activePlayerIds = new Set(activePlayers.map(player => player._id))
   const votes = await getVotesByRoomRound(ctx, { roomId, roundId })
 
-  const activeVotes = votes.filter((vote) => activePlayerIds.has(vote.voterPlayerId))
+  const activeVotes = votes.filter(
+    (vote) =>
+      activePlayerIds.has(vote.voterPlayerId) &&
+      activePlayerIds.has(vote.targetPlayerId),
+  )
+
+  const selectedVote = voterPlayerId
+    ? votes.find((vote) => vote.voterPlayerId === voterPlayerId)
+    : undefined
+
+  const selectedTargetPlayerId =
+    selectedVote &&
+      activePlayerIds.has(selectedVote.voterPlayerId) &&
+      activePlayerIds.has(selectedVote.targetPlayerId)
+      ? selectedVote.targetPlayerId
+      : null
 
   return {
     votedCount: activeVotes.length,
     eligibleVoterCount: activePlayers.length,
-    isComplete: activeVotes.length === activePlayers.length
+    isComplete: activeVotes.length === activePlayers.length,
+    selectedTargetPlayerId,
   }
 
 }

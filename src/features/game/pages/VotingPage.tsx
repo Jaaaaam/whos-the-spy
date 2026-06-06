@@ -1,12 +1,91 @@
-import { ButtonLink } from '../../../shared/components/Button'
+import { Navigate, useParams } from 'react-router-dom'
+import type { Id } from '../../../../convex/_generated/dataModel'
 import { Card } from '../../../shared/components/Card'
 import { PageShell } from '../../../shared/layouts/PageShell'
 import { IntelFeed } from '../components/IntelFeed'
-import { Timer } from '../components/Timer'
 import { VotingCard } from '../components/VotingCard'
-import { mockGame } from '../data/mockGame'
+import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
+import { useRoomByCode } from '../../room/hooks/useRoomByCode'
+import { usePlayersByRoom } from '../../room/hooks/usePlayersByRoom'
+import { useVoteProgress } from '../hooks/useVoteProgress'
+import { GAME_STATUS } from '../../../../shared/gameStatus'
+import { useCastVote } from '../hooks/useCastVote'
 
 export function VotingPage() {
+  const { roomCode } = useParams()
+  const currentPlayerId = getCurrentPlayerId()
+
+  const { room, isLoading: isRoomLoading, notFound: isRoomNotFound } = useRoomByCode(roomCode)
+
+  const {
+    players,
+    isLoading: arePlayersLoading,
+  } = usePlayersByRoom(room?._id)
+
+  const {
+    voteProgress,
+    isLoading: isVoteProgressLoading,
+  } = useVoteProgress({
+    roomId: room?._id,
+    roundId: room?.currentRoundId,
+    voterPlayerId: currentPlayerId,
+  })
+
+  const {
+    castVote,
+    isCastingVote,
+    error,
+  } = useCastVote()
+
+  const activePlayers = players?.filter((player) => player.isConnected) ?? []
+
+  async function handleVote(targetPlayerId: Id<'players'>) {
+    if (!room?.currentRoundId || !currentPlayerId) return
+
+    await castVote({
+      roomId: room._id,
+      roundId: room.currentRoundId,
+      voterPlayerId: currentPlayerId,
+      targetPlayerId,
+    })
+  }
+
+  if (isRoomLoading) {
+    return (
+      <PageShell compact>
+        <Card className="my-8 text-center text-on-surface-variant">
+          Loading room...
+        </Card>
+      </PageShell>
+    )
+  }
+
+  if (isRoomNotFound || !room || !currentPlayerId) {
+    return <Navigate to="/join" replace />
+  }
+
+  if (!room.currentRoundId) {
+    return <Navigate to={`/room/${room.code}`} replace />
+  }
+
+  if (room.status === GAME_STATUS.ROLE_REVEAL) {
+    return <Navigate to={`/room/${room.code}/role`} replace />
+  }
+
+  if (room.status === GAME_STATUS.DISCUSSION) {
+    return <Navigate to={`/room/${room.code}/discussion`} replace />
+  }
+
+  if (arePlayersLoading || isVoteProgressLoading) {
+    return (
+      <PageShell compact>
+        <Card className="my-8 text-center text-on-surface-variant">
+          Loading voting...
+        </Card>
+      </PageShell>
+    )
+  }
+
   return (
     <PageShell showFooter={false}>
       <div className="grid min-h-[calc(100vh-7rem)] gap-6 py-3 lg:grid-cols-[1fr_22rem]">
@@ -20,31 +99,42 @@ export function VotingPage() {
                 Time to Decide
               </h1>
               <p className="mt-3 max-w-xl text-on-surface-variant">
-                Cast a mock vote to reveal the infiltrator. Buttons are placeholders
-                for now.
+                Choose who you think is the spy. You can change your vote while
+                voting is open.
               </p>
             </div>
-            <Timer label="Seconds Remaining" value={mockGame.votingTimer} progress={75} urgent />
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {mockGame.players.map((player, index) => (
-              <VotingCard
-                key={player.id}
-                player={player}
-                isSelf={player.name === 'Jam'}
-                highlighted={index === 2}
-              />
-            ))}
-          </div>
-
-          <Card tone="low" className="mt-auto flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-            <p className="text-sm text-on-surface-variant">
-              4/5 players have voted. Mika is drawing the loudest suspicion.
+          {activePlayers.length === 0 ? (
+            <Card className="text-center text-on-surface-variant">
+              No active players are available to vote for.
+            </Card>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {activePlayers.map((player) => (
+                <VotingCard
+                  key={player._id}
+                  player={player}
+                  isSelf={player._id === currentPlayerId}
+                  isSelected={voteProgress?.selectedTargetPlayerId === player._id}
+                  disabled={isCastingVote}
+                  isSubmitting={isCastingVote}
+                  onVote={() => void handleVote(player._id)}
+                />
+              ))}
+            </div>
+          )}
+          {error ? (
+            <p className="text-center text-sm font-semibold text-error" role="alert">
+              {error}
             </p>
-            <ButtonLink to="/room/demo/results" className="shrink-0">
-              Show Results
-            </ButtonLink>
+          ) : null}
+          <Card tone="low" className="mt-auto">
+            <p className="text-sm text-on-surface-variant">
+              {voteProgress
+                ? `${voteProgress.votedCount}/${voteProgress.eligibleVoterCount} players have voted.`
+                : 'Waiting for votes...'}
+            </p>
           </Card>
         </section>
         <aside>

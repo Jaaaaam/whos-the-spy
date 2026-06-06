@@ -1,17 +1,11 @@
-import { useQuery } from "convex/react"
-import { api } from "../../../../convex/_generated/api"
-import type { Id } from "../../../../convex/_generated/dataModel"
-
-type UseDiscussionStateArgs = {
-  roomId: Id<'rooms'> | undefined,
-  roundId: Id<'rounds'> | undefined
-
-}
+import { useQuery } from 'convex/react'
+import { api } from '../../../../convex/_generated/api'
+import type { RoomRoundIdArgs } from '../types'
 
 export function useDiscussionState({
   roomId,
   roundId
-}: UseDiscussionStateArgs) {
+}: RoomRoundIdArgs) {
   const discussionState = useQuery(api.game.getDiscussionState, roomId && roundId ? { roomId, roundId } : 'skip')
 
   return {

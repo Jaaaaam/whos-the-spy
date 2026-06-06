@@ -107,6 +107,7 @@ export const getVoteProgress = query({
   args: {
     roomId: v.id(TABLE.ROOMS),
     roundId: v.id(TABLE.ROUNDS),
+    voterPlayerId: v.optional(v.id(TABLE.PLAYERS)),
   },
   handler: getVoteProgressHandler,
 })
