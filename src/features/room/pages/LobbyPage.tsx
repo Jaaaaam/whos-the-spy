@@ -111,7 +111,6 @@ export function LobbyPage() {
           <RoomCode code={currentRoom.code} />
           <div className="grid gap-5 md:grid-cols-3">
             {[
-              ['Category', mockRoom.category, 'category'],
               ['Timer', mockRoom.timer, 'schedule'],
               ['Players', arePlayersLoading ? '...' : `${connectedPlayerCount}/${MAX_PLAYERS_PER_ROOM}`, 'groups'],
             ].map(([label, value, icon]) => (

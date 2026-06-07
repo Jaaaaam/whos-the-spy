@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { ButtonLink } from '../components/Button'
 import { cn } from '../lib/cn'
 
@@ -19,6 +19,9 @@ export function PageShell({
   compact = false,
   showFooter = true,
 }: PageShellProps) {
+  const { pathname } = useLocation()
+  const isHome = pathname === '/'
+
   return (
     <div className="min-h-screen bg-surface text-on-surface">
       <header className="fixed inset-x-0 top-0 z-50 bg-surface/80 shadow-[0_20px_50px_rgba(12,12,31,0.8)] backdrop-blur-xl">
@@ -47,14 +50,16 @@ export function PageShell({
               </NavLink>
             ))}
           </div>
-          <div className="flex items-center gap-2">
-            <ButtonLink to="/create" className="hidden px-5 py-2 sm:inline-flex">
-              Create
-            </ButtonLink>
-            <ButtonLink to="/join" variant="secondary" className="px-4 py-2">
-              Join
-            </ButtonLink>
-          </div>
+          {!isHome && (
+            <div className="flex items-center gap-2">
+              <ButtonLink to="/create" className="hidden px-5 py-2 sm:inline-flex">
+                Create
+              </ButtonLink>
+              <ButtonLink to="/join" variant="secondary" className="px-4 py-2">
+                Join
+              </ButtonLink>
+            </div>
+          )}
         </nav>
       </header>
 

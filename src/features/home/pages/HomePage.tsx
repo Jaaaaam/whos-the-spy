@@ -20,7 +20,7 @@ export function HomePage() {
             </span>
             <input
               className="w-full rounded-[1rem] border-0 bg-surface-container-lowest px-4 py-4 text-on-surface outline-none ring-1 ring-outline-variant/10 placeholder:text-outline-variant focus:ring-2 focus:ring-tertiary"
-              placeholder="Jam"
+              placeholder="YOUR CODENAME..."
             />
           </label>
         </MenuCard>

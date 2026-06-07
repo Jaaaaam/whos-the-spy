@@ -6,7 +6,6 @@ import { PageShell } from '../../../shared/layouts/PageShell'
 import { cn } from '../../../shared/lib/cn'
 import { useCreateRoom } from '../hooks/useCreateRoom'
 
-const categories = ['Food', 'Places', 'Movies', 'Everyday Objects']
 const timerOptions = [5, 8, 10]
 const minPlayersToStart = 4
 
@@ -50,8 +49,7 @@ function getRecommendedSpyCount(playerCount: number) {
 export function CreateRoomPage() {
   const navigate = useNavigate()
   const { createRoom, isCreating, error } = useCreateRoom()
-  const [playerName, setPlayerName] = useState('Jam')
-  const [category, setCategory] = useState(categories[0])
+  const [playerName, setPlayerName] = useState('')
   const [spyCount, setSpyCount] = useState(2)
   const [timerMinutes, setTimerMinutes] = useState(8)
   const [expectedPlayers, setExpectedPlayers] = useState(8)
@@ -135,24 +133,11 @@ export function CreateRoomPage() {
               <input
                 value={playerName}
                 onChange={(event) => setPlayerName(event.target.value)}
+                placeholder="YOUR CODENAME..."
                 className="w-full rounded-[1rem] border-0 bg-surface-container-lowest px-4 py-4 text-lg font-bold text-on-surface outline-none ring-1 ring-outline-variant/10 transition focus:ring-2 focus:ring-tertiary"
               />
             </label>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <label className="space-y-2">
-                <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
-                  Category
-                </span>
-                <select
-                  value={category}
-                  onChange={(event) => setCategory(event.target.value)}
-                  className="w-full rounded-[1rem] border-0 bg-surface-container-lowest px-4 py-4 text-on-surface outline-none ring-1 ring-outline-variant/10 transition focus:ring-2 focus:ring-tertiary"
-                >
-                  {categories.map((option) => (
-                    <option key={option}>{option}</option>
-                  ))}
-                </select>
-              </label>
+            <div className="mt-6 grid gap-4">
               <label className="space-y-2">
                 <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
                   Expected Players

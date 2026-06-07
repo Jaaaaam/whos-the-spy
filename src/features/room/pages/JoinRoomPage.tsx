@@ -3,14 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '../../../shared/components/Button'
 import { Card } from '../../../shared/components/Card'
 import { PageShell } from '../../../shared/layouts/PageShell'
-import { mockRoom } from '../data/mockRoom'
 import { useJoinRoom } from '../hooks/useJoinRoom'
 
 export function JoinRoomPage() {
   const navigate = useNavigate()
   const { joinRoom, isJoining, error } = useJoinRoom()
-  const [playerName, setPlayerName] = useState('Alex')
-  const [roomCode, setRoomCode] = useState(mockRoom.code)
+  const [playerName, setPlayerName] = useState('')
+  const [roomCode, setRoomCode] = useState('')
   const [validationError, setValidationError] = useState<string | null>(null)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -56,6 +55,7 @@ export function JoinRoomPage() {
             <input
               value={playerName}
               onChange={(event) => setPlayerName(event.target.value)}
+              placeholder="YOUR CODENAME..."
               className="w-full rounded-[1rem] border-0 bg-surface-container-lowest px-4 py-4 text-on-surface outline-none ring-1 ring-outline-variant/10 focus:ring-2 focus:ring-tertiary"
             />
           </label>
