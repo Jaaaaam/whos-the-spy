@@ -15,5 +15,6 @@ export const GAME_ERROR = {
   ROUND_NOT_FOUND: 'Round not found.',
   TARGET_NOT_IN_ROOM: 'Target not in room.',
   VOTER_NOT_IN_ROOM: 'Voter not in room.',
-  CANNOT_VOTE_SELF: 'You cannot vote yourself.'
+  CANNOT_VOTE_SELF: 'You cannot vote yourself.',
+  VOTING_NOT_COMPLETE: 'Voting not complete.'
 } as const

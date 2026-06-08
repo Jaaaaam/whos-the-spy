@@ -107,6 +107,27 @@ export function createRound(
   }
 }
 
+export function createRoomWithStatus(
+  id: Id<typeof TABLE.ROOMS>,
+  status: Doc<typeof TABLE.ROOMS>['status'],
+  currentRoundId?: Id<typeof TABLE.ROUNDS>,
+): Doc<typeof TABLE.ROOMS> {
+  return { ...createRoom(id), status, ...(currentRoundId !== undefined && { currentRoundId }) }
+}
+
+export function createDiscussionRound(
+  id: Id<typeof TABLE.ROUNDS>,
+  room: Id<typeof TABLE.ROOMS>,
+  options: {
+    discussionOrder: Id<typeof TABLE.PLAYERS>[]
+    currentTurnIndex: number
+    turnStartedAt: number
+    turnEndsAt: number
+  },
+): Doc<typeof TABLE.ROUNDS> {
+  return { ...createRound(id, room), ...options }
+}
+
 export function createVote(
   id: Id<typeof TABLE.VOTES>,
   room: Id<typeof TABLE.ROOMS>,

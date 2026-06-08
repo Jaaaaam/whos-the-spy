@@ -15,4 +15,8 @@ export const rounds = defineTable({
   currentTurnIndex: v.optional(v.number()),
   turnStartedAt: v.optional(v.number()),
   turnEndsAt: v.optional(v.number()),
+  eliminatedPlayerId: v.optional(v.id(TABLE.PLAYERS)),
+  tieCandidateIds: v.optional(v.array(v.id(TABLE.PLAYERS))),
+  didSpyWon: v.optional(v.boolean()),
+  isTie: v.optional(v.boolean()),
 }).index(INDEX.ROUNDS_BY_ROOM_ID, ['roomId'])

@@ -1,4 +1,5 @@
 import type { MutationCtx } from "../_generated/server"
+import type { PlayerRoleAssignment } from "../gameRules"
 import {
   assignRandomRoles,
   getRecommendedSpyCount,
@@ -39,15 +40,13 @@ export async function startRoundHandler(
     .withIndex(INDEX.PLAYERS_BY_ROOM_ID, (q) => q.eq('roomId', roomId))
     .collect()
 
-  const connectedPlayers = roomPlayers.filter(player => player.isConnected)
+  const connectedPlayers = roomPlayers.filter(player => player.isConnected && !player.isEliminated)
 
   if (!isValidPlayerCount(connectedPlayers.length)) {
     throw new Error(GAME_ERROR.INVALID_PLAYER_COUNT)
   }
 
   const roomPlayerIds = connectedPlayers.map(({ _id }) => _id)
-  const currentSpyCount = spyCount ?? getRecommendedSpyCount(connectedPlayers.length)
-  const assignedRoles = assignRandomRoles(roomPlayerIds, currentSpyCount)
 
   const existingRounds = await ctx.db
     .query(TABLE.ROUNDS)
@@ -55,6 +54,28 @@ export async function startRoundHandler(
     .collect()
 
   const roundNumber = existingRounds.length + 1
+
+  let assignedRoles: PlayerRoleAssignment[]
+  let currentSpyCount: number
+
+  if (roundNumber === 1) {
+    currentSpyCount = spyCount ?? getRecommendedSpyCount(connectedPlayers.length)
+    assignedRoles = assignRandomRoles(roomPlayerIds, currentSpyCount)
+  } else {
+    const priorAssignments = await ctx.db
+      .query(TABLE.ROLE_ASSIGNMENTS)
+      .withIndex(INDEX.ROLE_ASSIGNMENTS_BY_ROOM_ID, (q) => q.eq('roomId', roomId))
+      .collect()
+
+    const priorRoleByPlayerId = new Map(priorAssignments.map((a) => [a.playerId, a.role]))
+
+    assignedRoles = connectedPlayers.map((player) => ({
+      playerId: player._id,
+      role: priorRoleByPlayerId.get(player._id) ?? 'civilian',
+    }))
+
+    currentSpyCount = assignedRoles.filter((a) => a.role === 'spy').length
+  }
   const wordPair = getRandomWordPair()
   const startedAt = Date.now()
   const roundId = await ctx.db.insert(TABLE.ROUNDS, {

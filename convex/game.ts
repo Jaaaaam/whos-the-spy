@@ -16,6 +16,7 @@ import {
 import { startRoundHandler } from "./game/startRound"
 import {
   castVoteHandler,
+  finalizeVotingHandler,
   getVoteProgressHandler,
   getVotingResultsHandler,
 } from "./game/voting"
@@ -118,4 +119,12 @@ export const getVotingResults = query({
     roundId: v.id(TABLE.ROUNDS),
   },
   handler: getVotingResultsHandler,
+})
+
+export const finalizeVoting = mutation({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+  },
+  handler: finalizeVotingHandler,
 })

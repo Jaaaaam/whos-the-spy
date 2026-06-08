@@ -10,6 +10,7 @@ export const rooms = defineTable({
     v.literal(GAME_STATUS.ROLE_REVEAL),
     v.literal(GAME_STATUS.DISCUSSION),
     v.literal(GAME_STATUS.VOTING),
+    v.literal(GAME_STATUS.BATTLE),
     v.literal(GAME_STATUS.RESULTS),
   ),
   hostPlayerId: v.optional(v.id(TABLE.PLAYERS)),

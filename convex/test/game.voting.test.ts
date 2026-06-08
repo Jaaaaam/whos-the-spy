@@ -10,6 +10,7 @@ import {
   createCtx,
   createPlayer,
   createRoom,
+  createRoomWithStatus,
   createRound,
   createVote,
   playerId,
@@ -20,6 +21,25 @@ import {
 } from './gameTestUtils'
 
 describe('castVoteHandler', () => {
+  const currentRoomId = roomId('room_1')
+  const currentRoundId = roundId('round_1')
+  const voterId = playerId('player_1')
+  const targetId = playerId('player_2')
+
+  function baseTables(overrides: Partial<StoredTables> = {}): StoredTables {
+    return {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+      players: [
+        createPlayer(voterId, currentRoomId, true),
+        createPlayer(targetId, currentRoomId),
+      ],
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments: [],
+      votes: [],
+      ...overrides,
+    }
+  }
+
   beforeEach(() => {
     vi.useFakeTimers()
     vi.setSystemTime(1_000)
@@ -30,26 +50,7 @@ describe('castVoteHandler', () => {
   })
 
   it('creates a vote during the voting phase', async () => {
-    const currentRoomId = roomId('room_1')
-    const currentRoundId = roundId('round_1')
-    const voterId = playerId('player_1')
-    const targetId = playerId('player_2')
-    const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.VOTING,
-          currentRoundId,
-        },
-      ],
-      players: [
-        createPlayer(voterId, currentRoomId, true),
-        createPlayer(targetId, currentRoomId),
-      ],
-      rounds: [createRound(currentRoundId, currentRoomId)],
-      roleAssignments: [],
-      votes: [],
-    }
+    const tables = baseTables()
     const ctx = createCtx(tables)
 
     const result = await castVoteHandler(ctx, {
@@ -76,39 +77,21 @@ describe('castVoteHandler', () => {
   })
 
   it('updates an existing vote for the same voter and round', async () => {
-    const currentRoomId = roomId('room_1')
-    const currentRoundId = roundId('round_1')
-    const voterId = playerId('player_1')
     const firstTargetId = playerId('player_2')
     const nextTargetId = playerId('player_3')
     const existingVote = {
-      ...createVote(
-        voteId('vote_1'),
-        currentRoomId,
-        currentRoundId,
-        voterId,
-        firstTargetId,
-      ),
+      ...createVote(voteId('vote_1'), currentRoomId, currentRoundId, voterId, firstTargetId),
       createdAt: 500,
       updatedAt: 500,
     }
-    const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.VOTING,
-          currentRoundId,
-        },
-      ],
+    const tables = baseTables({
       players: [
         createPlayer(voterId, currentRoomId, true),
         createPlayer(firstTargetId, currentRoomId),
         createPlayer(nextTargetId, currentRoomId),
       ],
-      rounds: [createRound(currentRoundId, currentRoomId)],
-      roleAssignments: [],
       votes: [existingVote],
-    }
+    })
     const ctx = createCtx(tables)
 
     const result = await castVoteHandler(ctx, {
@@ -131,26 +114,9 @@ describe('castVoteHandler', () => {
   })
 
   it('rejects voting outside the voting phase', async () => {
-    const currentRoomId = roomId('room_1')
-    const currentRoundId = roundId('round_1')
-    const voterId = playerId('player_1')
-    const targetId = playerId('player_2')
-    const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.DISCUSSION,
-          currentRoundId,
-        },
-      ],
-      players: [
-        createPlayer(voterId, currentRoomId, true),
-        createPlayer(targetId, currentRoomId),
-      ],
-      rounds: [createRound(currentRoundId, currentRoomId)],
-      roleAssignments: [],
-      votes: [],
-    }
+    const tables = baseTables({
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.DISCUSSION, currentRoundId)],
+    })
     const ctx = createCtx(tables)
 
     await expect(
@@ -165,30 +131,13 @@ describe('castVoteHandler', () => {
   })
 
   it('rejects voting for a stale round', async () => {
-    const currentRoomId = roomId('room_1')
-    const currentRoundId = roundId('round_1')
     const staleRoundId = roundId('round_2')
-    const voterId = playerId('player_1')
-    const targetId = playerId('player_2')
-    const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.VOTING,
-          currentRoundId,
-        },
-      ],
-      players: [
-        createPlayer(voterId, currentRoomId, true),
-        createPlayer(targetId, currentRoomId),
-      ],
+    const tables = baseTables({
       rounds: [
         createRound(currentRoundId, currentRoomId),
         createRound(staleRoundId, currentRoomId),
       ],
-      roleAssignments: [],
-      votes: [],
-    }
+    })
     const ctx = createCtx(tables)
 
     await expect(
@@ -202,26 +151,7 @@ describe('castVoteHandler', () => {
   })
 
   it('rejects a missing round', async () => {
-    const currentRoomId = roomId('room_1')
-    const currentRoundId = roundId('round_1')
-    const voterId = playerId('player_1')
-    const targetId = playerId('player_2')
-    const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.VOTING,
-          currentRoundId,
-        },
-      ],
-      players: [
-        createPlayer(voterId, currentRoomId, true),
-        createPlayer(targetId, currentRoomId),
-      ],
-      rounds: [],
-      roleAssignments: [],
-      votes: [],
-    }
+    const tables = baseTables({ rounds: [] })
     const ctx = createCtx(tables)
 
     await expect(
@@ -235,28 +165,17 @@ describe('castVoteHandler', () => {
   })
 
   it('rejects a voter outside the room', async () => {
-    const currentRoomId = roomId('room_1')
     const otherRoomId = roomId('room_2')
-    const currentRoundId = roundId('round_1')
-    const voterId = playerId('player_1')
-    const targetId = playerId('player_2')
-    const tables: StoredTables = {
+    const tables = baseTables({
       rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.VOTING,
-          currentRoundId,
-        },
+        createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId),
         createRoom(otherRoomId),
       ],
       players: [
         createPlayer(voterId, otherRoomId),
         createPlayer(targetId, currentRoomId),
       ],
-      rounds: [createRound(currentRoundId, currentRoomId)],
-      roleAssignments: [],
-      votes: [],
-    }
+    })
     const ctx = createCtx(tables)
 
     await expect(
@@ -270,29 +189,12 @@ describe('castVoteHandler', () => {
   })
 
   it('rejects a disconnected voter', async () => {
-    const currentRoomId = roomId('room_1')
-    const currentRoundId = roundId('round_1')
-    const voterId = playerId('player_1')
-    const targetId = playerId('player_2')
-    const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.VOTING,
-          currentRoundId,
-        },
-      ],
+    const tables = baseTables({
       players: [
-        {
-          ...createPlayer(voterId, currentRoomId, true),
-          isConnected: false,
-        },
+        { ...createPlayer(voterId, currentRoomId, true), isConnected: false },
         createPlayer(targetId, currentRoomId),
       ],
-      rounds: [createRound(currentRoundId, currentRoomId)],
-      roleAssignments: [],
-      votes: [],
-    }
+    })
     const ctx = createCtx(tables)
 
     await expect(
@@ -306,28 +208,17 @@ describe('castVoteHandler', () => {
   })
 
   it('rejects a target outside the room', async () => {
-    const currentRoomId = roomId('room_1')
     const otherRoomId = roomId('room_2')
-    const currentRoundId = roundId('round_1')
-    const voterId = playerId('player_1')
-    const targetId = playerId('player_2')
-    const tables: StoredTables = {
+    const tables = baseTables({
       rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.VOTING,
-          currentRoundId,
-        },
+        createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId),
         createRoom(otherRoomId),
       ],
       players: [
         createPlayer(voterId, currentRoomId, true),
         createPlayer(targetId, otherRoomId),
       ],
-      rounds: [createRound(currentRoundId, currentRoomId)],
-      roleAssignments: [],
-      votes: [],
-    }
+    })
     const ctx = createCtx(tables)
 
     await expect(
@@ -341,29 +232,12 @@ describe('castVoteHandler', () => {
   })
 
   it('rejects a disconnected target', async () => {
-    const currentRoomId = roomId('room_1')
-    const currentRoundId = roundId('round_1')
-    const voterId = playerId('player_1')
-    const targetId = playerId('player_2')
-    const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.VOTING,
-          currentRoundId,
-        },
-      ],
+    const tables = baseTables({
       players: [
         createPlayer(voterId, currentRoomId, true),
-        {
-          ...createPlayer(targetId, currentRoomId),
-          isConnected: false,
-        },
+        { ...createPlayer(targetId, currentRoomId), isConnected: false },
       ],
-      rounds: [createRound(currentRoundId, currentRoomId)],
-      roleAssignments: [],
-      votes: [],
-    }
+    })
     const ctx = createCtx(tables)
 
     await expect(
@@ -377,22 +251,7 @@ describe('castVoteHandler', () => {
   })
 
   it('rejects self-votes', async () => {
-    const currentRoomId = roomId('room_1')
-    const currentRoundId = roundId('round_1')
-    const voterId = playerId('player_1')
-    const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.VOTING,
-          currentRoundId,
-        },
-      ],
-      players: [createPlayer(voterId, currentRoomId, true)],
-      rounds: [createRound(currentRoundId, currentRoomId)],
-      roleAssignments: [],
-      votes: [],
-    }
+    const tables = baseTables({ players: [createPlayer(voterId, currentRoomId, true)] })
     const ctx = createCtx(tables)
 
     await expect(
@@ -414,13 +273,7 @@ describe('getVoteProgressHandler', () => {
     const targetId = playerId('player_2')
     const disconnectedPlayerId = playerId('player_3')
     const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.VOTING,
-          currentRoundId,
-        },
-      ],
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
       players: [
         createPlayer(voterId, currentRoomId, true),
         createPlayer(targetId, currentRoomId),
@@ -469,13 +322,7 @@ describe('getVoteProgressHandler', () => {
     const firstVoterId = playerId('player_1')
     const secondVoterId = playerId('player_2')
     const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.VOTING,
-          currentRoundId,
-        },
-      ],
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
       players: [
         createPlayer(firstVoterId, currentRoomId, true),
         createPlayer(secondVoterId, currentRoomId),
@@ -520,13 +367,7 @@ describe('getVoteProgressHandler', () => {
     const voterId = playerId('player_1')
     const targetId = playerId('player_2')
     const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.VOTING,
-          currentRoundId,
-        },
-      ],
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
       players: [
         createPlayer(voterId, currentRoomId, true),
         createPlayer(targetId, currentRoomId),
@@ -567,13 +408,7 @@ describe('getVoteProgressHandler', () => {
     const disconnectedVoterId = playerId('player_3')
     const disconnectedTargetId = playerId('player_4')
     const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.VOTING,
-          currentRoundId,
-        },
-      ],
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
       players: [
         createPlayer(voterId, currentRoomId, true),
         createPlayer(targetId, currentRoomId),
@@ -641,13 +476,7 @@ describe('getVotingResultsHandler', () => {
     const secondPlayerId = playerId('player_2')
     const thirdPlayerId = playerId('player_3')
     const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.VOTING,
-          currentRoundId,
-        },
-      ],
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
       players: [
         {
           ...createPlayer(firstPlayerId, currentRoomId, true),
@@ -724,13 +553,7 @@ describe('getVotingResultsHandler', () => {
     const secondPlayerId = playerId('player_2')
     const disconnectedPlayerId = playerId('player_3')
     const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.VOTING,
-          currentRoundId,
-        },
-      ],
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
       players: [
         {
           ...createPlayer(firstPlayerId, currentRoomId, true),
@@ -800,13 +623,7 @@ describe('getVotingResultsHandler', () => {
     const currentRoomId = roomId('room_1')
     const currentRoundId = roundId('round_1')
     const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.DISCUSSION,
-          currentRoundId,
-        },
-      ],
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.DISCUSSION, currentRoundId)],
       players: [],
       rounds: [createRound(currentRoundId, currentRoomId)],
       roleAssignments: [],

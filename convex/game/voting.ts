@@ -32,7 +32,7 @@ async function getActivePlayersByRoom(ctx: QueryCtx | MutationCtx, roomId: RoomR
       q.eq('roomId', roomId))
     .collect()
 
-  return playersInRoom.filter(player => player.isConnected)
+  return playersInRoom.filter(player => player.isConnected && !player.isEliminated)
 }
 
 async function getVotesByRoomRound(ctx: QueryCtx | MutationCtx, { roomId, roundId }: RoomRoundArgs) {
@@ -168,3 +168,80 @@ export async function getVotingResultsHandler(ctx: QueryCtx, { roomId, roundId }
     results,
   }
 }
+
+export async function finalizeVotingHandler(ctx: MutationCtx, { roomId, roundId }: RoomRoundArgs) {
+  await getCurrentVotingRound(ctx, { roomId, roundId })
+
+  const activePlayers = await getActivePlayersByRoom(ctx, roomId)
+  const activePlayerIds = new Set(activePlayers.map((p) => p._id))
+  const votes = await getVotesByRoomRound(ctx, { roomId, roundId })
+
+  const activeVotes = votes.filter(
+    (vote) =>
+      activePlayerIds.has(vote.voterPlayerId) &&
+      activePlayerIds.has(vote.targetPlayerId),
+  )
+
+  if (activeVotes.length < activePlayers.length) {
+    throw new Error(GAME_ERROR.VOTING_NOT_COMPLETE)
+  }
+
+  const voteCounts = new Map(activePlayers.map((p) => [p._id, 0]))
+  for (const vote of activeVotes) {
+    voteCounts.set(vote.targetPlayerId, (voteCounts.get(vote.targetPlayerId) ?? 0) + 1)
+  }
+
+  const topCount = Math.max(0, ...voteCounts.values())
+  const topCandidates = activePlayers.filter((p) => voteCounts.get(p._id) === topCount)
+  const isTie = topCandidates.length > 1
+
+  if (isTie) {
+    await ctx.db.patch(roundId, {
+      isTie: true,
+      tieCandidateIds: topCandidates.map((p) => p._id),
+    })
+    await ctx.db.patch(roomId, { status: GAME_STATUS.BATTLE })
+    return { isTie: true as const, eliminatedPlayerId: undefined, didSpyWon: undefined }
+  }
+
+  const eliminatedPlayer = topCandidates[0]
+  await ctx.db.patch(eliminatedPlayer._id, { isEliminated: true })
+
+  const roleAssignment = await ctx.db
+    .query(TABLE.ROLE_ASSIGNMENTS)
+    .withIndex(INDEX.ROLE_ASSIGNMENTS_BY_ROUND_ID_PLAYER_ID, (q) =>
+      q.eq('roundId', roundId).eq('playerId', eliminatedPlayer._id))
+    .unique()
+
+  const eliminatedIsSpy = roleAssignment?.role === 'spy'
+
+  const spyAssignments = (await ctx.db
+    .query(TABLE.ROLE_ASSIGNMENTS)
+    .withIndex(INDEX.ROLE_ASSIGNMENTS_BY_ROUND_ID, (q) => q.eq('roundId', roundId))
+    .collect())
+    .filter((a) => a.role === 'spy')
+
+  const remainingSpies = spyAssignments.length - (eliminatedIsSpy ? 1 : 0)
+  const remainingTotal = activePlayers.length - 1
+  const remainingCivilians = remainingTotal - remainingSpies
+
+  let didSpyWon: boolean
+  let gameOver: boolean
+
+  if (remainingSpies === 0) {
+    didSpyWon = false
+    gameOver = true
+  } else if (remainingSpies >= remainingCivilians) {
+    didSpyWon = true
+    gameOver = true
+  } else {
+    didSpyWon = false
+    gameOver = false
+  }
+
+  await ctx.db.patch(roundId, { eliminatedPlayerId: eliminatedPlayer._id, didSpyWon, isTie: false })
+  await ctx.db.patch(roomId, { status: gameOver ? GAME_STATUS.RESULTS : GAME_STATUS.LOBBY })
+
+  return { isTie: false as const, eliminatedPlayerId: eliminatedPlayer._id, didSpyWon }
+}
+

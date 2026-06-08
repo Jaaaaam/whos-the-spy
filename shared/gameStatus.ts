@@ -3,6 +3,7 @@ export const GAME_STATUS = {
   ROLE_REVEAL: 'role_reveal',
   DISCUSSION: 'discussion',
   VOTING: 'voting',
+  BATTLE: 'battle',
   RESULTS: 'results',
 } as const
 

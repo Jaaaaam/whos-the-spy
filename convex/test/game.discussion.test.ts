@@ -8,8 +8,10 @@ import {
 } from '../game/discussion'
 import {
   createCtx,
+  createDiscussionRound,
   createPlayer,
   createRoom,
+  createRoomWithStatus,
   createRound,
   playerId,
   roomId,
@@ -32,25 +34,18 @@ describe('getDiscussionStateHandler', () => {
     const firstPlayerId = playerId('player_1')
     const activePlayerId = playerId('player_2')
     const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.DISCUSSION,
-          currentRoundId,
-        },
-      ],
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.DISCUSSION, currentRoundId)],
       players: [
         createPlayer(firstPlayerId, currentRoomId, true),
         createPlayer(activePlayerId, currentRoomId),
       ],
       rounds: [
-        {
-          ...createRound(currentRoundId, currentRoomId),
+        createDiscussionRound(currentRoundId, currentRoomId, {
           discussionOrder: [firstPlayerId, activePlayerId],
           currentTurnIndex: 1,
           turnStartedAt: 1_000,
           turnEndsAt: 30_000,
-        },
+        }),
       ],
       roleAssignments: [],
     }
@@ -83,22 +78,15 @@ describe('getDiscussionStateHandler', () => {
     const currentRoundId = roundId('round_1')
     const activePlayerId = playerId('player_1')
     const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.DISCUSSION,
-          currentRoundId,
-        },
-      ],
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.DISCUSSION, currentRoundId)],
       players: [createPlayer(activePlayerId, currentRoomId, true)],
       rounds: [
-        {
-          ...createRound(currentRoundId, currentRoomId),
+        createDiscussionRound(currentRoundId, currentRoomId, {
           discussionOrder: [activePlayerId],
           currentTurnIndex: 0,
           turnStartedAt: 1_000,
           turnEndsAt: 30_000,
-        },
+        }),
       ],
       roleAssignments: [],
     }
@@ -120,13 +108,7 @@ describe('getDiscussionStateHandler', () => {
     const currentRoundId = roundId('round_1')
     const otherRoundId = roundId('round_2')
     const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.DISCUSSION,
-          currentRoundId,
-        },
-      ],
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.DISCUSSION, currentRoundId)],
       players: [],
       rounds: [createRound(otherRoundId, currentRoomId)],
       roleAssignments: [],
@@ -145,13 +127,7 @@ describe('getDiscussionStateHandler', () => {
     const currentRoomId = roomId('room_1')
     const currentRoundId = roundId('round_1')
     const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.DISCUSSION,
-          currentRoundId,
-        },
-      ],
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.DISCUSSION, currentRoundId)],
       players: [createPlayer(playerId('player_1'), currentRoomId, true)],
       rounds: [createRound(currentRoundId, currentRoomId)],
       roleAssignments: [],
@@ -171,22 +147,15 @@ describe('getDiscussionStateHandler', () => {
     const currentRoundId = roundId('round_1')
     const missingPlayerId = playerId('missing_player')
     const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.DISCUSSION,
-          currentRoundId,
-        },
-      ],
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.DISCUSSION, currentRoundId)],
       players: [],
       rounds: [
-        {
-          ...createRound(currentRoundId, currentRoomId),
+        createDiscussionRound(currentRoundId, currentRoomId, {
           discussionOrder: [missingPlayerId],
           currentTurnIndex: 0,
           turnStartedAt: 1_000,
           turnEndsAt: 30_000,
-        },
+        }),
       ],
       roleAssignments: [],
     }
@@ -202,36 +171,35 @@ describe('getDiscussionStateHandler', () => {
 })
 
 describe('endDiscussionTurnHandler', () => {
-  it('advances to the next player when the active player ends their turn', async () => {
-    vi.setSystemTime(5_000)
+  const currentRoomId = roomId('room_1')
+  const currentRoundId = roundId('round_1')
+  const activePlayerId = playerId('player_1')
+  const nextPlayerId = playerId('player_2')
 
-    const currentRoomId = roomId('room_1')
-    const currentRoundId = roundId('round_1')
-    const activePlayerId = playerId('player_1')
-    const nextPlayerId = playerId('player_2')
-    const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.DISCUSSION,
-          currentRoundId,
-        },
-      ],
+  function baseTables(overrides: Partial<StoredTables> = {}): StoredTables {
+    return {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.DISCUSSION, currentRoundId)],
       players: [
         createPlayer(activePlayerId, currentRoomId, true),
         createPlayer(nextPlayerId, currentRoomId),
       ],
       rounds: [
-        {
-          ...createRound(currentRoundId, currentRoomId),
+        createDiscussionRound(currentRoundId, currentRoomId, {
           discussionOrder: [activePlayerId, nextPlayerId],
           currentTurnIndex: 0,
           turnStartedAt: 1_000,
           turnEndsAt: 30_000,
-        },
+        }),
       ],
       roleAssignments: [],
+      ...overrides,
     }
+  }
+
+  it('advances to the next player when the active player ends their turn', async () => {
+    vi.setSystemTime(5_000)
+
+    const tables = baseTables()
     const ctx = createCtx(tables)
 
     const result = await endDiscussionTurnHandler(ctx, {
@@ -248,40 +216,14 @@ describe('endDiscussionTurnHandler', () => {
   })
 
   it('rejects a player who is not active', async () => {
-    const currentRoomId = roomId('room_1')
-    const currentRoundId = roundId('round_1')
-    const activePlayerId = playerId('player_1')
-    const otherPlayerId = playerId('player_2')
-    const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.DISCUSSION,
-          currentRoundId,
-        },
-      ],
-      players: [
-        createPlayer(activePlayerId, currentRoomId, true),
-        createPlayer(otherPlayerId, currentRoomId),
-      ],
-      rounds: [
-        {
-          ...createRound(currentRoundId, currentRoomId),
-          discussionOrder: [activePlayerId, otherPlayerId],
-          currentTurnIndex: 0,
-          turnStartedAt: 1_000,
-          turnEndsAt: 30_000,
-        },
-      ],
-      roleAssignments: [],
-    }
+    const tables = baseTables()
     const ctx = createCtx(tables)
 
     await expect(
       endDiscussionTurnHandler(ctx, {
         roomId: currentRoomId,
         roundId: currentRoundId,
-        playerId: otherPlayerId,
+        playerId: nextPlayerId,
       }),
     ).rejects.toThrow(GAME_ERROR.NOT_ACTIVE_DISCUSSION_PLAYER)
 
@@ -289,29 +231,17 @@ describe('endDiscussionTurnHandler', () => {
   })
 
   it('starts voting after the final player ends their turn', async () => {
-    const currentRoomId = roomId('room_1')
-    const currentRoundId = roundId('round_1')
-    const activePlayerId = playerId('player_1')
-    const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.DISCUSSION,
-          currentRoundId,
-        },
-      ],
+    const tables = baseTables({
       players: [createPlayer(activePlayerId, currentRoomId, true)],
       rounds: [
-        {
-          ...createRound(currentRoundId, currentRoomId),
+        createDiscussionRound(currentRoundId, currentRoomId, {
           discussionOrder: [activePlayerId],
           currentTurnIndex: 0,
           turnStartedAt: 1_000,
           turnEndsAt: 30_000,
-        },
+        }),
       ],
-      roleAssignments: [],
-    }
+    })
     const ctx = createCtx(tables)
 
     const result = await endDiscussionTurnHandler(ctx, {
@@ -326,36 +256,34 @@ describe('endDiscussionTurnHandler', () => {
 })
 
 describe('advanceDiscussionIfExpiredHandler', () => {
-  it('does not advance before the active turn expires', async () => {
-    vi.setSystemTime(5_000)
+  const currentRoomId = roomId('room_1')
+  const currentRoundId = roundId('round_1')
+  const activePlayerId = playerId('player_1')
+  const nextPlayerId = playerId('player_2')
 
-    const currentRoomId = roomId('room_1')
-    const currentRoundId = roundId('round_1')
-    const activePlayerId = playerId('player_1')
-    const nextPlayerId = playerId('player_2')
-    const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.DISCUSSION,
-          currentRoundId,
-        },
-      ],
+  function baseTables(): StoredTables {
+    return {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.DISCUSSION, currentRoundId)],
       players: [
         createPlayer(activePlayerId, currentRoomId, true),
         createPlayer(nextPlayerId, currentRoomId),
       ],
       rounds: [
-        {
-          ...createRound(currentRoundId, currentRoomId),
+        createDiscussionRound(currentRoundId, currentRoomId, {
           discussionOrder: [activePlayerId, nextPlayerId],
           currentTurnIndex: 0,
           turnStartedAt: 1_000,
           turnEndsAt: 10_000,
-        },
+        }),
       ],
       roleAssignments: [],
     }
+  }
+
+  it('does not advance before the active turn expires', async () => {
+    vi.setSystemTime(5_000)
+
+    const tables = baseTables()
     const ctx = createCtx(tables)
 
     const result = await advanceDiscussionIfExpiredHandler(ctx, {
@@ -370,33 +298,7 @@ describe('advanceDiscussionIfExpiredHandler', () => {
   it('advances after the active turn expires', async () => {
     vi.setSystemTime(10_001)
 
-    const currentRoomId = roomId('room_1')
-    const currentRoundId = roundId('round_1')
-    const activePlayerId = playerId('player_1')
-    const nextPlayerId = playerId('player_2')
-    const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: GAME_STATUS.DISCUSSION,
-          currentRoundId,
-        },
-      ],
-      players: [
-        createPlayer(activePlayerId, currentRoomId, true),
-        createPlayer(nextPlayerId, currentRoomId),
-      ],
-      rounds: [
-        {
-          ...createRound(currentRoundId, currentRoomId),
-          discussionOrder: [activePlayerId, nextPlayerId],
-          currentTurnIndex: 0,
-          turnStartedAt: 1_000,
-          turnEndsAt: 10_000,
-        },
-      ],
-      roleAssignments: [],
-    }
+    const tables = baseTables()
     const ctx = createCtx(tables)
 
     const result = await advanceDiscussionIfExpiredHandler(ctx, {

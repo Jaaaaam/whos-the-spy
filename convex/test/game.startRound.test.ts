@@ -4,9 +4,13 @@ import { startRoundHandler } from '../game/startRound'
 import {
   createCtx,
   createPlayer,
+  createRoleAssignment,
   createRoom,
+  createRound,
   playerId,
+  roleAssignmentId,
   roomId,
+  roundId,
   type StoredTables,
 } from './gameTestUtils'
 
@@ -209,6 +213,80 @@ describe('startRoundHandler', () => {
     expect(tables.roleAssignments.map(({ playerId }) => playerId)).not.toContain(
       disconnectedPlayerId,
     )
+  })
+
+  it('preserves spy assignments from round 1 in subsequent rounds', async () => {
+    const currentRoomId = roomId('room_1')
+    const hostPlayerId = playerId('player_1')
+    const spyPlayerId = playerId('player_2')
+    const civilian1Id = playerId('player_3')
+    const civilian2Id = playerId('player_4')
+    const round1Id = roundId('round_1')
+    const tables: StoredTables = {
+      rooms: [createRoom(currentRoomId)],
+      players: [
+        createPlayer(hostPlayerId, currentRoomId, true),
+        createPlayer(spyPlayerId, currentRoomId),
+        createPlayer(civilian1Id, currentRoomId),
+        createPlayer(civilian2Id, currentRoomId),
+      ],
+      rounds: [createRound(round1Id, currentRoomId)],
+      roleAssignments: [
+        createRoleAssignment(roleAssignmentId('ra_1'), currentRoomId, round1Id, hostPlayerId, 'civilian'),
+        createRoleAssignment(roleAssignmentId('ra_2'), currentRoomId, round1Id, spyPlayerId, 'spy'),
+        createRoleAssignment(roleAssignmentId('ra_3'), currentRoomId, round1Id, civilian1Id, 'civilian'),
+        createRoleAssignment(roleAssignmentId('ra_4'), currentRoomId, round1Id, civilian2Id, 'civilian'),
+      ],
+    }
+    const ctx = createCtx(tables)
+
+    const result = await startRoundHandler(ctx, { roomId: currentRoomId, hostPlayerId })
+
+    expect(result.roundNumber).toBe(2)
+    expect(result.spyCount).toBe(1)
+
+    const round2Assignments = tables.roleAssignments.filter(
+      (a) => !['ra_1', 'ra_2', 'ra_3', 'ra_4'].includes(a._id),
+    )
+    expect(round2Assignments).toHaveLength(4)
+    expect(round2Assignments.find((a) => a.playerId === spyPlayerId)?.role).toBe('spy')
+    expect(round2Assignments.find((a) => a.playerId === hostPlayerId)?.role).toBe('civilian')
+    expect(round2Assignments.find((a) => a.playerId === civilian1Id)?.role).toBe('civilian')
+    expect(round2Assignments.find((a) => a.playerId === civilian2Id)?.role).toBe('civilian')
+  })
+
+  it('excludes eliminated players when starting a new round', async () => {
+    const currentRoomId = roomId('room_1')
+    const hostPlayerId = playerId('player_1')
+    const spyPlayerId = playerId('player_2')
+    const eliminatedPlayerId = playerId('player_3')
+    const civilian2Id = playerId('player_4')
+    const round1Id = roundId('round_1')
+    const tables: StoredTables = {
+      rooms: [createRoom(currentRoomId)],
+      players: [
+        createPlayer(hostPlayerId, currentRoomId, true),
+        createPlayer(spyPlayerId, currentRoomId),
+        { ...createPlayer(eliminatedPlayerId, currentRoomId), isEliminated: true },
+        createPlayer(civilian2Id, currentRoomId),
+      ],
+      rounds: [createRound(round1Id, currentRoomId)],
+      roleAssignments: [
+        createRoleAssignment(roleAssignmentId('ra_1'), currentRoomId, round1Id, hostPlayerId, 'civilian'),
+        createRoleAssignment(roleAssignmentId('ra_2'), currentRoomId, round1Id, spyPlayerId, 'spy'),
+        createRoleAssignment(roleAssignmentId('ra_3'), currentRoomId, round1Id, eliminatedPlayerId, 'civilian'),
+        createRoleAssignment(roleAssignmentId('ra_4'), currentRoomId, round1Id, civilian2Id, 'civilian'),
+      ],
+    }
+    const ctx = createCtx(tables)
+
+    await startRoundHandler(ctx, { roomId: currentRoomId, hostPlayerId })
+
+    const round2Assignments = tables.roleAssignments.filter(
+      (a) => !['ra_1', 'ra_2', 'ra_3', 'ra_4'].includes(a._id),
+    )
+    expect(round2Assignments).toHaveLength(3)
+    expect(round2Assignments.map((a) => a.playerId)).not.toContain(eliminatedPlayerId)
   })
 
   it('prevents a host from another room from starting the round', async () => {

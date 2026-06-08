@@ -9,6 +9,7 @@ import {
   createPlayer,
   createRoleAssignment,
   createRoom,
+  createRoomWithStatus,
   createRound,
   playerId,
   roleAssignmentId,
@@ -31,13 +32,7 @@ describe('markRoleSeenHandler', () => {
     const currentRoundId = roundId('round_1')
     const currentPlayerId = playerId('player_1')
     const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: 'role_reveal',
-          currentRoundId,
-        },
-      ],
+      rooms: [createRoomWithStatus(currentRoomId, 'role_reveal', currentRoundId)],
       players: [createPlayer(currentPlayerId, currentRoomId, true)],
       rounds: [createRound(currentRoundId, currentRoomId)],
       roleAssignments: [
@@ -66,7 +61,7 @@ describe('markRoleSeenHandler', () => {
     const currentRoundId = roundId('round_1')
     const currentPlayerId = playerId('player_1')
     const tables: StoredTables = {
-      rooms: [{ ...createRoom(currentRoomId), status: 'role_reveal' }],
+      rooms: [createRoomWithStatus(currentRoomId, 'role_reveal')],
       players: [
         createPlayer(currentPlayerId, currentRoomId, true),
         createPlayer(playerId('player_2'), currentRoomId),
@@ -104,13 +99,7 @@ describe('markRoleSeenHandler', () => {
     const currentRoundId = roundId('round_1')
     const currentPlayerId = playerId('player_1')
     const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: 'role_reveal',
-          currentRoundId,
-        },
-      ],
+      rooms: [createRoomWithStatus(currentRoomId, 'role_reveal', currentRoundId)],
       players: [
         createPlayer(currentPlayerId, currentRoomId, true),
         createPlayer(playerId('player_2'), currentRoomId),
@@ -154,7 +143,7 @@ describe('markRoleSeenHandler', () => {
     const currentRoomId = roomId('room_1')
     const currentRoundId = roundId('round_1')
     const tables: StoredTables = {
-      rooms: [{ ...createRoom(currentRoomId), status: 'role_reveal' }],
+      rooms: [createRoomWithStatus(currentRoomId, 'role_reveal')],
       players: [createPlayer(playerId('player_1'), currentRoomId, true)],
       rounds: [createRound(currentRoundId, currentRoomId)],
       roleAssignments: [],
@@ -171,31 +160,26 @@ describe('markRoleSeenHandler', () => {
 })
 
 describe('advanceRevealIfExpiredHandler', () => {
-  it('does not advance the room before the reveal timer expires', async () => {
-    vi.setSystemTime(1_000)
+  const currentRoomId = roomId('room_1')
+  const currentRoundId = roundId('round_1')
 
-    const currentRoomId = roomId('room_1')
-    const currentRoundId = roundId('round_1')
-    const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: 'role_reveal',
-          currentRoundId,
-        },
-      ],
+  function baseRevealTables(overrides: Partial<StoredTables> = {}): StoredTables {
+    return {
+      rooms: [createRoomWithStatus(currentRoomId, 'role_reveal', currentRoundId)],
       players: [
         createPlayer(playerId('player_1'), currentRoomId, true),
         createPlayer(playerId('player_2'), currentRoomId),
       ],
-      rounds: [
-        {
-          ...createRound(currentRoundId, currentRoomId),
-          revealEndsAt: 2_000,
-        },
-      ],
+      rounds: [{ ...createRound(currentRoundId, currentRoomId), revealEndsAt: 2_000 }],
       roleAssignments: [],
+      ...overrides,
     }
+  }
+
+  it('does not advance the room before the reveal timer expires', async () => {
+    vi.setSystemTime(1_000)
+
+    const tables = baseRevealTables()
     const ctx = createCtx(tables)
 
     const result = await advanceRevealIfExpiredHandler(ctx, {
@@ -210,28 +194,7 @@ describe('advanceRevealIfExpiredHandler', () => {
   it('advances the room to discussion after the reveal timer expires', async () => {
     vi.setSystemTime(2_001)
 
-    const currentRoomId = roomId('room_1')
-    const currentRoundId = roundId('round_1')
-    const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: 'role_reveal',
-          currentRoundId,
-        },
-      ],
-      players: [
-        createPlayer(playerId('player_1'), currentRoomId, true),
-        createPlayer(playerId('player_2'), currentRoomId),
-      ],
-      rounds: [
-        {
-          ...createRound(currentRoundId, currentRoomId),
-          revealEndsAt: 2_000,
-        },
-      ],
-      roleAssignments: [],
-    }
+    const tables = baseRevealTables()
     const ctx = createCtx(tables)
 
     const result = await advanceRevealIfExpiredHandler(ctx, {
@@ -252,25 +215,7 @@ describe('advanceRevealIfExpiredHandler', () => {
   it('does not start discussion without players', async () => {
     vi.setSystemTime(2_001)
 
-    const currentRoomId = roomId('room_1')
-    const currentRoundId = roundId('round_1')
-    const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: 'role_reveal',
-          currentRoundId,
-        },
-      ],
-      players: [],
-      rounds: [
-        {
-          ...createRound(currentRoundId, currentRoomId),
-          revealEndsAt: 2_000,
-        },
-      ],
-      roleAssignments: [],
-    }
+    const tables = baseRevealTables({ players: [] })
     const ctx = createCtx(tables)
 
     await expect(
@@ -284,25 +229,9 @@ describe('advanceRevealIfExpiredHandler', () => {
   it('does nothing when the room is already out of role reveal', async () => {
     vi.setSystemTime(2_001)
 
-    const currentRoomId = roomId('room_1')
-    const currentRoundId = roundId('round_1')
-    const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: 'discussion',
-          currentRoundId,
-        },
-      ],
-      players: [],
-      rounds: [
-        {
-          ...createRound(currentRoundId, currentRoomId),
-          revealEndsAt: 2_000,
-        },
-      ],
-      roleAssignments: [],
-    }
+    const tables = baseRevealTables({
+      rooms: [createRoomWithStatus(currentRoomId, 'discussion', currentRoundId)],
+    })
     const ctx = createCtx(tables)
 
     const result = await advanceRevealIfExpiredHandler(ctx, {
@@ -317,24 +246,11 @@ describe('advanceRevealIfExpiredHandler', () => {
   it('throws when the round is not the current room round', async () => {
     vi.setSystemTime(2_001)
 
-    const currentRoomId = roomId('room_1')
-    const currentRoundId = roundId('round_1')
     const otherRoundId = roundId('round_2')
     const tables: StoredTables = {
-      rooms: [
-        {
-          ...createRoom(currentRoomId),
-          status: 'role_reveal',
-          currentRoundId,
-        },
-      ],
+      rooms: [createRoomWithStatus(currentRoomId, 'role_reveal', currentRoundId)],
       players: [],
-      rounds: [
-        {
-          ...createRound(otherRoundId, currentRoomId),
-          revealEndsAt: 2_000,
-        },
-      ],
+      rounds: [{ ...createRound(otherRoundId, currentRoomId), revealEndsAt: 2_000 }],
       roleAssignments: [],
     }
     const ctx = createCtx(tables)
