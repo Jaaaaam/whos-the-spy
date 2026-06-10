@@ -19,6 +19,7 @@ function App() {
         <Route path="/room/:roomCode/role" element={<RoleRevealPage />} />
         <Route path="/room/:roomCode/discussion" element={<DiscussionPage />} />
         <Route path="/room/:roomCode/voting" element={<VotingPage />} />
+        <Route path="/room/:roomCode/results" element={<ResultsPage />} />
         <Route path="/room/demo" element={<LobbyPage />} />
         <Route path="/room/demo/role" element={<RoleRevealPage />} />
         <Route path="/room/demo/discussion" element={<DiscussionPage />} />

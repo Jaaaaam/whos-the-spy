@@ -222,8 +222,8 @@ export async function finalizeVotingHandler(ctx: MutationCtx, { roomId, roundId 
     .filter((a) => a.role === 'spy')
 
   const remainingSpies = spyAssignments.length - (eliminatedIsSpy ? 1 : 0)
-  const remainingTotal = activePlayers.length - 1
-  const remainingCivilians = remainingTotal - remainingSpies
+  const remainingPlayers = activePlayers.length - 1
+  const remainingCivilians = remainingPlayers - remainingSpies
 
   let didSpyWon: boolean
   let gameOver: boolean

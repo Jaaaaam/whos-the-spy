@@ -10,12 +10,16 @@ import { usePlayersByRoom } from '../../room/hooks/usePlayersByRoom'
 import { useVoteProgress } from '../hooks/useVoteProgress'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { useCastVote } from '../hooks/useCastVote'
+import { useEffect, useRef } from 'react'
+import { useFinalizeVoting } from '../hooks/useFinalizeVoting'
 
 export function VotingPage() {
+  const hasFinalizedRef = useRef(false)
   const { roomCode } = useParams()
   const currentPlayerId = getCurrentPlayerId()
 
   const { room, isLoading: isRoomLoading, notFound: isRoomNotFound } = useRoomByCode(roomCode)
+  const { finalizeVoting, isFinalizingVote, error: finalizationError } = useFinalizeVoting()
 
   const {
     players,
@@ -27,7 +31,7 @@ export function VotingPage() {
     isLoading: isVoteProgressLoading,
   } = useVoteProgress({
     roomId: room?._id,
-    roundId: room?.currentRoundId,
+    roundId: room?.currentRoundId && room.status === GAME_STATUS.VOTING ? room.currentRoundId : undefined,
     voterPlayerId: currentPlayerId,
   })
 
@@ -49,6 +53,18 @@ export function VotingPage() {
       targetPlayerId,
     })
   }
+
+  useEffect(() => {
+    if (
+      !voteProgress?.isComplete ||
+      room?.status !== GAME_STATUS.VOTING ||
+      !room.currentRoundId ||
+      hasFinalizedRef.current
+    ) return
+
+    hasFinalizedRef.current = true
+    void finalizeVoting({ roomId: room._id, roundId: room.currentRoundId })
+  }, [voteProgress?.isComplete, room?.status, room?.currentRoundId, room?._id, finalizeVoting])
 
   if (isRoomLoading) {
     return (
@@ -74,6 +90,14 @@ export function VotingPage() {
 
   if (room.status === GAME_STATUS.DISCUSSION) {
     return <Navigate to={`/room/${room.code}/discussion`} replace />
+  }
+
+  if (room.status === GAME_STATUS.RESULTS) {
+    return <Navigate to={`/room/${room.code}/results`} replace />
+  }
+
+  if (room.status === GAME_STATUS.LOBBY) {
+    return <Navigate to={`/room/${room.code}`} replace />
   }
 
   if (arePlayersLoading || isVoteProgressLoading) {
@@ -136,6 +160,21 @@ export function VotingPage() {
                 : 'Waiting for votes...'}
             </p>
           </Card>
+          {finalizationError ? (
+            <p className="text-center text-sm font-semibold text-error" role="alert">
+              {finalizationError}{' '}
+              <button
+                onClick={() => {
+                  if (!room.currentRoundId) return
+                  void finalizeVoting({ roomId: room._id, roundId: room.currentRoundId })
+                }}
+                disabled={isFinalizingVote}
+                className="underline"
+              >
+                Retry
+              </button>
+            </p>
+          ) : null}
         </section>
         <aside>
           <IntelFeed />

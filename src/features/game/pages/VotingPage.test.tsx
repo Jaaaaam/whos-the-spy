@@ -7,6 +7,7 @@ import { usePlayersByRoom } from '../../room/hooks/usePlayersByRoom'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { saveCurrentPlayerId } from '../../room/lib/currentPlayer'
 import { useCastVote } from '../hooks/useCastVote'
+import { useFinalizeVoting } from '../hooks/useFinalizeVoting'
 import { useVoteProgress } from '../hooks/useVoteProgress'
 import { VotingPage } from './VotingPage'
 
@@ -14,6 +15,7 @@ vi.mock('../../room/hooks/useRoomByCode')
 vi.mock('../../room/hooks/usePlayersByRoom')
 vi.mock('../hooks/useVoteProgress')
 vi.mock('../hooks/useCastVote')
+vi.mock('../hooks/useFinalizeVoting')
 
 const roomId = 'room_1' as Id<'rooms'>
 const roundId = 'round_1' as Id<'rounds'>
@@ -67,6 +69,7 @@ function renderVotingPage() {
         <Route path="/room/:roomCode/voting" element={<VotingPage />} />
         <Route path="/room/:roomCode/role" element={<div>Role redirect</div>} />
         <Route path="/room/:roomCode/discussion" element={<div>Discussion redirect</div>} />
+        <Route path="/room/:roomCode/results" element={<div>Results redirect</div>} />
         <Route path="/room/:roomCode" element={<div>Lobby redirect</div>} />
         <Route path="/join" element={<div>Join redirect</div>} />
       </Routes>
@@ -101,6 +104,11 @@ describe('VotingPage', () => {
     vi.mocked(useCastVote).mockReturnValue({
       castVote: vi.fn(),
       isCastingVote: false,
+      error: null,
+    })
+    vi.mocked(useFinalizeVoting).mockReturnValue({
+      finalizeVoting: vi.fn(),
+      isFinalizingVote: false,
       error: null,
     })
   })
@@ -277,5 +285,118 @@ describe('VotingPage', () => {
     renderVotingPage()
 
     expect(screen.getByText('No active players are available to vote for.')).toBeInTheDocument()
+  })
+
+  it('calls finalizeVoting once when voting is complete', () => {
+    const finalizeVoting = vi.fn()
+    vi.mocked(useFinalizeVoting).mockReturnValue({
+      finalizeVoting,
+      isFinalizingVote: false,
+      error: null,
+    })
+    vi.mocked(useVoteProgress).mockReturnValue({
+      voteProgress: {
+        votedCount: 2,
+        eligibleVoterCount: 2,
+        isComplete: true,
+        selectedTargetPlayerId: secondPlayerId,
+      },
+      isLoading: false,
+      notFound: false,
+    })
+
+    renderVotingPage()
+
+    expect(finalizeVoting).toHaveBeenCalledOnce()
+    expect(finalizeVoting).toHaveBeenCalledWith({
+      roomId,
+      roundId,
+    })
+  })
+
+  it('does not call finalizeVoting when voting is incomplete', () => {
+    const finalizeVoting = vi.fn()
+    vi.mocked(useFinalizeVoting).mockReturnValue({
+      finalizeVoting,
+      isFinalizingVote: false,
+      error: null,
+    })
+    vi.mocked(useVoteProgress).mockReturnValue({
+      voteProgress: {
+        votedCount: 1,
+        eligibleVoterCount: 2,
+        isComplete: false,
+        selectedTargetPlayerId: null,
+      },
+      isLoading: false,
+      notFound: false,
+    })
+
+    renderVotingPage()
+
+    expect(finalizeVoting).not.toHaveBeenCalled()
+  })
+
+  it('redirects to results when room status becomes RESULTS', () => {
+    vi.mocked(useRoomByCode).mockReturnValue({
+      room: {
+        ...room,
+        status: GAME_STATUS.RESULTS,
+      },
+      isLoading: false,
+      notFound: false,
+    })
+
+    renderVotingPage()
+
+    expect(screen.getByText('Results redirect')).toBeInTheDocument()
+  })
+
+  it('redirects to lobby when room status becomes LOBBY', () => {
+    vi.mocked(useRoomByCode).mockReturnValue({
+      room: {
+        ...room,
+        status: GAME_STATUS.LOBBY,
+      },
+      isLoading: false,
+      notFound: false,
+    })
+
+    renderVotingPage()
+
+    expect(screen.getByText('Lobby redirect')).toBeInTheDocument()
+  })
+
+  it('shows finalization error message', () => {
+    vi.mocked(useFinalizeVoting).mockReturnValue({
+      finalizeVoting: vi.fn(),
+      isFinalizingVote: false,
+      error: 'Unable to finalize voting.',
+    })
+
+    renderVotingPage()
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Unable to finalize voting.')
+  })
+
+  it('shows retry button on finalization error', () => {
+    const finalizeVoting = vi.fn()
+    vi.mocked(useFinalizeVoting).mockReturnValue({
+      finalizeVoting,
+      isFinalizingVote: false,
+      error: 'Unable to finalize voting.',
+    })
+
+    renderVotingPage()
+
+    const retryButton = screen.getByRole('button', { name: 'Retry' })
+    expect(retryButton).toBeInTheDocument()
+
+    fireEvent.click(retryButton)
+
+    expect(finalizeVoting).toHaveBeenCalledWith({
+      roomId,
+      roundId,
+    })
   })
 })
