@@ -170,6 +170,32 @@ describe('getDiscussionStateHandler', () => {
   })
 })
 
+  it('reports correct turn counts for a 15-player discussion round', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const playerIds = Array.from({ length: 15 }, (_, i) => playerId(`player_${i + 1}`))
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.DISCUSSION, currentRoundId)],
+      players: playerIds.map((id, i) => createPlayer(id, currentRoomId, i === 0)),
+      rounds: [
+        createDiscussionRound(currentRoundId, currentRoomId, {
+          discussionOrder: playerIds,
+          currentTurnIndex: 7,
+          turnStartedAt: 1_000,
+          turnEndsAt: 31_000,
+        }),
+      ],
+      roleAssignments: [],
+    }
+    const ctx = createCtx(tables)
+
+    const result = await getDiscussionStateHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+
+    expect(result?.round.totalTurns).toBe(15)
+    expect(result?.round.currentTurn).toBe(8)
+    expect(result?.round.activePlayerId).toBe(playerIds[7])
+  })
+
 describe('endDiscussionTurnHandler', () => {
   const currentRoomId = roomId('room_1')
   const currentRoundId = roundId('round_1')

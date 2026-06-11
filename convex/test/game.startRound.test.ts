@@ -289,6 +289,29 @@ describe('startRoundHandler', () => {
     expect(round2Assignments.map((a) => a.playerId)).not.toContain(eliminatedPlayerId)
   })
 
+  it('assigns 3 spies and 12 civilians when starting with 15 players', async () => {
+    const currentRoomId = roomId('room_1')
+    const hostPlayerId = playerId('player_1')
+    const players = Array.from({ length: 15 }, (_, i) =>
+      createPlayer(playerId(`player_${i + 1}`), currentRoomId, i === 0),
+    )
+    const tables: StoredTables = {
+      rooms: [createRoom(currentRoomId)],
+      players,
+      rounds: [],
+      roleAssignments: [],
+    }
+    const ctx = createCtx(tables)
+
+    const result = await startRoundHandler(ctx, { roomId: currentRoomId, hostPlayerId })
+
+    expect(result.spyCount).toBe(3)
+    expect(tables.roleAssignments).toHaveLength(15)
+    expect(tables.roleAssignments.filter(({ role }) => role === 'spy')).toHaveLength(3)
+    expect(tables.roleAssignments.filter(({ role }) => role === 'civilian')).toHaveLength(12)
+    expect(tables.rooms[0].status).toBe('role_reveal')
+  })
+
   it('prevents a host from another room from starting the round', async () => {
     const currentRoomId = roomId('room_1')
     const otherRoomId = roomId('room_2')

@@ -244,6 +244,85 @@ describe('finalizeVotingHandler', () => {
     ).rejects.toThrow(GAME_ERROR.VOTING_NOT_COMPLETE)
   })
 
+  it('returns the existing result when called a second time after voting is already finalized', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const spyId = playerId('player_1')
+    const civilian1Id = playerId('player_2')
+    const civilian2Id = playerId('player_3')
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+      players: [
+        createPlayer(spyId, currentRoomId),
+        createPlayer(civilian1Id, currentRoomId),
+        createPlayer(civilian2Id, currentRoomId),
+      ],
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments: [
+        createRoleAssignment(roleAssignmentId('ra_1'), currentRoomId, currentRoundId, spyId, 'spy'),
+        createRoleAssignment(roleAssignmentId('ra_2'), currentRoomId, currentRoundId, civilian1Id, 'civilian'),
+        createRoleAssignment(roleAssignmentId('ra_3'), currentRoomId, currentRoundId, civilian2Id, 'civilian'),
+      ],
+      votes: [
+        createVote(voteId('vote_1'), currentRoomId, currentRoundId, civilian1Id, spyId),
+        createVote(voteId('vote_2'), currentRoomId, currentRoundId, civilian2Id, spyId),
+        createVote(voteId('vote_3'), currentRoomId, currentRoundId, spyId, civilian1Id),
+      ],
+    }
+    const ctx = createCtx(tables)
+
+    const firstResult = await finalizeVotingHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+    const secondResult = await finalizeVotingHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+
+    expect(secondResult).toEqual(firstResult)
+    expect(tables.rooms[0].status).toBe(GAME_STATUS.RESULTS)
+  })
+
+  it('ends the game when spies equal civilians with 15 players', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    // 15 players: 5 spies, 10 civilians — eliminate 9 civilians → 5 spies vs 1 civilian → spy wins
+    const spyIds = Array.from({ length: 5 }, (_, i) => playerId(`spy_${i + 1}`))
+    const civilianIds = Array.from({ length: 10 }, (_, i) => playerId(`civilian_${i + 1}`))
+    // Mark 9 civilians as already eliminated (previous rounds), leaving 5 spies + 1 civilian active
+    const players = [
+      ...spyIds.map(id => createPlayer(id, currentRoomId)),
+      ...civilianIds.map((id, i) => ({ ...createPlayer(id, currentRoomId), isEliminated: i < 9 })),
+    ]
+    const activePlayers = players.filter(p => !p.isEliminated) // 5 spies + 1 civilian = 6 active
+    const lastCivilianId = civilianIds[9]
+
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+      players,
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments: [
+        ...spyIds.map((id, i) =>
+          createRoleAssignment(roleAssignmentId(`ra_spy_${i + 1}`), currentRoomId, currentRoundId, id, 'spy')),
+        ...civilianIds.map((id, i) =>
+          createRoleAssignment(roleAssignmentId(`ra_civ_${i + 1}`), currentRoomId, currentRoundId, id, 'civilian')),
+      ],
+      // All 6 active players vote for the last civilian
+      votes: activePlayers.map((voter, i) =>
+        createVote(
+          voteId(`vote_${i + 1}`),
+          currentRoomId,
+          currentRoundId,
+          playerId(voter._id),
+          voter._id === lastCivilianId ? spyIds[0] : lastCivilianId,
+        )
+      ),
+    }
+    const ctx = createCtx(tables)
+
+    // last civilian gets 5 votes (from 5 spies), spy gets 1 vote (from last civilian) → civilian eliminated
+    // 5 spies >= 0 remaining civilians → spy wins
+    const result = await finalizeVotingHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+
+    expect(result).toEqual({ isTie: false, eliminatedPlayerId: lastCivilianId, didSpyWon: true })
+    expect(tables.rooms[0].status).toBe(GAME_STATUS.RESULTS)
+  })
+
   it('throws when the room is not in the voting phase', async () => {
     const currentRoomId = roomId('room_1')
     const currentRoundId = roundId('round_1')

@@ -139,6 +139,36 @@ describe('markRoleSeenHandler', () => {
     expect(tables.rounds[0].turnEndsAt).toEqual(expect.any(Number))
   })
 
+  it('advances to discussion only after all 15 players have seen their role', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const playerIds = Array.from({ length: 15 }, (_, i) => playerId(`player_${i + 1}`))
+    const roleAssignments = playerIds.map((id, i) =>
+      createRoleAssignment(
+        roleAssignmentId(`ra_${i + 1}`),
+        currentRoomId,
+        currentRoundId,
+        id,
+        i === 0 ? 'spy' : 'civilian',
+        i < 14 ? 1_000 : undefined,
+      ),
+    )
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, 'role_reveal', currentRoundId)],
+      players: playerIds.map((id, i) => createPlayer(id, currentRoomId, i === 0)),
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments,
+    }
+    const ctx = createCtx(tables)
+
+    await markRoleSeenHandler(ctx, { roundId: currentRoundId, playerId: playerIds[13] })
+    expect(tables.rooms[0].status).toBe('role_reveal')
+
+    await markRoleSeenHandler(ctx, { roundId: currentRoundId, playerId: playerIds[14] })
+    expect(tables.rooms[0].status).toBe('discussion')
+    expect(tables.rounds[0].discussionOrder).toHaveLength(15)
+  })
+
   it('throws when the player has no role assignment', async () => {
     const currentRoomId = roomId('room_1')
     const currentRoundId = roundId('round_1')

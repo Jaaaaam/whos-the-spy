@@ -170,6 +170,17 @@ export async function getVotingResultsHandler(ctx: QueryCtx, { roomId, roundId }
 }
 
 export async function finalizeVotingHandler(ctx: MutationCtx, { roomId, roundId }: RoomRoundArgs) {
+  const room = await ctx.db.get(roomId)
+  if (!room) throw new Error(GAME_ERROR.ROOM_NOT_FOUND)
+
+  if (room.status !== GAME_STATUS.VOTING) {
+    const round = await ctx.db.get(roundId)
+    if (round && round.roomId === roomId && (round.eliminatedPlayerId !== undefined || round.isTie)) {
+      return { isTie: round.isTie as boolean, eliminatedPlayerId: round.eliminatedPlayerId, didSpyWon: round.didSpyWon }
+    }
+    throw new Error(GAME_ERROR.ROOM_NOT_IN_CURRENT_VOTING)
+  }
+
   await getCurrentVotingRound(ctx, { roomId, roundId })
 
   const activePlayers = await getActivePlayersByRoom(ctx, roomId)

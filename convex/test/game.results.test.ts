@@ -105,6 +105,37 @@ describe('getResultsStateHandler', () => {
     expect(result.didSpyWin).toBe(true)
   })
 
+  it('returns voting history for all 15 players', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const playerIds = Array.from({ length: 15 }, (_, i) => playerId(`player_${i + 1}`))
+    const spyId = playerIds[0]
+    const eliminatedId = playerIds[1]
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.RESULTS, currentRoundId)],
+      players: playerIds.map((id, i) => ({ ...createPlayer(id, currentRoomId, i === 0), name: `Player ${i + 1}` })),
+      rounds: [{
+        ...createRound(currentRoundId, currentRoomId),
+        eliminatedPlayerId: eliminatedId,
+        didSpyWon: false,
+        isTie: false,
+      }],
+      roleAssignments: playerIds.map((id, i) =>
+        createRoleAssignment(roleAssignmentId(`ra_${i + 1}`), currentRoomId, currentRoundId, id, i === 0 ? 'spy' : 'civilian'),
+      ),
+      votes: playerIds.map((id, i) =>
+        createVote(voteId(`vote_${i + 1}`), currentRoomId, currentRoundId, id, id === spyId ? playerIds[2] : eliminatedId),
+      ),
+    }
+    const ctx = createCtx(tables)
+
+    const result = await getResultsStateHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+
+    expect(result.votingHistory).toHaveLength(15)
+    expect(result.eliminatedPlayerName).toBe('Player 2')
+    expect(result.isEliminatedPlayerSpy).toBe(false)
+  })
+
   it('throws when room is not in results phase', async () => {
     const currentRoomId = roomId('room_1')
     const currentRoundId = roundId('round_1')

@@ -619,6 +619,34 @@ describe('getVotingResultsHandler', () => {
     })
   })
 
+  it('tallies votes correctly across 15 players', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const playerIds = Array.from({ length: 15 }, (_, i) => playerId(`player_${i + 1}`))
+    const targetId = playerIds[0]
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+      players: playerIds.map((id, i) => ({ ...createPlayer(id, currentRoomId, i === 0), name: `Player ${i + 1}` })),
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments: [],
+      // 14 players vote for player_1; player_1 votes for player_2
+      votes: [
+        ...playerIds.slice(1).map((id, i) =>
+          createVote(voteId(`vote_${i + 1}`), currentRoomId, currentRoundId, id, targetId),
+        ),
+        createVote(voteId('vote_15'), currentRoomId, currentRoundId, targetId, playerIds[1]),
+      ],
+    }
+    const ctx = createCtx(tables)
+
+    const results = await getVotingResultsHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+
+    expect(results.totalVotes).toBe(15)
+    expect(results.results[0]).toMatchObject({ playerId: targetId, voteCount: 14 })
+    expect(results.results[1]).toMatchObject({ playerId: playerIds[1], voteCount: 1 })
+    expect(results.results.slice(2).every(r => r.voteCount === 0)).toBe(true)
+  })
+
   it('rejects requests outside the voting phase', async () => {
     const currentRoomId = roomId('room_1')
     const currentRoundId = roundId('round_1')
