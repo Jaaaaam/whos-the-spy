@@ -7,8 +7,8 @@ import type { RoomRoundArgs } from './types'
 export async function getResultsStateHandler(ctx: QueryCtx, { roomId, roundId }: RoomRoundArgs) {
   const room = await ctx.db.get(roomId)
   if (!room) throw new Error(GAME_ERROR.ROOM_NOT_FOUND)
-  if (room.status !== GAME_STATUS.RESULTS) throw new Error(GAME_ERROR.ROOM_NOT_IN_RESULTS)
-  if (room.currentRoundId !== roundId) throw new Error(GAME_ERROR.NOT_CURRENT_ROOM_ROUND)
+  if (room.status !== GAME_STATUS.RESULTS) return null
+  if (room.currentRoundId !== roundId) return null
 
   const round = await ctx.db.get(roundId)
   if (!round || round.roomId !== roomId) throw new Error(GAME_ERROR.ROUND_NOT_FOUND)

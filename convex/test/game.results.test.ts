@@ -53,6 +53,7 @@ describe('getResultsStateHandler', () => {
     const ctx = createCtx(tables)
 
     const result = await getResultsStateHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+    if (!result) throw new Error('Expected non-null result')
 
     expect(result.civilianWord).toBe('Jollibee')
     expect(result.eliminatedPlayerName).toBe('Mika')
@@ -99,6 +100,7 @@ describe('getResultsStateHandler', () => {
     const ctx = createCtx(tables)
 
     const result = await getResultsStateHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+    if (!result) throw new Error('Expected non-null result')
 
     expect(result.eliminatedPlayerName).toBe('Jam')
     expect(result.isEliminatedPlayerSpy).toBe(false)
@@ -130,13 +132,14 @@ describe('getResultsStateHandler', () => {
     const ctx = createCtx(tables)
 
     const result = await getResultsStateHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+    if (!result) throw new Error('Expected non-null result')
 
     expect(result.votingHistory).toHaveLength(15)
     expect(result.eliminatedPlayerName).toBe('Player 2')
     expect(result.isEliminatedPlayerSpy).toBe(false)
   })
 
-  it('throws when room is not in results phase', async () => {
+  it('returns null when room is not in results phase', async () => {
     const currentRoomId = roomId('room_1')
     const currentRoundId = roundId('round_1')
 
@@ -148,9 +151,8 @@ describe('getResultsStateHandler', () => {
     }
     const ctx = createCtx(tables)
 
-    await expect(
-      getResultsStateHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId }),
-    ).rejects.toThrow(GAME_ERROR.ROOM_NOT_IN_RESULTS)
+    const result = await getResultsStateHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+    expect(result).toBeNull()
   })
 
   it('throws when room is not found', async () => {
@@ -170,7 +172,7 @@ describe('getResultsStateHandler', () => {
     ).rejects.toThrow(GAME_ERROR.ROOM_NOT_FOUND)
   })
 
-  it('throws when round does not match current room round', async () => {
+  it('returns null when round does not match current room round', async () => {
     const currentRoomId = roomId('room_1')
     const currentRoundId = roundId('round_1')
     const otherRoundId = roundId('round_2')
@@ -183,9 +185,8 @@ describe('getResultsStateHandler', () => {
     }
     const ctx = createCtx(tables)
 
-    await expect(
-      getResultsStateHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId }),
-    ).rejects.toThrow(GAME_ERROR.NOT_CURRENT_ROOM_ROUND)
+    const result = await getResultsStateHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+    expect(result).toBeNull()
   })
 
   it('returns isGameOver=false when civilian was eliminated and game continues', async () => {
@@ -219,6 +220,7 @@ describe('getResultsStateHandler', () => {
     const ctx = createCtx(tables)
 
     const result = await getResultsStateHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+    if (!result) throw new Error('Expected non-null result')
 
     expect(result.isEliminatedPlayerSpy).toBe(false)
     expect(result.isGameOver).toBe(false)

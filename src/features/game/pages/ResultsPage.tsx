@@ -53,6 +53,22 @@ export function ResultsPage() {
     return <Navigate to="/join" replace />
   }
 
+  if (room.status === GAME_STATUS.ROLE_REVEAL) {
+    return <Navigate to={`/room/${room.code}/role`} replace />
+  }
+
+  if (room.status === GAME_STATUS.DISCUSSION) {
+    return <Navigate to={`/room/${room.code}/discussion`} replace />
+  }
+
+  if (room.status === GAME_STATUS.VOTING) {
+    return <Navigate to={`/room/${room.code}/voting`} replace />
+  }
+
+  if (room.status === GAME_STATUS.LOBBY) {
+    return <Navigate to={`/room/${room.code}`} replace />
+  }
+
   if (!resultsState) {
     return (
       <PageShell compact>
