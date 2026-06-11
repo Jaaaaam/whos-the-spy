@@ -46,6 +46,7 @@ export async function getResultsStateHandler(ctx: QueryCtx, { roomId, roundId }:
       : null,
     isEliminatedPlayerSpy: roleAssignment?.role === 'spy',
     didSpyWin: round.didSpyWon ?? false,
+    isGameOver: round.isGameOver ?? true,
     votingHistory,
   }
 }

@@ -187,4 +187,40 @@ describe('getResultsStateHandler', () => {
       getResultsStateHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId }),
     ).rejects.toThrow(GAME_ERROR.NOT_CURRENT_ROOM_ROUND)
   })
+
+  it('returns isGameOver=false when civilian was eliminated and game continues', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const civilianId = playerId('civilian_player')
+    const spyId = playerId('spy_player')
+    const civilian2Id = playerId('civilian_2')
+
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.RESULTS, currentRoundId)],
+      players: [
+        { ...createPlayer(civilianId, currentRoomId), name: 'Jam' },
+        { ...createPlayer(spyId, currentRoomId), name: 'Mika' },
+        { ...createPlayer(civilian2Id, currentRoomId), name: 'Dani' },
+      ],
+      rounds: [{
+        ...createRound(currentRoundId, currentRoomId),
+        eliminatedPlayerId: civilianId,
+        didSpyWon: false,
+        isTie: false,
+        isGameOver: false,
+      }],
+      roleAssignments: [
+        createRoleAssignment(roleAssignmentId('ra_1'), currentRoomId, currentRoundId, civilianId, 'civilian'),
+        createRoleAssignment(roleAssignmentId('ra_2'), currentRoomId, currentRoundId, spyId, 'spy'),
+        createRoleAssignment(roleAssignmentId('ra_3'), currentRoomId, currentRoundId, civilian2Id, 'civilian'),
+      ],
+      votes: [],
+    }
+    const ctx = createCtx(tables)
+
+    const result = await getResultsStateHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+
+    expect(result.isEliminatedPlayerSpy).toBe(false)
+    expect(result.isGameOver).toBe(false)
+  })
 })
