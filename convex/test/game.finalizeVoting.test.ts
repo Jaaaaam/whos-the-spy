@@ -92,7 +92,7 @@ describe('finalizeVotingHandler', () => {
 
     expect(result).toEqual({ isTie: false, eliminatedPlayerId: spy1Id, didSpyWon: false })
     expect(tables.players.find(p => p._id === spy1Id)?.isEliminated).toBe(true)
-    expect(tables.rooms[0].status).toBe(GAME_STATUS.LOBBY)
+    expect(tables.rooms[0].status).toBe(GAME_STATUS.RESULTS)
   })
 
   it('eliminates a civilian and ends the game when spies equal civilians', async () => {
@@ -166,7 +166,7 @@ describe('finalizeVotingHandler', () => {
     const result = await finalizeVotingHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
 
     expect(result).toEqual({ isTie: false, eliminatedPlayerId: civilian1Id, didSpyWon: false })
-    expect(tables.rooms[0].status).toBe(GAME_STATUS.LOBBY)
+    expect(tables.rooms[0].status).toBe(GAME_STATUS.RESULTS)
   })
 
   it('transitions to battle on a tie and stores the tied candidates', async () => {
