@@ -5,7 +5,7 @@ import type { Doc, Id } from '../../../../convex/_generated/dataModel'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { usePlayersByRoom } from '../../room/hooks/usePlayersByRoom'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
-import { saveCurrentPlayerId } from '../../room/lib/currentPlayer'
+import { clearCurrentPlayerId, saveCurrentPlayerId } from '../../room/lib/currentPlayer'
 import { useCastVote } from '../hooks/useCastVote'
 import { useFinalizeVoting } from '../hooks/useFinalizeVoting'
 import { useVoteProgress } from '../hooks/useVoteProgress'
@@ -138,7 +138,7 @@ describe('VotingPage', () => {
   })
 
   it('redirects to join when there is no current player', () => {
-    localStorage.clear()
+    clearCurrentPlayerId()
 
     renderVotingPage()
 

@@ -5,7 +5,7 @@ import type { Doc, Id } from '../../../../convex/_generated/dataModel'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { usePlayersByRoom } from '../../room/hooks/usePlayersByRoom'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
-import { saveCurrentPlayerId } from '../../room/lib/currentPlayer'
+import { clearCurrentPlayerId, saveCurrentPlayerId } from '../../room/lib/currentPlayer'
 import { useAdvanceDiscussionIfExpired } from '../hooks/useAdvanceDiscussionIfExpired'
 import { useDiscussionState } from '../hooks/useDiscussionState'
 import { useEndDiscussionTurn } from '../hooks/useEndDiscussionTurn'
@@ -151,7 +151,7 @@ describe('DiscussionPage', () => {
   })
 
   it('redirects to join when there is no current player', () => {
-    localStorage.clear()
+    clearCurrentPlayerId()
 
     renderDiscussionPage()
 

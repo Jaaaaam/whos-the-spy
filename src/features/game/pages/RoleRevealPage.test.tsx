@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Doc, Id } from '../../../../convex/_generated/dataModel'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
-import { saveCurrentPlayerId } from '../../room/lib/currentPlayer'
+import { clearCurrentPlayerId, saveCurrentPlayerId } from '../../room/lib/currentPlayer'
 import { useAdvanceRevealIfExpired } from '../hooks/useAdvanceRevealIfExpired'
 import { useMarkRoleSeen } from '../hooks/useMarkRoleSeen'
 import { useMyReveal } from '../hooks/useMyReveal'
@@ -119,7 +119,7 @@ describe('RoleRevealPage', () => {
   })
 
   it('redirects to join when there is no current player', () => {
-    localStorage.clear()
+    clearCurrentPlayerId()
 
     renderRoleRevealPage()
 
