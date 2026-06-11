@@ -20,6 +20,7 @@ import {
   getVoteProgressHandler,
   getVotingResultsHandler,
 } from "./game/voting"
+import { getResultsStateHandler } from "./game/results"
 
 export const startRound = mutation({
   args: {
@@ -127,4 +128,12 @@ export const finalizeVoting = mutation({
     roundId: v.id(TABLE.ROUNDS),
   },
   handler: finalizeVotingHandler,
+})
+
+export const getResultsState = query({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+  },
+  handler: getResultsStateHandler,
 })

@@ -17,5 +17,6 @@ export const GAME_ERROR = {
   VOTER_NOT_IN_ROOM: 'Voter not in room.',
   CANNOT_VOTE_SELF: 'You cannot vote yourself.',
   VOTING_NOT_COMPLETE: 'Voting not complete.',
+  ROOM_NOT_IN_RESULTS: 'Room is not in the results phase.',
   GENERIC_ERROR: 'Something went wrong.'
 } as const

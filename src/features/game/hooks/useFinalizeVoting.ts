@@ -26,7 +26,7 @@ export function useFinalizeVoting() {
       if (message !== GAME_ERROR.ROOM_NOT_IN_CURRENT_VOTING) {
         setError(message)
       }
-      setError(message)
+
     } finally {
       setIsFinalizingVote(false)
     }

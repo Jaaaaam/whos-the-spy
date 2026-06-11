@@ -12,6 +12,7 @@ import type * as game from "../game.js";
 import type * as game_constants from "../game/constants.js";
 import type * as game_discussion from "../game/discussion.js";
 import type * as game_errors from "../game/errors.js";
+import type * as game_results from "../game/results.js";
 import type * as game_reveal from "../game/reveal.js";
 import type * as game_startRound from "../game/startRound.js";
 import type * as game_types from "../game/types.js";
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   "game/constants": typeof game_constants;
   "game/discussion": typeof game_discussion;
   "game/errors": typeof game_errors;
+  "game/results": typeof game_results;
   "game/reveal": typeof game_reveal;
   "game/startRound": typeof game_startRound;
   "game/types": typeof game_types;

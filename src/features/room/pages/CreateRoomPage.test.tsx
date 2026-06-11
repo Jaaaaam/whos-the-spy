@@ -26,7 +26,7 @@ describe('CreateRoomPage', () => {
     renderCreateRoomPage()
 
     expect(screen.getByRole('heading', { name: 'Room Configuration' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Your Name')).toHaveValue('Jam')
+    expect(screen.getByLabelText('Your Name')).toHaveValue('')
     expect(screen.getByLabelText('Expected Players')).toHaveValue(8)
     expect(
       screen.getByText((text) => text.includes(`Room capacity is ${MAX_PLAYERS_PER_ROOM}.`)),
