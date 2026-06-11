@@ -21,6 +21,10 @@ export async function startRoundHandler(
     throw new Error(GAME_ERROR.ROOM_NOT_FOUND)
   }
 
+  if (currentRoom.status !== GAME_STATUS.LOBBY && currentRoom.status !== GAME_STATUS.RESULTS) {
+    return { roundId: currentRoom.currentRoundId!, spyCount: 0, roundNumber: 0 }
+  }
+
   const hostPlayer = await ctx.db.get(hostPlayerId)
 
   if (!hostPlayer) {
