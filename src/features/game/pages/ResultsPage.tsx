@@ -1,19 +1,43 @@
+import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { ButtonLink } from '../../../shared/components/Button'
 import { Card } from '../../../shared/components/Card'
 import { PageShell } from '../../../shared/layouts/PageShell'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
+import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
+import { useStartRound } from '../../room/hooks/useStartRound'
 import { useResultsState } from '../hooks/useResultsState'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
+
+const NEXT_ROUND_COUNTDOWN_SECONDS = 5
 
 export function ResultsPage() {
   const { roomCode } = useParams()
   const { room, isLoading: isRoomLoading, notFound: isRoomNotFound } = useRoomByCode(roomCode)
-
   const { resultsState, isLoading: isResultsLoading } = useResultsState({
     roomId: room?._id,
     roundId: room?.status === GAME_STATUS.RESULTS && room?.currentRoundId ? room.currentRoundId : undefined,
   })
+  const { startRound } = useStartRound()
+  const [countdown, setCountdown] = useState(NEXT_ROUND_COUNTDOWN_SECONDS)
+
+  const isGameOver = resultsState?.isGameOver ?? true
+  const currentPlayerId = getCurrentPlayerId()
+  const isHost = !!room?.hostPlayerId && currentPlayerId === room.hostPlayerId
+
+  useEffect(() => {
+    if (isGameOver || !resultsState || !room) return
+
+    if (countdown <= 0) {
+      if (isHost) {
+        startRound(room._id, room.hostPlayerId!)
+      }
+      return
+    }
+
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [isGameOver, resultsState, room, countdown, isHost, startRound])
 
   if (isRoomLoading || isResultsLoading) {
     return (
@@ -35,6 +59,28 @@ export function ResultsPage() {
         <Card className="my-8 text-center text-on-surface-variant">
           Loading results...
         </Card>
+      </PageShell>
+    )
+  }
+
+  if (!isGameOver) {
+    const eliminatedName = resultsState.eliminatedPlayerName ?? 'A player'
+    return (
+      <PageShell compact>
+        <section className="py-12 text-center">
+          <div className="inline-flex rounded-full bg-error-container/20 px-5 py-2 text-xs font-bold uppercase tracking-[0.25em] text-error ring-1 ring-error/20">
+            Round Over
+          </div>
+          <h1 className="mt-5 font-headline text-5xl font-extrabold tracking-tight sm:text-7xl">
+            {eliminatedName} was eliminated
+          </h1>
+          <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-on-surface-variant">
+            They were a <strong>Civilian</strong>. The spy is still out there.
+          </p>
+          <p className="mt-8 text-2xl font-bold text-primary">
+            Next round starting in {countdown}…
+          </p>
+        </section>
       </PageShell>
     )
   }

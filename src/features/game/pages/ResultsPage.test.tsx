@@ -1,17 +1,22 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import type { Doc, Id } from '../../../../convex/_generated/dataModel'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
+import { useStartRound } from '../../room/hooks/useStartRound'
+import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
 import { useResultsState } from '../hooks/useResultsState'
 import { ResultsPage } from './ResultsPage'
 
 vi.mock('../../room/hooks/useRoomByCode')
 vi.mock('../hooks/useResultsState')
+vi.mock('../../room/hooks/useStartRound')
+vi.mock('../../room/lib/currentPlayer')
 
 const roomId = 'room_1' as Id<'rooms'>
 const roundId = 'round_1' as Id<'rounds'>
+const hostPlayerId = 'host_player' as Id<'players'>
 
 const room: Doc<'rooms'> = {
   _id: roomId,
@@ -19,14 +24,17 @@ const room: Doc<'rooms'> = {
   code: 'SPY247',
   status: GAME_STATUS.RESULTS,
   currentRoundId: roundId,
+  hostPlayerId,
   createdAt: 0,
 }
 
 const resultsState = {
   civilianWord: 'Jollibee',
+  spyWord: "McDonald's",
   eliminatedPlayerName: 'Mika',
   isEliminatedPlayerSpy: true,
   didSpyWin: false,
+  isGameOver: true,
   votingHistory: [
     { voterName: 'Jam', targetName: 'Mika' },
     { voterName: 'Dani', targetName: 'Mika' },
@@ -48,15 +56,15 @@ function renderResultsPage() {
 
 describe('ResultsPage', () => {
   beforeEach(() => {
-    vi.mocked(useRoomByCode).mockReturnValue({
-      room,
-      isLoading: false,
-      notFound: false,
-    })
-    vi.mocked(useResultsState).mockReturnValue({
-      resultsState,
-      isLoading: false,
-    })
+    vi.useFakeTimers()
+    vi.mocked(useRoomByCode).mockReturnValue({ room, isLoading: false, notFound: false })
+    vi.mocked(useResultsState).mockReturnValue({ resultsState, isLoading: false })
+    vi.mocked(useStartRound).mockReturnValue({ startRound: vi.fn(), isStarting: false, error: null })
+    vi.mocked(getCurrentPlayerId).mockReturnValue(null)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('shows loading state while room is loading', () => {
@@ -132,5 +140,98 @@ describe('ResultsPage', () => {
 
     const lobbyLinks = screen.getAllByRole('link', { name: /lobby/i })
     expect(lobbyLinks.some((link) => link.getAttribute('href') === '/room/SPY247')).toBe(true)
+  })
+})
+
+describe('mid-game results (isGameOver=false)', () => {
+  const midGameResultsState = {
+    ...resultsState,
+    isEliminatedPlayerSpy: false,
+    didSpyWin: false,
+    isGameOver: false,
+    eliminatedPlayerName: 'Jam',
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.mocked(useRoomByCode).mockReturnValue({ room, isLoading: false, notFound: false })
+    vi.mocked(useResultsState).mockReturnValue({ resultsState: midGameResultsState, isLoading: false })
+    vi.mocked(useStartRound).mockReturnValue({ startRound: vi.fn(), isStarting: false, error: null })
+    vi.mocked(getCurrentPlayerId).mockReturnValue(null)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('shows a countdown instead of game-over UI', () => {
+    renderResultsPage()
+    expect(screen.getByText(/Next round starting in/i)).toBeInTheDocument()
+  })
+
+  it('does not show the New Game or Lobby buttons', () => {
+    renderResultsPage()
+    expect(screen.queryByText('New Game')).not.toBeInTheDocument()
+    const lobbyLinks = screen.queryAllByRole('link', { name: 'Lobby' })
+    expect(lobbyLinks.some((link) => link.getAttribute('href') === '/room/SPY247')).toBe(false)
+  })
+
+  it('calls startRound after countdown when current player is host', async () => {
+    const startRound = vi.fn()
+    vi.mocked(useStartRound).mockReturnValue({ startRound, isStarting: false, error: null })
+    vi.mocked(getCurrentPlayerId).mockReturnValue(hostPlayerId)
+
+    renderResultsPage()
+
+    for (let i = 0; i < 5; i++) {
+      await act(async () => { vi.advanceTimersByTime(1000) })
+    }
+
+    expect(startRound).toHaveBeenCalledWith(roomId, hostPlayerId)
+  })
+
+  it('does not call startRound when current player is not host', async () => {
+    const startRound = vi.fn()
+    vi.mocked(useStartRound).mockReturnValue({ startRound, isStarting: false, error: null })
+    vi.mocked(getCurrentPlayerId).mockReturnValue('other_player' as Id<'players'>)
+
+    renderResultsPage()
+
+    for (let i = 0; i < 5; i++) {
+      await act(async () => { vi.advanceTimersByTime(1000) })
+    }
+
+    expect(startRound).not.toHaveBeenCalled()
+  })
+})
+
+describe('game-over results (isGameOver=true)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.mocked(useRoomByCode).mockReturnValue({ room, isLoading: false, notFound: false })
+    vi.mocked(useResultsState).mockReturnValue({ resultsState, isLoading: false })
+    vi.mocked(useStartRound).mockReturnValue({ startRound: vi.fn(), isStarting: false, error: null })
+    vi.mocked(getCurrentPlayerId).mockReturnValue(null)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('shows SPY ELIMINATED when spy was caught', () => {
+    renderResultsPage()
+    expect(screen.getByText('SPY ELIMINATED!')).toBeInTheDocument()
+  })
+
+  it('shows New Game and Lobby buttons', () => {
+    renderResultsPage()
+    expect(screen.getByText('New Game')).toBeInTheDocument()
+    const lobbyLinks = screen.getAllByRole('link', { name: 'Lobby' })
+    expect(lobbyLinks.some((link) => link.getAttribute('href') === '/room/SPY247')).toBe(true)
+  })
+
+  it('does not show a countdown', () => {
+    renderResultsPage()
+    expect(screen.queryByText(/Next round starting in/i)).not.toBeInTheDocument()
   })
 })
