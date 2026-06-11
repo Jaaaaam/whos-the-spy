@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { GAME_STATUS } from '../../shared/gameStatus'
 import {
   castVoteHandler,
+  finalizeVotingHandler,
   getVoteProgressHandler,
   getVotingResultsHandler,
 } from '../game/voting'
@@ -10,10 +11,12 @@ import {
   createCtx,
   createPlayer,
   createRoom,
+  createRoleAssignment,
   createRoomWithStatus,
   createRound,
   createVote,
   playerId,
+  roleAssignmentId,
   roomId,
   roundId,
   type StoredTables,
@@ -665,5 +668,106 @@ describe('getVotingResultsHandler', () => {
         roundId: currentRoundId,
       }),
     ).rejects.toThrow(GAME_ERROR.ROOM_NOT_IN_CURRENT_VOTING)
+  })
+})
+
+describe('finalizeVotingHandler', () => {
+  const currentRoomId = roomId('room_1')
+  const currentRoundId = roundId('round_1')
+  const spyId = playerId('spy_player')
+  const civilian1Id = playerId('civilian_1')
+  const civilian2Id = playerId('civilian_2')
+
+  function baseTablesWithRoleAssignments(overrides: Partial<StoredTables> = {}): StoredTables {
+    return {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+      players: [
+        { ...createPlayer(spyId, currentRoomId), name: 'Mika' },
+        { ...createPlayer(civilian1Id, currentRoomId), name: 'Jam' },
+        { ...createPlayer(civilian2Id, currentRoomId), name: 'Dani' },
+      ],
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments: [
+        createRoleAssignment(roleAssignmentId('ra_1'), currentRoomId, currentRoundId, spyId, 'spy'),
+        createRoleAssignment(roleAssignmentId('ra_2'), currentRoomId, currentRoundId, civilian1Id, 'civilian'),
+        createRoleAssignment(roleAssignmentId('ra_3'), currentRoomId, currentRoundId, civilian2Id, 'civilian'),
+      ],
+      votes: [],
+      ...overrides,
+    }
+  }
+
+  it('sets room status to RESULTS and isGameOver=true when spy is caught', async () => {
+    const tables = baseTablesWithRoleAssignments({
+      votes: [
+        createVote(voteId('vote_1'), currentRoomId, currentRoundId, civilian1Id, spyId),
+        createVote(voteId('vote_2'), currentRoomId, currentRoundId, civilian2Id, spyId),
+        createVote(voteId('vote_3'), currentRoomId, currentRoundId, spyId, civilian1Id),
+      ],
+    })
+    const ctx = createCtx(tables)
+
+    const result = await finalizeVotingHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+
+    expect(result.isTie).toBe(false)
+    expect(result.eliminatedPlayerId).toBe(spyId)
+    expect(result.didSpyWon).toBe(false)
+    expect(tables.rooms[0].status).toBe(GAME_STATUS.RESULTS)
+    const round = tables.rounds[0] as any
+    expect(round.isGameOver).toBe(true)
+  })
+
+  it('sets room status to RESULTS and isGameOver=false when civilian is eliminated (game continues)', async () => {
+    const extraCivilianId = playerId('civilian_3')
+    const tables = baseTablesWithRoleAssignments({
+      players: [
+        { ...createPlayer(spyId, currentRoomId), name: 'Mika' },
+        { ...createPlayer(civilian1Id, currentRoomId), name: 'Jam' },
+        { ...createPlayer(civilian2Id, currentRoomId), name: 'Dani' },
+        { ...createPlayer(extraCivilianId, currentRoomId), name: 'Alex' },
+      ],
+      roleAssignments: [
+        createRoleAssignment(roleAssignmentId('ra_1'), currentRoomId, currentRoundId, spyId, 'spy'),
+        createRoleAssignment(roleAssignmentId('ra_2'), currentRoomId, currentRoundId, civilian1Id, 'civilian'),
+        createRoleAssignment(roleAssignmentId('ra_3'), currentRoomId, currentRoundId, civilian2Id, 'civilian'),
+        createRoleAssignment(roleAssignmentId('ra_4'), currentRoomId, currentRoundId, extraCivilianId, 'civilian'),
+      ],
+      votes: [
+        createVote(voteId('vote_1'), currentRoomId, currentRoundId, spyId, civilian1Id),
+        createVote(voteId('vote_2'), currentRoomId, currentRoundId, civilian2Id, civilian1Id),
+        createVote(voteId('vote_3'), currentRoomId, currentRoundId, extraCivilianId, civilian1Id),
+        createVote(voteId('vote_4'), currentRoomId, currentRoundId, civilian1Id, spyId),
+      ],
+    })
+    const ctx = createCtx(tables)
+
+    const result = await finalizeVotingHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+
+    expect(result.isTie).toBe(false)
+    expect(result.eliminatedPlayerId).toBe(civilian1Id)
+    expect(result.didSpyWon).toBe(false)
+    expect(tables.rooms[0].status).toBe(GAME_STATUS.RESULTS)
+    const round = tables.rounds[0] as any
+    expect(round.isGameOver).toBe(false)
+  })
+
+  it('sets room status to RESULTS and isGameOver=true when spies outnumber civilians', async () => {
+    const tables = baseTablesWithRoleAssignments({
+      votes: [
+        createVote(voteId('vote_1'), currentRoomId, currentRoundId, spyId, civilian1Id),
+        createVote(voteId('vote_2'), currentRoomId, currentRoundId, civilian2Id, civilian1Id),
+        createVote(voteId('vote_3'), currentRoomId, currentRoundId, civilian1Id, spyId),
+      ],
+    })
+    const ctx = createCtx(tables)
+
+    const result = await finalizeVotingHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+
+    expect(result.isTie).toBe(false)
+    expect(result.eliminatedPlayerId).toBe(civilian1Id)
+    expect(result.didSpyWon).toBe(true)
+    expect(tables.rooms[0].status).toBe(GAME_STATUS.RESULTS)
+    const round = tables.rounds[0] as any
+    expect(round.isGameOver).toBe(true)
   })
 })

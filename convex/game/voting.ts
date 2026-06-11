@@ -250,8 +250,8 @@ export async function finalizeVotingHandler(ctx: MutationCtx, { roomId, roundId 
     gameOver = false
   }
 
-  await ctx.db.patch(roundId, { eliminatedPlayerId: eliminatedPlayer._id, didSpyWon, isTie: false })
-  await ctx.db.patch(roomId, { status: gameOver ? GAME_STATUS.RESULTS : GAME_STATUS.LOBBY })
+  await ctx.db.patch(roundId, { eliminatedPlayerId: eliminatedPlayer._id, didSpyWon, isTie: false, isGameOver: gameOver })
+  await ctx.db.patch(roomId, { status: GAME_STATUS.RESULTS })
 
   return { isTie: false as const, eliminatedPlayerId: eliminatedPlayer._id, didSpyWon }
 }
