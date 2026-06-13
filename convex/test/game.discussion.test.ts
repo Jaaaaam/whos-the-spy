@@ -10,7 +10,6 @@ import {
   createCtx,
   createDiscussionRound,
   createPlayer,
-  createRoom,
   createRoomWithStatus,
   createRound,
   playerId,
@@ -168,7 +167,6 @@ describe('getDiscussionStateHandler', () => {
 
     expect(result).toBeNull()
   })
-})
 
   it('reports correct turn counts for a 15-player discussion round', async () => {
     const currentRoomId = roomId('room_1')
@@ -195,6 +193,7 @@ describe('getDiscussionStateHandler', () => {
     expect(result?.round.currentTurn).toBe(8)
     expect(result?.round.activePlayerId).toBe(playerIds[7])
   })
+})
 
 describe('endDiscussionTurnHandler', () => {
   const currentRoomId = roomId('room_1')

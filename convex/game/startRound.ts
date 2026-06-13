@@ -11,6 +11,7 @@ import { INDEX, TABLE } from "../lib/db"
 import { REVEAL_DURATION_MS } from "./constants"
 import { GAME_ERROR } from "./errors"
 import type { StartRoundArgs } from "./types"
+import { startDiscussion } from "./discussion"
 
 export async function startRoundHandler(
   ctx: MutationCtx,
@@ -91,7 +92,7 @@ export async function startRoundHandler(
     spyCount: currentSpyCount,
     roundNumber,
     startedAt,
-    revealEndsAt: startedAt + REVEAL_DURATION_MS
+    revealEndsAt: existingRounds.length ? undefined : startedAt + REVEAL_DURATION_MS
   })
 
   for (const assignedRole of assignedRoles) {
@@ -103,10 +104,15 @@ export async function startRoundHandler(
     })
   }
 
-  await ctx.db.patch(roomId, {
-    status: GAME_STATUS.ROLE_REVEAL,
-    currentRoundId: roundId,
-  })
+  if (roundNumber === 1) {
+    await ctx.db.patch(roomId, {
+      status: GAME_STATUS.ROLE_REVEAL,
+      currentRoundId: roundId,
+    })
+  } else {
+    await ctx.db.patch(roomId, { currentRoundId: roundId })
+    await startDiscussion(ctx, { roomId, roundId })
+  }
 
   return {
     roundId,

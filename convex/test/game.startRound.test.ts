@@ -6,6 +6,7 @@ import {
   createPlayer,
   createRoleAssignment,
   createRoom,
+  createRoomWithStatus,
   createRound,
   playerId,
   roleAssignmentId,
@@ -13,6 +14,7 @@ import {
   roundId,
   type StoredTables,
 } from './gameTestUtils'
+import { GAME_STATUS } from '../../shared/gameStatus'
 
 describe('startRoundHandler', () => {
   it('creates a round, persists role assignments, and moves room to role reveal', async () => {
@@ -335,5 +337,81 @@ describe('startRoundHandler', () => {
         hostPlayerId: otherRoomHostPlayerId,
       }),
     ).rejects.toThrow(GAME_ERROR.HOST_NOT_IN_ROOM)
+  })
+
+  it('excludes eliminated and disconnected players from discussion order in round 2+', async () => {
+    const currentRoomId = roomId('room_1')
+    const hostPlayerId = playerId('player_1')
+    const spyPlayerId = playerId('player_2')
+    const civilian1Id = playerId('player_3')
+    const eliminatedId = playerId('player_4')
+    const disconnectedId = playerId('player_5')
+    const round1Id = roundId('round_1')
+
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.RESULTS)],
+      players: [
+        createPlayer(hostPlayerId, currentRoomId, true),
+        createPlayer(spyPlayerId, currentRoomId),
+        createPlayer(civilian1Id, currentRoomId),
+        { ...createPlayer(eliminatedId, currentRoomId), isEliminated: true },
+        { ...createPlayer(disconnectedId, currentRoomId), isConnected: false },
+      ],
+      rounds: [createRound(round1Id, currentRoomId)],
+      roleAssignments: [
+        createRoleAssignment(roleAssignmentId('ra_1'), currentRoomId, round1Id, hostPlayerId, 'civilian'),
+        createRoleAssignment(roleAssignmentId('ra_2'), currentRoomId, round1Id, spyPlayerId, 'spy'),
+        createRoleAssignment(roleAssignmentId('ra_3'), currentRoomId, round1Id, civilian1Id, 'civilian'),
+        createRoleAssignment(roleAssignmentId('ra_4'), currentRoomId, round1Id, eliminatedId, 'civilian'),
+        createRoleAssignment(roleAssignmentId('ra_5'), currentRoomId, round1Id, disconnectedId, 'civilian'),
+      ]
+    }
+    const ctx = createCtx(tables)
+
+    const result = await startRoundHandler(ctx, { roomId: currentRoomId, hostPlayerId })
+
+    const round2 = tables.rounds.find(r => r._id === result.roundId)!
+    expect(tables.rooms[0].status).toBe(GAME_STATUS.DISCUSSION)
+    expect(round2.revealEndsAt).toBeUndefined()
+    expect(round2.discussionOrder).toHaveLength(3)
+    expect(round2.discussionOrder).not.toContain(eliminatedId)
+    expect(round2.discussionOrder).not.toContain(disconnectedId)
+    expect(round2.currentTurnIndex).toBe(0)
+    expect(round2.turnStartedAt).toBeTypeOf('number')
+    expect(round2.turnEndsAt).toBeTypeOf('number')
+  })
+
+  it('skips role reveal and starts discussion directly for round 2+', async () => {
+    const currentRoomId = roomId('room_1')
+    const hostPlayerId = playerId('player_1')
+    const spyPlayerId = playerId('player_2')
+    const civilian1Id = playerId('player_3')
+    const round1Id = roundId('round_1')
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.RESULTS)],
+      players: [
+        createPlayer(hostPlayerId, currentRoomId, true),
+        createPlayer(spyPlayerId, currentRoomId),
+        createPlayer(civilian1Id, currentRoomId),
+      ],
+      rounds: [createRound(round1Id, currentRoomId)],
+      roleAssignments: [
+        createRoleAssignment(roleAssignmentId('ra_1'), currentRoomId, round1Id, hostPlayerId, 'civilian'),
+        createRoleAssignment(roleAssignmentId('ra_2'), currentRoomId, round1Id, spyPlayerId, 'spy'),
+        createRoleAssignment(roleAssignmentId('ra_3'), currentRoomId, round1Id, civilian1Id, 'civilian'),
+      ],
+    }
+    const ctx = createCtx(tables)
+
+    const result = await startRoundHandler(ctx, { roomId: currentRoomId, hostPlayerId })
+
+    expect(result.roundNumber).toBe(2)
+    expect(tables.rooms[0].status).toBe(GAME_STATUS.DISCUSSION)
+    const round2 = tables.rounds.find(r => r._id === result.roundId)!
+    expect(round2.revealEndsAt).toBeUndefined()
+    expect(round2.discussionOrder).toHaveLength(3)
+    expect(round2.currentTurnIndex).toBe(0)
+    expect(round2.turnStartedAt).toBeTypeOf('number')
+    expect(round2.turnEndsAt).toBeTypeOf('number')
   })
 })

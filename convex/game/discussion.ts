@@ -204,7 +204,8 @@ export async function startDiscussion(
     .withIndex(INDEX.PLAYERS_BY_ROOM_ID, (q) => q.eq('roomId', roomId))
     .collect()
 
-  const discussionOrder = shuffle(players.map(player => player._id))
+  const activePlayers = players.filter(player => player.isConnected && !player.isEliminated)
+  const discussionOrder = shuffle(activePlayers.map(player => player._id))
   const turnStartedAt = Date.now()
 
   if (discussionOrder.length === 0) {
