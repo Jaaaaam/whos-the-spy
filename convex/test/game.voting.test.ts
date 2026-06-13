@@ -441,6 +441,67 @@ describe('getVoteProgressHandler', () => {
     })
   })
 
+  it('returns null when the room does not exist', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const tables: StoredTables = {
+      rooms: [],
+      players: [],
+      rounds: [],
+      roleAssignments: [],
+      votes: [],
+    }
+    const ctx = createCtx(tables)
+
+    const progress = await getVoteProgressHandler(ctx, {
+      roomId: currentRoomId,
+      roundId: currentRoundId,
+    })
+
+    expect(progress).toBeNull()
+  })
+
+  it('returns null when the room is not in voting status', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.RESULTS, currentRoundId)],
+      players: [],
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments: [],
+      votes: [],
+    }
+    const ctx = createCtx(tables)
+
+    const progress = await getVoteProgressHandler(ctx, {
+      roomId: currentRoomId,
+      roundId: currentRoundId,
+    })
+
+    expect(progress).toBeNull()
+  })
+
+  it('returns null when the roundId does not match the current round', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const staleRoundId = roundId('round_0')
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+      players: [],
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments: [],
+      votes: [],
+    }
+    const ctx = createCtx(tables)
+
+    const progress = await getVoteProgressHandler(ctx, {
+      roomId: currentRoomId,
+      roundId: staleRoundId,
+    })
+
+    expect(progress).toBeNull()
+  })
+
   it('does not return a selected target for inactive voter or target records', async () => {
     const currentRoomId = roomId('room_1')
     const currentRoundId = roundId('round_1')

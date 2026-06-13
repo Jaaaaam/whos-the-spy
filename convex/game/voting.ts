@@ -97,7 +97,10 @@ export async function castVoteHandler(ctx: MutationCtx, { roundId, roomId, voter
 }
 
 export async function getVoteProgressHandler(ctx: QueryCtx, { roomId, roundId, voterPlayerId }: VoteProgressArgs) {
-  await getCurrentVotingRound(ctx, { roomId, roundId })
+  const room = await ctx.db.get(roomId)
+  if (!room || room.status !== GAME_STATUS.VOTING || room.currentRoundId !== roundId) {
+    return null
+  }
   const activePlayers = await getActivePlayersByRoom(ctx, roomId)
   const activePlayerIds = new Set(activePlayers.map(player => player._id))
   const votes = await getVotesByRoomRound(ctx, { roomId, roundId })
