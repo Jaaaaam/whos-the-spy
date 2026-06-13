@@ -15,3 +15,8 @@ export type RoundPlayerIdArgs = RoundIdArgs & {
 export type VoteProgressIdArgs = RoomRoundIdArgs & {
   voterPlayerId: Id<'players'> | null
 }
+
+export type RoomHostArgs = {
+  roomId: Id<'rooms'>
+  hostPlayerId: Id<'players'>
+}

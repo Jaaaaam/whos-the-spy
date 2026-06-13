@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
-import { ButtonLink } from '../../../shared/components/Button'
+import { Button, ButtonLink } from '../../../shared/components/Button'
 import { Card } from '../../../shared/components/Card'
 import { PageShell } from '../../../shared/layouts/PageShell'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
@@ -8,6 +8,7 @@ import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
 import { useStartRound } from '../../room/hooks/useStartRound'
 import { useResultsState } from '../hooks/useResultsState'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
+import { usePlayAgain } from '../hooks/usePlayAgain'
 
 const NEXT_ROUND_COUNTDOWN_SECONDS = 5
 
@@ -19,6 +20,8 @@ export function ResultsPage() {
     roundId: room?.status === GAME_STATUS.RESULTS && room?.currentRoundId ? room.currentRoundId : undefined,
   })
   const { startRound } = useStartRound()
+  const { playAgain, isPlayingAgain } = usePlayAgain()
+
   const [countdown, setCountdown] = useState(NEXT_ROUND_COUNTDOWN_SECONDS)
 
   const isGameOver = resultsState?.isGameOver ?? true
@@ -30,7 +33,7 @@ export function ResultsPage() {
 
     if (countdown <= 0) {
       if (isHost) {
-        startRound(room._id, room.hostPlayerId!)
+        startRound({ roomId: room._id, hostPlayerId: room.hostPlayerId! })
       }
       return
     }
@@ -105,11 +108,11 @@ export function ResultsPage() {
 
   const initials = resultsState.eliminatedPlayerName
     ? resultsState.eliminatedPlayerName
-        .split(' ')
-        .map((w) => w[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2)
+      .split(' ')
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
     : '??'
 
   return (
@@ -201,11 +204,17 @@ export function ResultsPage() {
       </div>
 
       <div className="mx-auto flex max-w-md flex-col gap-4 pb-8 sm:flex-row">
-        <ButtonLink to="/create" className="flex-1 py-5">
-          New Game
-        </ButtonLink>
-        <ButtonLink to={`/room/${room.code}`} variant="secondary" className="flex-1 py-5">
-          Lobby
+        {isHost && (
+          <Button
+            onClick={() => playAgain({ roomId: room._id, hostPlayerId: room.hostPlayerId! })}
+            disabled={isPlayingAgain}
+            className="flex-1 py-5"
+          >
+            {isPlayingAgain ? 'Starting…' : 'Play Again'}
+          </Button>
+        )}
+        <ButtonLink to="/create" variant="secondary" className="flex-1 py-5">
+          New Room
         </ButtonLink>
       </div>
     </PageShell>

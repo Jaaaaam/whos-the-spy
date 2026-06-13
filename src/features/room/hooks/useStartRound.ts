@@ -1,15 +1,15 @@
 import { useMutation } from 'convex/react'
 import { useState } from 'react'
 import { api } from '../../../../convex/_generated/api'
-import type { Id } from '../../../../convex/_generated/dataModel'
 import { getConvexErrorMessage } from '../../../shared/lib/getConvexErrorMessage'
+import type { RoomHostArgs } from '../../game/types'
 
 export function useStartRound() {
   const startRoundMutation = useMutation(api.game.startRound)
   const [isStarting, setIsStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function startRound(roomId: Id<'rooms'>, hostPlayerId: Id<'players'>) {
+  async function startRound({ roomId, hostPlayerId }: RoomHostArgs) {
     setIsStarting(true)
     setError(null)
 

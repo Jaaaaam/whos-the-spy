@@ -178,7 +178,7 @@ describe('LobbyPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Start Game' }))
 
-    expect(startRound).toHaveBeenCalledWith(room._id, readyPlayers[0]._id)
+    expect(startRound).toHaveBeenCalledWith({ roomId: room._id, hostPlayerId: readyPlayers[0]._id })
   })
 
   it('does not allow a non-host to start the round', () => {

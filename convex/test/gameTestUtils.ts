@@ -281,6 +281,15 @@ export function createCtx(tables: StoredTables) {
           Object.assign(document, value)
         }
       },
+      async delete(id: string) {
+        for (const [table, documents] of Object.entries(storedTables)) {
+          const index = documents.findIndex(({ _id }) => _id === id)
+          if (index !== -1) {
+            (storedTables[table as TableName] as StoredDocument[]).splice(index, 1)
+            return
+          }
+        }
+      },
     },
   } as unknown as MutationCtx & QueryCtx
 

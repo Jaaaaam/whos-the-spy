@@ -74,7 +74,7 @@ export function LobbyPage() {
   async function handleStartRound() {
     if (!canStartRound || !currentPlayer) return
 
-    await startRound(currentRoom._id, currentPlayer._id)
+    await startRound({ roomId: currentRoom._id, hostPlayerId: currentPlayer._id })
   }
 
   async function handleLeaveGame() {
