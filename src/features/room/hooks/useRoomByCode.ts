@@ -1,5 +1,4 @@
 import { useQuery } from 'convex/react'
-import { useEffect } from 'react'
 import { api } from '../../../../convex/_generated/api'
 
 export function useRoomByCode(roomCode: string | undefined) {
@@ -8,13 +7,6 @@ export function useRoomByCode(roomCode: string | undefined) {
     api.rooms.getRoomByCode,
     normalizedRoomCode ? { code: normalizedRoomCode } : 'skip',
   )
-
-  useEffect(() => {
-    console.log('[Convex] room query result', {
-      roomCode: normalizedRoomCode,
-      room,
-    })
-  }, [normalizedRoomCode, room])
 
   return {
     room,

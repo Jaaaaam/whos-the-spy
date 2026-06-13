@@ -74,7 +74,6 @@ export async function joinRoomHandler(ctx: MutationCtx, args: JoinRoomArgs) {
     isConnected: true,
     joinedAt: Date.now(),
   })
-  console.log(playerId, room._id, 'join room')
 
   return {
     playerId,

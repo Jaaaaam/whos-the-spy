@@ -131,26 +131,25 @@ export async function getVoteProgressHandler(ctx: QueryCtx, { roomId, roundId, v
 
 }
 
+function buildVoteCounts(
+  votes: Awaited<ReturnType<typeof getVotesByRoomRound>>,
+  activePlayerIds: Set<string>,
+  activePlayers: { _id: string }[],
+) {
+  const voteCounts = new Map(activePlayers.map((p) => [p._id, 0]))
+  for (const vote of votes) {
+    if (!activePlayerIds.has(vote.voterPlayerId) || !activePlayerIds.has(vote.targetPlayerId)) continue
+    voteCounts.set(vote.targetPlayerId, (voteCounts.get(vote.targetPlayerId) ?? 0) + 1)
+  }
+  return voteCounts
+}
+
 export async function getVotingResultsHandler(ctx: QueryCtx, { roomId, roundId }: RoomRoundArgs) {
   await getCurrentVotingRound(ctx, { roomId, roundId })
   const activePlayers = await getActivePlayersByRoom(ctx, roomId)
   const activePlayerIds = new Set(activePlayers.map(player => player._id))
   const votes = await getVotesByRoomRound(ctx, { roomId, roundId })
-  const voteCounts = new Map(activePlayers.map(player => [player._id, 0]))
-
-  for (const vote of votes) {
-    if (
-      !activePlayerIds.has(vote.voterPlayerId) ||
-      !activePlayerIds.has(vote.targetPlayerId)
-    ) {
-      continue
-    }
-
-    voteCounts.set(
-      vote.targetPlayerId,
-      (voteCounts.get(vote.targetPlayerId) ?? 0) + 1,
-    )
-  }
+  const voteCounts = buildVoteCounts(votes, activePlayerIds, activePlayers)
 
   const results = activePlayers
     .map(player => ({
@@ -200,10 +199,7 @@ export async function finalizeVotingHandler(ctx: MutationCtx, { roomId, roundId 
     throw new Error(GAME_ERROR.VOTING_NOT_COMPLETE)
   }
 
-  const voteCounts = new Map(activePlayers.map((p) => [p._id, 0]))
-  for (const vote of activeVotes) {
-    voteCounts.set(vote.targetPlayerId, (voteCounts.get(vote.targetPlayerId) ?? 0) + 1)
-  }
+  const voteCounts = buildVoteCounts(activeVotes, activePlayerIds, activePlayers)
 
   const topCount = Math.max(0, ...voteCounts.values())
   const topCandidates = activePlayers.filter((p) => voteCounts.get(p._id) === topCount)

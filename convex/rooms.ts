@@ -32,7 +32,6 @@ export async function createRoomHandler(ctx: MutationCtx, args: CreateRoomArgs) 
   })
 
   const room = await ctx.db.get(roomId);
-  console.log(room, 'room created')
   return { room, playerId, code: room?.code };
 }
 

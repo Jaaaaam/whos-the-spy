@@ -95,14 +95,14 @@ export async function startRoundHandler(
     revealEndsAt: existingRounds.length ? undefined : startedAt + REVEAL_DURATION_MS
   })
 
-  for (const assignedRole of assignedRoles) {
-    await ctx.db.insert(TABLE.ROLE_ASSIGNMENTS, {
+  await Promise.all(assignedRoles.map((assignedRole) =>
+    ctx.db.insert(TABLE.ROLE_ASSIGNMENTS, {
       roomId,
       roundId,
       playerId: assignedRole.playerId,
       role: assignedRole.role,
     })
-  }
+  ))
 
   if (roundNumber === 1) {
     await ctx.db.patch(roomId, {
