@@ -48,13 +48,13 @@ export async function castVoteHandler(ctx: MutationCtx, { roundId, roomId, voter
 
   const voter = await ctx.db.get(voterPlayerId);
 
-  if (!voter || voter.roomId !== roomId || !voter.isConnected) {
+  if (!voter || voter.roomId !== roomId || !voter.isConnected || voter.isEliminated) {
     throw new Error(GAME_ERROR.VOTER_NOT_IN_ROOM)
   }
 
   const target = await ctx.db.get(targetPlayerId)
 
-  if (!target || target.roomId !== roomId || !target.isConnected) {
+  if (!target || target.roomId !== roomId || !target.isConnected || target.isEliminated) {
     throw new Error(GAME_ERROR.TARGET_NOT_IN_ROOM)
   }
 

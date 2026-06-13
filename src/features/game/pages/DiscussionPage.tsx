@@ -154,13 +154,12 @@ export function DiscussionPage() {
 
   if (
     isDiscussionNotFound ||
-    !discussionState ||
-    isRevealNotFound ||
-    !reveal
+    !discussionState
   ) {
     return <Navigate to={`/room/${room.code}`} replace />
   }
 
+  const isSpectating = isRevealNotFound || !reveal
   const {
     activePlayerId,
     activePlayerName,
@@ -210,18 +209,28 @@ export function DiscussionPage() {
               progress={timerProgress}
               urgent={secondsRemaining <= 10}
             />
-            <Button
-              className="min-h-24 rounded-[2rem] py-6 text-base md:h-full"
-              disabled={!isCurrentPlayerActive || isEndingTurn}
-              onClick={handleEndTurn}
-              type="button"
-            >
-              {isEndingTurn
-                ? 'Ending Turn...'
-                : isCurrentPlayerActive
-                  ? 'End My Turn'
-                  : `Waiting for ${activePlayerName}`}
-            </Button>
+            {isSpectating ? (
+              <Button
+                className="min-h-24 rounded-[2rem] py-6 text-base md:h-full"
+                disabled
+                type="button"
+              >
+                Spectating
+              </Button>
+            ) : (
+              <Button
+                className="min-h-24 rounded-[2rem] py-6 text-base md:h-full"
+                disabled={!isCurrentPlayerActive || isEndingTurn}
+                onClick={handleEndTurn}
+                type="button"
+              >
+                {isEndingTurn
+                  ? 'Ending Turn...'
+                  : isCurrentPlayerActive
+                    ? 'End My Turn'
+                    : `Waiting for ${activePlayerName}`}
+              </Button>
+            )}
           </div>
           {endTurnError || advanceError ? (
             <p className="text-center text-sm font-semibold text-error" role="alert">
@@ -242,17 +251,19 @@ export function DiscussionPage() {
                 </p>
               </div>
               <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-on-surface-variant">
-                Listen closely, compare each clue, and keep your own word secret.
+                {isSpectating
+                  ? 'You\'ve been eliminated. Watch the discussion unfold.'
+                  : 'Listen closely, compare each clue, and keep your own word secret.'}
               </p>
 
-              <div className="mx-auto mt-10 max-w-xl rounded-[2rem] bg-surface-container-highest/60 p-6 ring-1 ring-outline-variant/20 sm:p-8">
+              {!isSpectating && <div className="mx-auto mt-10 max-w-xl rounded-[2rem] bg-surface-container-highest/60 p-6 ring-1 ring-outline-variant/20 sm:p-8">
                 <p className="text-xs font-bold uppercase tracking-[0.35em] text-on-surface-variant">
                   Your Secret Word
                 </p>
                 <p className="mt-3 font-headline text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-on-surface-variant sm:text-7xl">
-                  {reveal.word}
+                  {reveal?.word}
                 </p>
-              </div>
+              </div>}
 
               <div className="mx-auto mt-8 max-w-xl">
                 <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-on-surface-variant">

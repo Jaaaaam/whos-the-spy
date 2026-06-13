@@ -300,6 +300,20 @@ describe('DiscussionPage', () => {
     expect(advanceDiscussionIfExpired).toHaveBeenCalledWith(roomId, roundId)
   })
 
+  it('shows spectating state for eliminated players with no reveal', () => {
+    vi.mocked(useMyReveal).mockReturnValue({
+      reveal: null,
+      isLoading: false,
+      notFound: true,
+    })
+
+    renderDiscussionPage()
+
+    expect(screen.getByRole('button', { name: 'Spectating' })).toBeDisabled()
+    expect(screen.getByText("You've been eliminated. Watch the discussion unfold.")).toBeInTheDocument()
+    expect(screen.getByText('Active Player')).toBeInTheDocument()
+  })
+
   it('shows turn mutation errors', () => {
     vi.mocked(useEndDiscussionTurn).mockReturnValue({
       endDiscussionTurn: vi.fn(),

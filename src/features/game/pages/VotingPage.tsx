@@ -41,7 +41,11 @@ export function VotingPage() {
     error,
   } = useCastVote()
 
-  const activePlayers = players?.filter((player) => player.isConnected) ?? []
+  const activePlayers = players?.filter((player) => player.isConnected && !player.isEliminated) ?? []
+
+  const currentPlayer = players?.find(player => player._id === currentPlayerId);
+
+  const isSpectating = currentPlayer?.isEliminated ?? false
 
   async function handleVote(targetPlayerId: Id<'players'>) {
     if (!room?.currentRoundId || !currentPlayerId) return
@@ -141,9 +145,9 @@ export function VotingPage() {
                   player={player}
                   isSelf={player._id === currentPlayerId}
                   isSelected={voteProgress?.selectedTargetPlayerId === player._id}
-                  disabled={isCastingVote}
+                  disabled={isSpectating ? true : isCastingVote}
                   isSubmitting={isCastingVote}
-                  onVote={() => void handleVote(player._id)}
+                  onVote={isSpectating ? () => { } : () => void handleVote(player._id)}
                 />
               ))}
             </div>
@@ -153,13 +157,19 @@ export function VotingPage() {
               {error}
             </p>
           ) : null}
-          <Card tone="low" className="mt-auto">
-            <p className="text-sm text-on-surface-variant">
-              {voteProgress
-                ? `${voteProgress.votedCount}/${voteProgress.eligibleVoterCount} players have voted.`
-                : 'Waiting for votes...'}
-            </p>
-          </Card>
+          {isSpectating ? (
+            <Card tone="low" className="mt-auto">
+              <p className="text-sm font-semibold text-on-surface-variant">Spectating</p>
+            </Card>
+          ) : (
+            <Card tone="low" className="mt-auto">
+              <p className="text-sm text-on-surface-variant">
+                {voteProgress
+                  ? `${voteProgress.votedCount}/${voteProgress.eligibleVoterCount} players have voted.`
+                  : 'Waiting for votes...'}
+              </p>
+            </Card>
+          )}
           {finalizationError ? (
             <p className="text-center text-sm font-semibold text-error" role="alert">
               {finalizationError}{' '}

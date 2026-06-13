@@ -253,6 +253,44 @@ describe('castVoteHandler', () => {
     ).rejects.toThrow(GAME_ERROR.TARGET_NOT_IN_ROOM)
   })
 
+  it('rejects an eliminated voter', async () => {
+    const tables = baseTables({
+      players: [
+        { ...createPlayer(voterId, currentRoomId, true), isEliminated: true },
+        createPlayer(targetId, currentRoomId),
+      ],
+    })
+    const ctx = createCtx(tables)
+
+    await expect(
+      castVoteHandler(ctx, {
+        roomId: currentRoomId,
+        roundId: currentRoundId,
+        voterPlayerId: voterId,
+        targetPlayerId: targetId,
+      }),
+    ).rejects.toThrow(GAME_ERROR.VOTER_NOT_IN_ROOM)
+  })
+
+  it('rejects an eliminated target', async () => {
+    const tables = baseTables({
+      players: [
+        createPlayer(voterId, currentRoomId, true),
+        { ...createPlayer(targetId, currentRoomId), isEliminated: true },
+      ],
+    })
+    const ctx = createCtx(tables)
+
+    await expect(
+      castVoteHandler(ctx, {
+        roomId: currentRoomId,
+        roundId: currentRoundId,
+        voterPlayerId: voterId,
+        targetPlayerId: targetId,
+      }),
+    ).rejects.toThrow(GAME_ERROR.TARGET_NOT_IN_ROOM)
+  })
+
   it('rejects self-votes', async () => {
     const tables = baseTables({ players: [createPlayer(voterId, currentRoomId, true)] })
     const ctx = createCtx(tables)

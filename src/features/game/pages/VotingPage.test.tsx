@@ -275,6 +275,56 @@ describe('VotingPage', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Unable to cast vote.')
   })
 
+  it('does not show eliminated players as voting targets', () => {
+    vi.mocked(usePlayersByRoom).mockReturnValue({
+      players: [
+        ...players,
+        {
+          _id: 'player_4' as Id<'players'>,
+          _creationTime: 0,
+          roomId,
+          name: 'Eli',
+          isHost: false,
+          isConnected: true,
+          joinedAt: 0,
+          isEliminated: true,
+        },
+      ],
+      isLoading: false,
+      isEmpty: false,
+    })
+
+    renderVotingPage()
+
+    expect(screen.queryByRole('heading', { name: 'Eli' })).not.toBeInTheDocument()
+  })
+
+  it('shows a spectating indicator and hides vote count when the current player is eliminated', () => {
+    saveCurrentPlayerId('player_4' as Id<'players'>)
+    vi.mocked(usePlayersByRoom).mockReturnValue({
+      players: [
+        ...players,
+        {
+          _id: 'player_4' as Id<'players'>,
+          _creationTime: 0,
+          roomId,
+          name: 'Eli',
+          isHost: false,
+          isConnected: true,
+          joinedAt: 0,
+          isEliminated: true,
+        },
+      ],
+      isLoading: false,
+      isEmpty: false,
+    })
+
+    renderVotingPage()
+
+    expect(screen.getByText('Spectating')).toBeInTheDocument()
+    expect(screen.queryByText(/players have voted/)).not.toBeInTheDocument()
+  })
+
   it('shows an empty state when no active players can vote', () => {
     vi.mocked(usePlayersByRoom).mockReturnValue({
       players: [],
