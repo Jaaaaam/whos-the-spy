@@ -14,7 +14,7 @@ dist-ssr
 
 .superpowers/
 .claude/
-.docs/
+docs/
 
 # Editor directories and files
 .vscode/*

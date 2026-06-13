@@ -1,5 +1,40 @@
 # Who's the Spy - Agent Instructions
 
+## Game Overview
+
+Who's the Spy is a multiplayer social deduction party game played in a private room.
+
+### Players & Roles
+- One player is secretly assigned the **Spy** role
+- All other players are **civilians** and receive a secret **word**
+- The Spy receives no word — they must bluff their way through
+
+### Round Flow
+1. A **word** is chosen for the round (civilians see it, spy does not)
+2. Players take turns giving a **one-word clue** related to the word
+3. After all clues are given, players **vote** on who they think the Spy is
+4. The player with the most votes is **eliminated**
+5. Win condition is checked:
+   - If spies remaining ≥ civilians remaining → **spies win, game ends**
+   - If all spies are eliminated → **civilians win, game ends**
+   - Otherwise → **new round begins from step 2** (same word, remaining players)
+
+### Win Conditions
+- **Civilians win** if all spies are eliminated before spies equal or outnumber them
+- **Spies win** if the number of spies remaining is **equal to or greater than** the number of civilians remaining
+- **Spy also wins** if, after being caught, they correctly guess the secret word
+
+### Game End
+The game ends immediately when:
+- The Spy is voted out → civilians win
+- A civilian is voted out → spy wins
+- The Spy successfully guesses the word after being eliminated → spy wins
+
+### Key Constraints
+- No user accounts — identity is room-scoped only
+- Rooms are joined by private code
+- Designed for mobile, played synchronously (all players present)
+
 ## Stack
 - React
 - TypeScript

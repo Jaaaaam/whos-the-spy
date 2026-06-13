@@ -58,10 +58,11 @@ export async function startRoundHandler(
     .collect()
 
   const roundNumber = existingRounds.length + 1
+  const firstRoundData = existingRounds[0];
 
   let assignedRoles: PlayerRoleAssignment[]
   let currentSpyCount: number
-
+  const wordPair = existingRounds.length ? { civilianWord: firstRoundData.civilianWord, spyWord: firstRoundData.spyWord } : getRandomWordPair()
   if (roundNumber === 1) {
     currentSpyCount = spyCount ?? getRecommendedSpyCount(connectedPlayers.length)
     assignedRoles = assignRandomRoles(roomPlayerIds, currentSpyCount)
@@ -80,7 +81,7 @@ export async function startRoundHandler(
 
     currentSpyCount = assignedRoles.filter((a) => a.role === 'spy').length
   }
-  const wordPair = getRandomWordPair()
+
   const startedAt = Date.now()
   const roundId = await ctx.db.insert(TABLE.ROUNDS, {
     roomId,
