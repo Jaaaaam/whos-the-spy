@@ -7,6 +7,11 @@ import { cn } from '../../../shared/lib/cn'
 import { useCreateRoom } from '../hooks/useCreateRoom'
 
 const timerOptions = [5, 8, 10]
+const discussionTimerOptions = [
+  { label: '1 min', value: 60_000 },
+  { label: '2 min', value: 120_000 },
+  { label: '3 min', value: 180_000 },
+]
 const minPlayersToStart = 4
 
 type RuleSetting = {
@@ -55,6 +60,7 @@ export function CreateRoomPage() {
   const [expectedPlayers, setExpectedPlayers] = useState(8)
   const [rules, setRules] = useState(initialRules)
   const [validationError, setValidationError] = useState<string | null>(null)
+  const [discussionTurnDurationMs, setDiscussionTurnDurationMs] = useState(60_000)
 
   const recommendedSpyCount = getRecommendedSpyCount(expectedPlayers)
   const timerProgress = timerMinutes === 5 ? '40%' : timerMinutes === 8 ? '66%' : '90%'
@@ -69,7 +75,7 @@ export function CreateRoomPage() {
     }
 
     setValidationError(null)
-    const result = await createRoom(trimmedName)
+    const result = await createRoom(trimmedName, discussionTurnDurationMs)
 
     if (result?.code) {
       navigate(`/room/${result.code}`)
@@ -185,7 +191,7 @@ export function CreateRoomPage() {
             </p>
           </section>
 
-          <section className="rounded-[1.5rem] bg-surface-container/70 p-5 ring-1 ring-outline-variant/10 backdrop-blur-xl sm:p-8 lg:col-span-5">
+          <section className="rounded-[1.5rem] bg-surface-container/70 p-5 ring-1 ring-outline-variant/10 backdrop-blur-xl sm:p-8 lg:col-span-6">
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-tertiary">
               Mission Duration
             </p>
@@ -221,6 +227,33 @@ export function CreateRoomPage() {
                 </div>
               </div>
             </div>
+          </section>
+
+          <section className="rounded-[1.5rem] bg-surface-container/70 p-5 ring-1 ring-outline-variant/10 backdrop-blur-xl sm:p-8 lg:col-span-6">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-tertiary">
+              Discussion Phase
+            </p>
+            <h2 className="mt-2 font-headline text-2xl font-black">Turn Timer</h2>
+            <div className="my-6 grid grid-cols-3 gap-3">
+              {discussionTimerOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setDiscussionTurnDurationMs(option.value)}
+                  className={cn(
+                    'rounded-[1rem] px-4 py-4 font-headline font-black transition ring-1',
+                    discussionTurnDurationMs === option.value
+                      ? 'bg-primary-container text-on-primary-container shadow-[0_10px_30px_rgba(161,142,255,0.22)] ring-primary/20'
+                      : 'bg-surface-container-highest text-on-surface-variant ring-transparent hover:text-primary hover:ring-primary/30',
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-center text-xs text-on-surface-variant">
+              Time each player has to give a clue
+            </p>
           </section>
 
           <section className="rounded-[1.5rem] bg-surface-container/70 p-5 ring-1 ring-outline-variant/10 backdrop-blur-xl sm:p-8 lg:col-span-7">

@@ -8,14 +8,12 @@ export function useCreateRoom() {
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function createRoom(playerName: string) {
+  async function createRoom(playerName: string, discussionTurnDurationMs: number) {
     setIsCreating(true)
     setError(null)
 
     try {
-      console.log('[Convex] createRoom mutation args', { playerName })
-      const result = await createRoomMutation({ playerName })
-      console.log('[Convex] createRoom mutation result', result)
+      const result = await createRoomMutation({ playerName, discussionTurnDurationMs })
 
       if (!result.playerId || !result.code) {
         throw new Error('Room was created, but Convex did not return the room code.')
@@ -24,7 +22,6 @@ export function useCreateRoom() {
       saveCurrentPlayerId(result.playerId)
       return result
     } catch (error) {
-      console.error('[Convex] createRoom mutation failed', error)
       setError('Could not create the room. Try again.')
       return null
     } finally {
