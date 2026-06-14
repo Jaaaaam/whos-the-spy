@@ -10,6 +10,7 @@ function generateRoomCode() {
 
 type CreateRoomArgs = {
   playerName: string
+  discussionTurnDurationMs: number
 }
 
 export async function createRoomHandler(ctx: MutationCtx, args: CreateRoomArgs) {
@@ -17,6 +18,7 @@ export async function createRoomHandler(ctx: MutationCtx, args: CreateRoomArgs) 
     code: generateRoomCode(),
     status: GAME_STATUS.LOBBY,
     createdAt: Date.now(),
+    discussionTurnDurationMs: args.discussionTurnDurationMs,
   });
 
   const playerId = await ctx.db.insert(TABLE.PLAYERS, {
@@ -38,6 +40,7 @@ export async function createRoomHandler(ctx: MutationCtx, args: CreateRoomArgs) 
 export const createRoom = mutation({
   args: {
     playerName: v.string(),
+    discussionTurnDurationMs: v.union(v.literal(60_000), v.literal(120_000), v.literal(180_000)),
   },
   handler: createRoomHandler,
 });
