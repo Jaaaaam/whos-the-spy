@@ -20,7 +20,9 @@ function getSecondsRemaining(turnEndsAt: number, now: number) {
 }
 
 function formatSeconds(seconds: number) {
-  return `00:${seconds.toString().padStart(2, '0')}`
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
 }
 
 function getTimerProgress(
