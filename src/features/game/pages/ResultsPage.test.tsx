@@ -7,12 +7,14 @@ import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { useStartRound } from '../../room/hooks/useStartRound'
 import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
 import { useResultsState } from '../hooks/useResultsState'
+import { usePlayAgain } from '../hooks/usePlayAgain'
 import { ResultsPage } from './ResultsPage'
 
 vi.mock('../../room/hooks/useRoomByCode')
 vi.mock('../hooks/useResultsState')
 vi.mock('../../room/hooks/useStartRound')
 vi.mock('../../room/lib/currentPlayer')
+vi.mock('../hooks/usePlayAgain')
 
 const roomId = 'room_1' as Id<'rooms'>
 const roundId = 'round_1' as Id<'rounds'>
@@ -60,6 +62,7 @@ describe('ResultsPage', () => {
     vi.mocked(useRoomByCode).mockReturnValue({ room, isLoading: false, notFound: false })
     vi.mocked(useResultsState).mockReturnValue({ resultsState, isLoading: false })
     vi.mocked(useStartRound).mockReturnValue({ startRound: vi.fn(), isStarting: false, error: null })
+    vi.mocked(usePlayAgain).mockReturnValue({ playAgain: vi.fn(), isPlayingAgain: false, error: null })
     vi.mocked(getCurrentPlayerId).mockReturnValue(null)
   })
 
@@ -135,11 +138,11 @@ describe('ResultsPage', () => {
     expect(screen.getByText('Dani')).toBeInTheDocument()
   })
 
-  it('lobby button links to actual room', () => {
+  it('new room button links to create page', () => {
     renderResultsPage()
 
-    const lobbyLinks = screen.getAllByRole('link', { name: /lobby/i })
-    expect(lobbyLinks.some((link) => link.getAttribute('href') === '/room/SPY247')).toBe(true)
+    const newRoomLinks = screen.getAllByRole('link', { name: /new room/i })
+    expect(newRoomLinks.some((link) => link.getAttribute('href') === '/create')).toBe(true)
   })
 })
 
@@ -157,6 +160,7 @@ describe('mid-game results (isGameOver=false)', () => {
     vi.mocked(useRoomByCode).mockReturnValue({ room, isLoading: false, notFound: false })
     vi.mocked(useResultsState).mockReturnValue({ resultsState: midGameResultsState, isLoading: false })
     vi.mocked(useStartRound).mockReturnValue({ startRound: vi.fn(), isStarting: false, error: null })
+    vi.mocked(usePlayAgain).mockReturnValue({ playAgain: vi.fn(), isPlayingAgain: false, error: null })
     vi.mocked(getCurrentPlayerId).mockReturnValue(null)
   })
 
@@ -187,7 +191,7 @@ describe('mid-game results (isGameOver=false)', () => {
       await act(async () => { vi.advanceTimersByTime(1000) })
     }
 
-    expect(startRound).toHaveBeenCalledWith(roomId, hostPlayerId)
+    expect(startRound).toHaveBeenCalledWith({ roomId, hostPlayerId })
   })
 
   it('does not call startRound when current player is not host', async () => {
@@ -211,6 +215,7 @@ describe('game-over results (isGameOver=true)', () => {
     vi.mocked(useRoomByCode).mockReturnValue({ room, isLoading: false, notFound: false })
     vi.mocked(useResultsState).mockReturnValue({ resultsState, isLoading: false })
     vi.mocked(useStartRound).mockReturnValue({ startRound: vi.fn(), isStarting: false, error: null })
+    vi.mocked(usePlayAgain).mockReturnValue({ playAgain: vi.fn(), isPlayingAgain: false, error: null })
     vi.mocked(getCurrentPlayerId).mockReturnValue(null)
   })
 
@@ -223,11 +228,10 @@ describe('game-over results (isGameOver=true)', () => {
     expect(screen.getByText('SPY ELIMINATED!')).toBeInTheDocument()
   })
 
-  it('shows New Game and Lobby buttons', () => {
+  it('shows New Room button', () => {
     renderResultsPage()
-    expect(screen.getByText('New Game')).toBeInTheDocument()
-    const lobbyLinks = screen.getAllByRole('link', { name: 'Lobby' })
-    expect(lobbyLinks.some((link) => link.getAttribute('href') === '/room/SPY247')).toBe(true)
+    const newRoomLinks = screen.getAllByRole('link', { name: /new room/i })
+    expect(newRoomLinks.some((link) => link.getAttribute('href') === '/create')).toBe(true)
   })
 
   it('does not show a countdown', () => {

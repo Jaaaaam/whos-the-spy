@@ -236,7 +236,7 @@ describe('endDiscussionTurnHandler', () => {
     expect(result).toEqual({ advanced: true, votingStarted: false })
     expect(tables.rounds[0].currentTurnIndex).toBe(1)
     expect(tables.rounds[0].turnStartedAt).toBe(5_000)
-    expect(tables.rounds[0].turnEndsAt).toBe(35_000)
+    expect(tables.rounds[0].turnEndsAt).toBe(65_000)
     expect(tables.rooms[0].status).toBe(GAME_STATUS.DISCUSSION)
   })
 
@@ -334,6 +334,6 @@ describe('advanceDiscussionIfExpiredHandler', () => {
     expect(result).toEqual({ advanced: true, votingStarted: false })
     expect(tables.rounds[0].currentTurnIndex).toBe(1)
     expect(tables.rounds[0].turnStartedAt).toBe(10_001)
-    expect(tables.rounds[0].turnEndsAt).toBe(40_001)
+    expect(tables.rounds[0].turnEndsAt).toBe(70_001)
   })
 })
