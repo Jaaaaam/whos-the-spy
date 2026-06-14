@@ -2,7 +2,6 @@ import type { MutationCtx, QueryCtx } from "../_generated/server"
 import { GAME_STATUS } from "../../shared/gameStatus"
 import { INDEX, TABLE } from "../lib/db"
 import { shuffle } from "../lib/shuffle"
-import { DISCUSSION_TURN_DURATION_MS } from "./constants"
 import { GAME_ERROR } from "./errors"
 import type {
   AdvanceDiscussionTurnArgs,
@@ -107,11 +106,14 @@ export async function endDiscussionTurnHandler(
     throw new Error(GAME_ERROR.NOT_ACTIVE_DISCUSSION_PLAYER)
   }
 
+  const durationMs = room.discussionTurnDurationMs ?? 60_000
+
   return await advanceDiscussionTurn(ctx, {
     roomId,
     roundId,
     discussionOrder: round.discussionOrder,
     currentTurnIndex: round.currentTurnIndex,
+    durationMs,
   })
 }
 
@@ -122,6 +124,7 @@ async function advanceDiscussionTurn(
     roundId,
     discussionOrder,
     currentTurnIndex,
+    durationMs,
   }: AdvanceDiscussionTurnArgs,
 ) {
   const nextTurnIndex = currentTurnIndex + 1
@@ -142,7 +145,7 @@ async function advanceDiscussionTurn(
   await ctx.db.patch(roundId, {
     currentTurnIndex: nextTurnIndex,
     turnStartedAt,
-    turnEndsAt: turnStartedAt + DISCUSSION_TURN_DURATION_MS,
+    turnEndsAt: turnStartedAt + durationMs,
   })
 
   return {
@@ -187,11 +190,14 @@ export async function advanceDiscussionIfExpiredHandler(
     return { advanced: false, votingStarted: false }
   }
 
+  const durationMs = room.discussionTurnDurationMs ?? 60_000
+
   return await advanceDiscussionTurn(ctx, {
     roomId,
     roundId,
     discussionOrder: round.discussionOrder,
     currentTurnIndex: round.currentTurnIndex,
+    durationMs,
   })
 }
 
@@ -199,6 +205,9 @@ export async function startDiscussion(
   ctx: MutationCtx,
   { roomId, roundId }: RoomRoundArgs,
 ) {
+  const room = await ctx.db.get(roomId)
+  const durationMs = room?.discussionTurnDurationMs ?? 60_000
+
   const players = await ctx.db
     .query(TABLE.PLAYERS)
     .withIndex(INDEX.PLAYERS_BY_ROOM_ID, (q) => q.eq('roomId', roomId))
@@ -216,7 +225,7 @@ export async function startDiscussion(
     discussionOrder,
     currentTurnIndex: 0,
     turnStartedAt,
-    turnEndsAt: Date.now() + DISCUSSION_TURN_DURATION_MS
+    turnEndsAt: Date.now() + durationMs
   })
 
   await ctx.db.patch(roomId, {

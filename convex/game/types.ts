@@ -28,6 +28,7 @@ export type EndDiscussionTurnArgs = RoomRoundArgs & {
 export type AdvanceDiscussionTurnArgs = RoomRoundArgs & {
   discussionOrder: Id<typeof TABLE.PLAYERS>[]
   currentTurnIndex: number
+  durationMs: number
 }
 
 export type CastVoteArgs = RoomRoundArgs & {
