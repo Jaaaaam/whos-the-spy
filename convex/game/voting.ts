@@ -108,6 +108,7 @@ export async function getVoteProgressHandler(ctx: QueryCtx, { roomId, roundId, v
   const activeVotes = votes.filter(
     (vote) =>
       activePlayerIds.has(vote.voterPlayerId) &&
+      !!vote.targetPlayerId &&
       activePlayerIds.has(vote.targetPlayerId),
   )
 
@@ -118,6 +119,7 @@ export async function getVoteProgressHandler(ctx: QueryCtx, { roomId, roundId, v
   const selectedTargetPlayerId =
     selectedVote &&
       activePlayerIds.has(selectedVote.voterPlayerId) &&
+      !!selectedVote.targetPlayerId &&
       activePlayerIds.has(selectedVote.targetPlayerId)
       ? selectedVote.targetPlayerId
       : null
@@ -138,7 +140,7 @@ function buildVoteCounts(
 ) {
   const voteCounts = new Map(activePlayers.map((p) => [p._id, 0]))
   for (const vote of votes) {
-    if (!activePlayerIds.has(vote.voterPlayerId) || !activePlayerIds.has(vote.targetPlayerId)) continue
+    if (!activePlayerIds.has(vote.voterPlayerId) || !vote.targetPlayerId || !activePlayerIds.has(vote.targetPlayerId)) continue
     voteCounts.set(vote.targetPlayerId, (voteCounts.get(vote.targetPlayerId) ?? 0) + 1)
   }
   return voteCounts
@@ -192,6 +194,7 @@ export async function finalizeVotingHandler(ctx: MutationCtx, { roomId, roundId 
   const activeVotes = votes.filter(
     (vote) =>
       activePlayerIds.has(vote.voterPlayerId) &&
+      !!vote.targetPlayerId &&
       activePlayerIds.has(vote.targetPlayerId),
   )
 

@@ -35,7 +35,7 @@ export async function getResultsStateHandler(ctx: QueryCtx, { roomId, roundId }:
 
   const votingHistory = votes.map((vote) => ({
     voterName: playerNameById.get(vote.voterPlayerId) ?? 'Unknown',
-    targetName: playerNameById.get(vote.targetPlayerId) ?? 'Unknown',
+    targetName: vote.targetPlayerId ? (playerNameById.get(vote.targetPlayerId) ?? 'Unknown') : 'Unknown',
   }))
 
   return {
