@@ -128,12 +128,20 @@ export function createDiscussionRound(
   return { ...createRound(id, room), ...options }
 }
 
+export function createVotingRound(
+  id: Id<typeof TABLE.ROUNDS>,
+  room: Id<typeof TABLE.ROOMS>,
+  votingEndsAt: number,
+): Doc<typeof TABLE.ROUNDS> {
+  return { ...createRound(id, room), votingEndsAt }
+}
+
 export function createVote(
   id: Id<typeof TABLE.VOTES>,
   room: Id<typeof TABLE.ROOMS>,
   round: Id<typeof TABLE.ROUNDS>,
   voterPlayerId: Id<typeof TABLE.PLAYERS>,
-  targetPlayerId: Id<typeof TABLE.PLAYERS>,
+  targetPlayerId?: Id<typeof TABLE.PLAYERS>,
 ): Doc<typeof TABLE.VOTES> {
   return {
     _id: id,

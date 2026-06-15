@@ -16,5 +16,6 @@ export const rooms = defineTable({
   hostPlayerId: v.optional(v.id(TABLE.PLAYERS)),
   currentRoundId: v.optional(v.id(TABLE.ROUNDS)),
   discussionTurnDurationMs: v.optional(v.number()),
+  votingDurationMs: v.optional(v.number()),
   createdAt: v.number(),
 }).index(INDEX.ROOMS_BY_CODE, ['code'])
