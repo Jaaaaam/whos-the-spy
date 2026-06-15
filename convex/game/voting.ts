@@ -101,6 +101,7 @@ export async function getVoteProgressHandler(ctx: QueryCtx, { roomId, roundId, v
   if (!room || room.status !== GAME_STATUS.VOTING || room.currentRoundId !== roundId) {
     return null
   }
+  const round = await ctx.db.get(roundId)
   const activePlayers = await getActivePlayersByRoom(ctx, roomId)
   const activePlayerIds = new Set(activePlayers.map(player => player._id))
   const votes = await getVotesByRoomRound(ctx, { roomId, roundId })
@@ -108,8 +109,7 @@ export async function getVoteProgressHandler(ctx: QueryCtx, { roomId, roundId, v
   const activeVotes = votes.filter(
     (vote) =>
       activePlayerIds.has(vote.voterPlayerId) &&
-      !!vote.targetPlayerId &&
-      activePlayerIds.has(vote.targetPlayerId),
+      (vote.targetPlayerId === undefined || activePlayerIds.has(vote.targetPlayerId)),
   )
 
   const selectedVote = voterPlayerId
@@ -124,11 +124,17 @@ export async function getVoteProgressHandler(ctx: QueryCtx, { roomId, roundId, v
       ? selectedVote.targetPlayerId
       : null
 
+  const hasVoted = voterPlayerId
+    ? votes.some((vote) => vote.voterPlayerId === voterPlayerId)
+    : false
+
   return {
     votedCount: activeVotes.length,
     eligibleVoterCount: activePlayers.length,
     isComplete: activeVotes.length === activePlayers.length,
     selectedTargetPlayerId,
+    votingEndsAt: round?.votingEndsAt ?? null,
+    hasVoted
   }
 
 }

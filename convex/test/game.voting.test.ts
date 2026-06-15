@@ -15,6 +15,7 @@ import {
   createRoomWithStatus,
   createRound,
   createVote,
+  createVotingRound,
   playerId,
   roleAssignmentId,
   roomId,
@@ -354,6 +355,8 @@ describe('getVoteProgressHandler', () => {
       eligibleVoterCount: 2,
       isComplete: false,
       selectedTargetPlayerId: null,
+      votingEndsAt: null,
+      hasVoted: false,
     })
   })
 
@@ -399,6 +402,8 @@ describe('getVoteProgressHandler', () => {
       eligibleVoterCount: 2,
       isComplete: true,
       selectedTargetPlayerId: null,
+      votingEndsAt: null,
+      hasVoted: false,
     })
   })
 
@@ -438,6 +443,8 @@ describe('getVoteProgressHandler', () => {
       eligibleVoterCount: 2,
       isComplete: false,
       selectedTargetPlayerId: targetId,
+      votingEndsAt: null,
+      hasVoted: true,
     })
   })
 
@@ -560,13 +567,148 @@ describe('getVoteProgressHandler', () => {
       eligibleVoterCount: 2,
       isComplete: false,
       selectedTargetPlayerId: null,
+      votingEndsAt: null,
+      hasVoted: true,
     })
     expect(inactiveVoterProgress).toEqual({
       votedCount: 0,
       eligibleVoterCount: 2,
       isComplete: false,
       selectedTargetPlayerId: null,
+      votingEndsAt: null,
+      hasVoted: true,
     })
+  })
+
+
+  it('returns votingEndsAt from the round when set', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const voterId = playerId('player_1')
+    const targetId = playerId('player_2')
+    const endsAt = 99_000
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+      players: [
+        createPlayer(voterId, currentRoomId, true),
+        createPlayer(targetId, currentRoomId),
+      ],
+      rounds: [createVotingRound(currentRoundId, currentRoomId, endsAt)],
+      roleAssignments: [],
+      votes: [],
+    }
+    const ctx = createCtx(tables)
+
+    const progress = await getVoteProgressHandler(ctx, {
+      roomId: currentRoomId,
+      roundId: currentRoundId,
+    })
+
+    expect(progress?.votingEndsAt).toBe(endsAt)
+  })
+
+  it('returns hasVoted true when the voter has cast a vote', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const voterId = playerId('player_1')
+    const targetId = playerId('player_2')
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+      players: [
+        createPlayer(voterId, currentRoomId, true),
+        createPlayer(targetId, currentRoomId),
+      ],
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments: [],
+      votes: [createVote(voteId('vote_1'), currentRoomId, currentRoundId, voterId, targetId)],
+    }
+    const ctx = createCtx(tables)
+
+    const progress = await getVoteProgressHandler(ctx, {
+      roomId: currentRoomId,
+      roundId: currentRoundId,
+      voterPlayerId: voterId,
+    })
+
+    expect(progress?.hasVoted).toBe(true)
+  })
+
+  it('returns hasVoted false when the voter has not cast a vote', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const voterId = playerId('player_1')
+    const targetId = playerId('player_2')
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+      players: [
+        createPlayer(voterId, currentRoomId, true),
+        createPlayer(targetId, currentRoomId),
+      ],
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments: [],
+      votes: [],
+    }
+    const ctx = createCtx(tables)
+
+    const progress = await getVoteProgressHandler(ctx, {
+      roomId: currentRoomId,
+      roundId: currentRoundId,
+      voterPlayerId: voterId,
+    })
+
+    expect(progress?.hasVoted).toBe(false)
+  })
+
+  it('returns hasVoted true when the voter has abstained (no targetPlayerId)', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const voterId = playerId('player_1')
+    const targetId = playerId('player_2')
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+      players: [
+        createPlayer(voterId, currentRoomId, true),
+        createPlayer(targetId, currentRoomId),
+      ],
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments: [],
+      votes: [createVote(voteId('vote_1'), currentRoomId, currentRoundId, voterId)],
+    }
+    const ctx = createCtx(tables)
+
+    const progress = await getVoteProgressHandler(ctx, {
+      roomId: currentRoomId,
+      roundId: currentRoundId,
+      voterPlayerId: voterId,
+    })
+
+    expect(progress?.hasVoted).toBe(true)
+  })
+
+  it('counts abstentions toward votedCount', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const voterId = playerId('player_1')
+    const targetId = playerId('player_2')
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+      players: [
+        createPlayer(voterId, currentRoomId, true),
+        createPlayer(targetId, currentRoomId),
+      ],
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments: [],
+      votes: [createVote(voteId('vote_1'), currentRoomId, currentRoundId, voterId)],
+    }
+    const ctx = createCtx(tables)
+
+    const progress = await getVoteProgressHandler(ctx, {
+      roomId: currentRoomId,
+      roundId: currentRoundId,
+    })
+
+    expect(progress?.votedCount).toBe(1)
+    expect(progress?.selectedTargetPlayerId).toBeNull()
   })
 })
 
