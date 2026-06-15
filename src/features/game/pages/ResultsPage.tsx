@@ -165,7 +165,7 @@ export function ResultsPage() {
         <div className="grid gap-6 md:col-span-4">
           <Card tone="high" className="rounded-[2rem]">
             <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
-              Villager Word
+              Civilian Word
             </p>
             <div className="mt-3 font-headline text-4xl font-black text-primary">
               {resultsState.civilianWord}

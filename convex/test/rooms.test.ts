@@ -14,6 +14,7 @@ describe('createRoomHandler', () => {
 
     const result = await createRoomHandler(ctx, {
       playerName: 'Jam',
+      discussionTurnDurationMs: 60000,
     })
 
     expect(result.playerId).toBe(tables.players[0]._id)

@@ -42,7 +42,7 @@ export function JoinRoomPage() {
             Join a Room
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-on-surface-variant">
-            Enter the private code from your host. This screen uses mock navigation only.
+            Enter the private code from your host.
           </p>
         </div>
 
@@ -55,7 +55,7 @@ export function JoinRoomPage() {
             <input
               value={playerName}
               onChange={(event) => setPlayerName(event.target.value)}
-              placeholder="YOUR CODENAME..."
+              placeholder="Your codename..."
               className="w-full rounded-[1rem] border-0 bg-surface-container-lowest px-4 py-4 text-on-surface outline-none ring-1 ring-outline-variant/10 focus:ring-2 focus:ring-tertiary"
             />
           </label>
