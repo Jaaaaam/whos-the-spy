@@ -29,6 +29,7 @@ export type AdvanceDiscussionTurnArgs = RoomRoundArgs & {
   discussionOrder: Id<typeof TABLE.PLAYERS>[]
   currentTurnIndex: number
   durationMs: number
+  votingDurationMs: number
 }
 
 export type CastVoteArgs = RoomRoundArgs & {

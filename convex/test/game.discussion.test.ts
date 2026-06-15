@@ -236,7 +236,7 @@ describe('endDiscussionTurnHandler', () => {
     expect(result).toEqual({ advanced: true, votingStarted: false })
     expect(tables.rounds[0].currentTurnIndex).toBe(1)
     expect(tables.rounds[0].turnStartedAt).toBe(5_000)
-    expect(tables.rounds[0].turnEndsAt).toBe(65_000)
+    expect(tables.rounds[0].turnEndsAt).toBe(35_000)
     expect(tables.rooms[0].status).toBe(GAME_STATUS.DISCUSSION)
   })
 
@@ -334,6 +334,34 @@ describe('advanceDiscussionIfExpiredHandler', () => {
     expect(result).toEqual({ advanced: true, votingStarted: false })
     expect(tables.rounds[0].currentTurnIndex).toBe(1)
     expect(tables.rounds[0].turnStartedAt).toBe(10_001)
-    expect(tables.rounds[0].turnEndsAt).toBe(70_001)
+    expect(tables.rounds[0].turnEndsAt).toBe(40_001)
+  })
+
+  it('sets votingEndsAt on the round when the last turn expires', async () => {
+    vi.setSystemTime(5_000)
+
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.DISCUSSION, currentRoundId)],
+      players: [createPlayer(activePlayerId, currentRoomId, true)],
+      rounds: [
+        createDiscussionRound(currentRoundId, currentRoomId, {
+          discussionOrder: [activePlayerId],
+          currentTurnIndex: 0,
+          turnStartedAt: 0,
+          turnEndsAt: 1_000,
+        }),
+      ],
+      roleAssignments: [],
+    }
+    const ctx = createCtx(tables)
+
+    const result = await advanceDiscussionIfExpiredHandler(ctx, {
+      roomId: currentRoomId,
+      roundId: currentRoundId,
+    })
+
+    expect(result).toEqual({ advanced: true, votingStarted: true })
+    expect(tables.rounds[0].votingEndsAt).toBe(5_000 + 60_000)
+    expect(tables.rooms[0].status).toBe(GAME_STATUS.VOTING)
   })
 })

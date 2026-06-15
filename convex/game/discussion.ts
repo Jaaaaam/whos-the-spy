@@ -3,6 +3,7 @@ import { GAME_STATUS } from "../../shared/gameStatus"
 import { INDEX, TABLE } from "../lib/db"
 import { shuffle } from "../lib/shuffle"
 import { GAME_ERROR } from "./errors"
+import { DISCUSSION_TURN_DURATION_MS, VOTING_DURATION_MS } from "./constants"
 import type {
   AdvanceDiscussionTurnArgs,
   EndDiscussionTurnArgs,
@@ -106,7 +107,8 @@ export async function endDiscussionTurnHandler(
     throw new Error(GAME_ERROR.NOT_ACTIVE_DISCUSSION_PLAYER)
   }
 
-  const durationMs = room.discussionTurnDurationMs ?? 60_000
+  const durationMs = room.discussionTurnDurationMs ?? DISCUSSION_TURN_DURATION_MS
+  const votingDurationMs = room.votingDurationMs ?? VOTING_DURATION_MS
 
   return await advanceDiscussionTurn(ctx, {
     roomId,
@@ -114,6 +116,7 @@ export async function endDiscussionTurnHandler(
     discussionOrder: round.discussionOrder,
     currentTurnIndex: round.currentTurnIndex,
     durationMs,
+    votingDurationMs
   })
 }
 
@@ -125,14 +128,17 @@ async function advanceDiscussionTurn(
     discussionOrder,
     currentTurnIndex,
     durationMs,
+    votingDurationMs,
   }: AdvanceDiscussionTurnArgs,
 ) {
   const nextTurnIndex = currentTurnIndex + 1
 
   if (nextTurnIndex >= discussionOrder.length) {
-    await ctx.db.patch(roomId, {
-      status: GAME_STATUS.VOTING,
-    })
+    const votingEndsAt = Date.now() + votingDurationMs
+    await Promise.all([
+      ctx.db.patch(roundId, { votingEndsAt }),
+      ctx.db.patch(roomId, { status: GAME_STATUS.VOTING }),
+    ])
 
     return {
       advanced: true,
@@ -190,7 +196,8 @@ export async function advanceDiscussionIfExpiredHandler(
     return { advanced: false, votingStarted: false }
   }
 
-  const durationMs = room.discussionTurnDurationMs ?? 60_000
+  const durationMs = room.discussionTurnDurationMs ?? DISCUSSION_TURN_DURATION_MS
+  const votingDurationMs = room.votingDurationMs ?? VOTING_DURATION_MS
 
   return await advanceDiscussionTurn(ctx, {
     roomId,
@@ -198,6 +205,7 @@ export async function advanceDiscussionIfExpiredHandler(
     discussionOrder: round.discussionOrder,
     currentTurnIndex: round.currentTurnIndex,
     durationMs,
+    votingDurationMs
   })
 }
 
@@ -206,7 +214,7 @@ export async function startDiscussion(
   { roomId, roundId }: RoomRoundArgs,
 ) {
   const room = await ctx.db.get(roomId)
-  const durationMs = room?.discussionTurnDurationMs ?? 60_000
+  const durationMs = room?.discussionTurnDurationMs ?? DISCUSSION_TURN_DURATION_MS
 
   const players = await ctx.db
     .query(TABLE.PLAYERS)
