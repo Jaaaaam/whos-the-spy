@@ -225,4 +225,42 @@ describe('getResultsStateHandler', () => {
     expect(result.isEliminatedPlayerSpy).toBe(false)
     expect(result.isGameOver).toBe(false)
   })
+
+  it('returns hadElimination=false and null targetNames when votes were skipped', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const player1Id = playerId('player_1')
+    const player2Id = playerId('player_2')
+
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.RESULTS, currentRoundId)],
+      players: [
+        { ...createPlayer(player1Id, currentRoomId), name: 'Jam' },
+        { ...createPlayer(player2Id, currentRoomId), name: 'Mika' },
+      ],
+      rounds: [{
+        ...createRound(currentRoundId, currentRoomId),
+        hadElimination: false,
+        isGameOver: false,
+        isTie: false,
+      }],
+      roleAssignments: [
+        createRoleAssignment(roleAssignmentId('ra_1'), currentRoomId, currentRoundId, player1Id, 'spy'),
+        createRoleAssignment(roleAssignmentId('ra_2'), currentRoomId, currentRoundId, player2Id, 'civilian'),
+      ],
+      votes: [
+        createVote(voteId('vote_1'), currentRoomId, currentRoundId, player1Id),
+        createVote(voteId('vote_2'), currentRoomId, currentRoundId, player2Id),
+      ],
+    }
+    const ctx = createCtx(tables)
+
+    const result = await getResultsStateHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+    if (!result) throw new Error('Expected non-null result')
+
+    expect(result.hadElimination).toBe(false)
+    expect(result.eliminatedPlayerName).toBeNull()
+    expect(result.votingHistory).toHaveLength(2)
+    expect(result.votingHistory.every(v => v.targetName === null)).toBe(true)
+  })
 })

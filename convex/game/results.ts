@@ -35,7 +35,7 @@ export async function getResultsStateHandler(ctx: QueryCtx, { roomId, roundId }:
 
   const votingHistory = votes.map((vote) => ({
     voterName: playerNameById.get(vote.voterPlayerId) ?? 'Unknown',
-    targetName: vote.targetPlayerId ? (playerNameById.get(vote.targetPlayerId) ?? 'Unknown') : 'Unknown',
+    targetName: vote.targetPlayerId ? (playerNameById.get(vote.targetPlayerId) ?? null) : null,
   }))
 
   return {
@@ -47,6 +47,7 @@ export async function getResultsStateHandler(ctx: QueryCtx, { roomId, roundId }:
     isEliminatedPlayerSpy: roleAssignment?.role === 'spy',
     didSpyWin: round.didSpyWon ?? false,
     isGameOver: round.isGameOver ?? true,
+    hadElimination: round.hadElimination,
     votingHistory,
   }
 }
