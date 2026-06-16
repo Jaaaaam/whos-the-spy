@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getMyRevealHandler, getMyRoleHandler } from '../game/reveal'
+import { getMyRevealHandler, getMyRoleHandler } from '../../game/reveal'
 import {
   createCtx,
   createPlayer,
@@ -11,7 +11,7 @@ import {
   roomId,
   roundId,
   type StoredTables,
-} from './gameTestUtils'
+} from '../gameTestUtils'
 
 describe('getMyRoleHandler', () => {
   it('returns only the requested player role for a round', async () => {

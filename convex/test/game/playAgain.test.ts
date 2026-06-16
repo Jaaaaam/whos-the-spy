@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { GAME_ERROR } from '../game/errors'
-import { playAgainHandler } from '../game/playAgain'
+import { GAME_ERROR } from '../../game/errors'
+import { playAgainHandler } from '../../game/playAgain'
 import {
   createCtx,
   createPlayer,
@@ -14,8 +14,8 @@ import {
   roomId,
   roundId,
   voteId,
-} from './gameTestUtils'
-import { GAME_STATUS } from '../../shared/gameStatus'
+} from '../gameTestUtils'
+import { GAME_STATUS } from '../../../shared/gameStatus'
 
 describe('playAgainHandler', () => {
   it('resets room to LOBBY, clears currentRoundId, un-eliminates players, and deletes rounds/roleAssignments/votes', async () => {

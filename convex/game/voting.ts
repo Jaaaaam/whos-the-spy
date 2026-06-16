@@ -2,7 +2,7 @@ import { GAME_STATUS } from "../../shared/gameStatus"
 import type { MutationCtx, QueryCtx } from "../_generated/server"
 import { INDEX, TABLE } from "../lib/db"
 import { GAME_ERROR } from "./errors"
-import type { CastVoteArgs, RoomRoundArgs, VoteProgressArgs } from "./types"
+import type { CastVoteArgs, RoomRoundArgs, VoteProgressArgs, SkipVoteArgs } from "./types"
 
 async function getCurrentVotingRound(ctx: QueryCtx | MutationCtx, { roomId, roundId }: RoomRoundArgs) {
   const room = await ctx.db.get(roomId)
@@ -264,3 +264,32 @@ export async function finalizeVotingHandler(ctx: MutationCtx, { roomId, roundId 
   return { isTie: false as const, eliminatedPlayerId: eliminatedPlayer._id, didSpyWon }
 }
 
+export async function skipVoteHandler(ctx: MutationCtx, { voterPlayerId, roomId, roundId }: SkipVoteArgs) {
+  await getCurrentVotingRound(ctx, { roomId, roundId })
+
+  const voter = await ctx.db.get(voterPlayerId)
+  if (!voter || voter.roomId !== roomId || !voter.isConnected || voter.isEliminated) {
+    throw new Error(GAME_ERROR.VOTER_NOT_IN_ROOM)
+  }
+
+  const existingVote = await ctx.db
+    .query(TABLE.VOTES)
+    .withIndex(INDEX.VOTES_BY_ROUND_ID_VOTER_PLAYER_ID, (q) =>
+      q.eq('roundId', roundId).eq('voterPlayerId', voterPlayerId))
+    .unique()
+  const now = Date.now()
+  if (existingVote) {
+    await ctx.db.patch(existingVote._id, { targetPlayerId: undefined, updatedAt: now })
+    return { vote: existingVote._id, isUpdated: true }
+  }
+
+  const voteId = await ctx.db.insert(TABLE.VOTES, {
+    roomId,
+    roundId,
+    voterPlayerId,
+    createdAt: now,
+    updatedAt: now,
+  })
+
+  return { vote: voteId, isUpdated: false }
+}

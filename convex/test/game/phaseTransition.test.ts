@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { GAME_ERROR } from '../game/errors'
+import { GAME_ERROR } from '../../game/errors'
 import {
   advanceRevealIfExpiredHandler,
   markRoleSeenHandler,
-} from '../game/reveal'
+} from '../../game/reveal'
 import {
   createCtx,
   createPlayer,
@@ -16,7 +16,7 @@ import {
   roomId,
   roundId,
   type StoredTables,
-} from './gameTestUtils'
+} from '../gameTestUtils'
 
 beforeEach(() => {
   vi.useFakeTimers()

@@ -40,3 +40,7 @@ export type CastVoteArgs = RoomRoundArgs & {
 export type VoteProgressArgs = RoomRoundArgs & {
   voterPlayerId?: Id<typeof TABLE.PLAYERS>
 }
+
+export type SkipVoteArgs = RoomRoundArgs & {
+  voterPlayerId: Id<typeof TABLE.PLAYERS>
+}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { GAME_STATUS } from '../../shared/gameStatus'
-import { getResultsStateHandler } from '../game/results'
-import { GAME_ERROR } from '../game/errors'
+import { GAME_STATUS } from '../../../shared/gameStatus'
+import { getResultsStateHandler } from '../../game/results'
+import { GAME_ERROR } from '../../game/errors'
 import {
   createCtx,
   createPlayer,
@@ -15,7 +15,7 @@ import {
   roundId,
   type StoredTables,
   voteId,
-} from './gameTestUtils'
+} from '../gameTestUtils'
 
 describe('getResultsStateHandler', () => {
   it('returns results when spy was caught', async () => {

@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { GAME_ERROR } from '../game/errors'
+import { GAME_ERROR } from '../../game/errors'
 import {
   assignRandomRoles,
   getRecommendedSpyCount,
   isValidPlayerCount,
   isValidSpyCount,
-} from '../gameRules'
-import type { Id } from '../_generated/dataModel'
+} from '../../gameRules'
+import type { Id } from '../../_generated/dataModel'
 
 function playerId(id: string) {
   return id as Id<'players'>

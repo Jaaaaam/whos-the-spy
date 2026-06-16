@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { GAME_ERROR } from '../game/errors'
-import { startRoundHandler } from '../game/startRound'
+import { GAME_ERROR } from '../../game/errors'
+import { startRoundHandler } from '../../game/startRound'
 import {
   createCtx,
   createPlayer,
@@ -13,8 +13,8 @@ import {
   roomId,
   roundId,
   type StoredTables,
-} from './gameTestUtils'
-import { GAME_STATUS } from '../../shared/gameStatus'
+} from '../gameTestUtils'
+import { GAME_STATUS } from '../../../shared/gameStatus'
 
 describe('startRoundHandler', () => {
   it('creates a round, persists role assignments, and moves room to role reveal', async () => {

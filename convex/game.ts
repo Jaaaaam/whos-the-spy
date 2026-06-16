@@ -19,6 +19,7 @@ import {
   finalizeVotingHandler,
   getVoteProgressHandler,
   getVotingResultsHandler,
+  skipVoteHandler,
 } from "./game/voting"
 import { getResultsStateHandler } from "./game/results"
 import { playAgainHandler } from "./game/playAgain"
@@ -145,4 +146,13 @@ export const playAgain = mutation({
     hostPlayerId: v.id(TABLE.PLAYERS)
   },
   handler: playAgainHandler
+})
+
+export const skipVote = mutation({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+    voterPlayerId: v.id(TABLE.PLAYERS)
+  },
+  handler: skipVoteHandler
 })

@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { GAME_STATUS } from '../../shared/gameStatus'
-import { GAME_ERROR } from '../game/errors'
+import { GAME_STATUS } from '../../../shared/gameStatus'
+import { GAME_ERROR } from '../../game/errors'
 import {
   advanceDiscussionIfExpiredHandler,
   endDiscussionTurnHandler,
   getDiscussionStateHandler,
-} from '../game/discussion'
+} from '../../game/discussion'
 import {
   createCtx,
   createDiscussionRound,
@@ -16,7 +16,7 @@ import {
   roomId,
   roundId,
   type StoredTables,
-} from './gameTestUtils'
+} from '../gameTestUtils'
 
 beforeEach(() => {
   vi.useFakeTimers()

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { GAME_STATUS } from '../../shared/gameStatus'
-import { finalizeVotingHandler } from '../game/voting'
-import { GAME_ERROR } from '../game/errors'
+import { GAME_STATUS } from '../../../shared/gameStatus'
+import { finalizeVotingHandler } from '../../game/voting'
+import { GAME_ERROR } from '../../game/errors'
 import {
   createCtx,
   createPlayer,
@@ -15,7 +15,7 @@ import {
   roundId,
   type StoredTables,
   voteId,
-} from './gameTestUtils'
+} from '../gameTestUtils'
 
 describe('finalizeVotingHandler', () => {
   it('eliminates the top-voted spy, ends the game when no spies remain', async () => {
