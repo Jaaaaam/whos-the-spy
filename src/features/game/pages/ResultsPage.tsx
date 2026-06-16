@@ -80,6 +80,52 @@ export function ResultsPage() {
   }
 
   if (!isGameOver) {
+    if (!resultsState.hadElimination) {
+      return (
+        <PageShell compact>
+          <section className="py-12 text-center">
+            <div className="inline-flex rounded-full bg-tertiary/10 px-5 py-2 text-xs font-bold uppercase tracking-[0.25em] text-tertiary ring-1 ring-tertiary/20">
+              The Verdict Is In
+            </div>
+            <h1 className="mt-5 font-headline text-5xl font-extrabold tracking-tight sm:text-7xl">
+              NO ONE ELIMINATED
+            </h1>
+            <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-on-surface-variant">
+              The consensus was shattered. Doubts lingered like fog in the alleyways.{' '}
+              <strong className="mt-2 block tracking-wide text-tertiary">
+                THE SPY REMAINS IN THE SHADOWS.
+              </strong>
+            </p>
+            {resultsState.votingHistory.length > 0 && (
+              <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                {resultsState.votingHistory.map((vote, index) => (
+                  <div key={index} className="rounded-[1.25rem] bg-surface-container p-4 text-left">
+                    <p className="font-headline font-bold">{vote.voterName}</p>
+                    <div className="mt-2 flex items-center gap-1 text-xs font-medium">
+                      {vote.targetName === null ? (
+                        <>
+                          <span className="material-symbols-outlined text-sm leading-none text-tertiary">close</span>
+                          <span className="text-tertiary">Skipped</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="material-symbols-outlined text-sm leading-none text-primary">person_search</span>
+                          <span className="text-primary">{vote.targetName}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="mt-8 text-2xl font-bold text-primary">
+              Next round starting in {countdown}…
+            </p>
+          </section>
+        </PageShell>
+      )
+    }
+
     const eliminatedName = resultsState.eliminatedPlayerName ?? 'A player'
     return (
       <PageShell compact>

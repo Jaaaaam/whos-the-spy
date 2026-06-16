@@ -37,6 +37,7 @@ const resultsState = {
   isEliminatedPlayerSpy: true,
   didSpyWin: false,
   isGameOver: true,
+  hadElimination: true,
   votingHistory: [
     { voterName: 'Jam', targetName: 'Mika' },
     { voterName: 'Dani', targetName: 'Mika' },
@@ -152,6 +153,7 @@ describe('mid-game results (isGameOver=false)', () => {
     isEliminatedPlayerSpy: false,
     didSpyWin: false,
     isGameOver: false,
+    hadElimination: true,
     eliminatedPlayerName: 'Jam',
   }
 
@@ -237,5 +239,80 @@ describe('game-over results (isGameOver=true)', () => {
   it('does not show a countdown', () => {
     renderResultsPage()
     expect(screen.queryByText(/Next round starting in/i)).not.toBeInTheDocument()
+  })
+})
+
+describe('skipped-votes results (isGameOver=false, hadElimination=false)', () => {
+  const skippedResultsState = {
+    civilianWord: 'Jollibee',
+    spyWord: "McDonald's",
+    eliminatedPlayerName: null,
+    isEliminatedPlayerSpy: false,
+    didSpyWin: false,
+    isGameOver: false,
+    hadElimination: false,
+    votingHistory: [
+      { voterName: 'Jam', targetName: null },
+      { voterName: 'Mika', targetName: null },
+      { voterName: 'Dani', targetName: 'Jam' },
+    ],
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.mocked(useRoomByCode).mockReturnValue({ room, isLoading: false, notFound: false })
+    vi.mocked(useResultsState).mockReturnValue({ resultsState: skippedResultsState, isLoading: false })
+    vi.mocked(useStartRound).mockReturnValue({ startRound: vi.fn(), isStarting: false, error: null })
+    vi.mocked(usePlayAgain).mockReturnValue({ playAgain: vi.fn(), isPlayingAgain: false, error: null })
+    vi.mocked(getCurrentPlayerId).mockReturnValue(null)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('shows NO ONE ELIMINATED headline', () => {
+    renderResultsPage()
+    expect(screen.getByText(/no one eliminated/i)).toBeInTheDocument()
+  })
+
+  it('shows THE SPY REMAINS IN THE SHADOWS copy', () => {
+    renderResultsPage()
+    expect(screen.getByText(/the spy remains in the shadows/i)).toBeInTheDocument()
+  })
+
+  it('shows The Verdict Is In badge', () => {
+    renderResultsPage()
+    expect(screen.getByText(/the verdict is in/i)).toBeInTheDocument()
+  })
+
+  it('shows countdown text', () => {
+    renderResultsPage()
+    expect(screen.getByText(/next round starting in/i)).toBeInTheDocument()
+  })
+
+  it('shows Skipped label for null-target votes', () => {
+    renderResultsPage()
+    const skippedLabels = screen.getAllByText(/skipped/i)
+    expect(skippedLabels.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('shows the real vote target name for non-null votes', () => {
+    renderResultsPage()
+    expect(screen.getAllByText('Jam').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('auto-advances round when host countdown expires', async () => {
+    const startRound = vi.fn()
+    vi.mocked(useStartRound).mockReturnValue({ startRound, isStarting: false, error: null })
+    vi.mocked(getCurrentPlayerId).mockReturnValue(hostPlayerId)
+
+    renderResultsPage()
+
+    for (let i = 0; i < 5; i++) {
+      await act(async () => { vi.advanceTimersByTime(1000) })
+    }
+
+    expect(startRound).toHaveBeenCalledWith({ roomId, hostPlayerId })
   })
 })
