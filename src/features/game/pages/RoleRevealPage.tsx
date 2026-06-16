@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { Card } from '../../../shared/components/Card'
+import { Loader } from '../../../shared/components/Loader'
 import { PageShell } from '../../../shared/layouts/PageShell'
 import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
@@ -75,9 +76,7 @@ export function RoleRevealPage() {
   if (isRoomLoading) {
     return (
       <PageShell compact>
-        <Card className="my-8 text-center text-on-surface-variant">
-          Loading Room...
-        </Card>
+        <Loader fullPage label="Loading room" />
       </PageShell>
     )
   }
@@ -101,9 +100,7 @@ export function RoleRevealPage() {
   if (isRoundLoading) {
     return (
       <PageShell compact>
-        <Card className="my-8 text-center text-on-surface-variant">
-          Loading round...
-        </Card>
+        <Loader fullPage label="Loading round" />
       </PageShell>
     )
   }
@@ -115,9 +112,15 @@ export function RoleRevealPage() {
   if (isRevealLoading) {
     return (
       <PageShell compact>
-        <Card className="my-8 text-center text-on-surface-variant">
-          Loading your word...
-        </Card>
+        <Loader fullPage label="Loading your word" />
+      </PageShell>
+    )
+  }
+
+  if (isAdvancing) {
+    return (
+      <PageShell compact>
+        <Loader fullPage label="Transitioning" />
       </PageShell>
     )
   }

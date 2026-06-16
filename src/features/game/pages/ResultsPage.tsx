@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { Button, ButtonLink } from '../../../shared/components/Button'
 import { Card } from '../../../shared/components/Card'
+import { Loader } from '../../../shared/components/Loader'
 import { PageShell } from '../../../shared/layouts/PageShell'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
@@ -45,9 +46,7 @@ export function ResultsPage() {
   if (isRoomLoading || isResultsLoading) {
     return (
       <PageShell compact>
-        <Card className="my-8 text-center text-on-surface-variant">
-          Loading results...
-        </Card>
+        <Loader fullPage label="Loading results" />
       </PageShell>
     )
   }
@@ -75,9 +74,7 @@ export function ResultsPage() {
   if (!resultsState) {
     return (
       <PageShell compact>
-        <Card className="my-8 text-center text-on-surface-variant">
-          Loading results...
-        </Card>
+        <Loader fullPage label="Loading results" />
       </PageShell>
     )
   }

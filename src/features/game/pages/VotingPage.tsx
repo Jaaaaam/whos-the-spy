@@ -1,6 +1,7 @@
 import { Navigate, useParams } from 'react-router-dom'
 import type { Id } from '../../../../convex/_generated/dataModel'
 import { Card } from '../../../shared/components/Card'
+import { Loader } from '../../../shared/components/Loader'
 import { PageShell } from '../../../shared/layouts/PageShell'
 import { IntelFeed } from '../components/IntelFeed'
 import { Timer } from '../components/Timer'
@@ -100,12 +101,12 @@ export function VotingPage() {
       room?.status !== GAME_STATUS.VOTING ||
       !room.currentRoundId ||
       hasFinalizedRef.current ||
-      secondsRemaining === 0
+      (votingEndsAt !== null && secondsRemaining === 0)
     ) return
 
     hasFinalizedRef.current = true
     void finalizeVoting({ roomId: room._id, roundId: room.currentRoundId })
-  }, [voteProgress?.isComplete, room?.status, room?.currentRoundId, room?._id, finalizeVoting, secondsRemaining])
+  }, [voteProgress?.isComplete, room?.status, room?.currentRoundId, room?._id, finalizeVoting, secondsRemaining, votingEndsAt])
 
   async function handleVote(targetPlayerId: Id<'players'>) {
     if (!room?.currentRoundId || !currentPlayerId) return
@@ -125,9 +126,7 @@ export function VotingPage() {
   if (isRoomLoading) {
     return (
       <PageShell compact>
-        <Card className="my-8 text-center text-on-surface-variant">
-          Loading room...
-        </Card>
+        <Loader fullPage label="Loading room" />
       </PageShell>
     )
   }
@@ -159,9 +158,15 @@ export function VotingPage() {
   if (arePlayersLoading || isVoteProgressLoading) {
     return (
       <PageShell compact>
-        <Card className="my-8 text-center text-on-surface-variant">
-          Loading voting...
-        </Card>
+        <Loader fullPage label="Loading voting" />
+      </PageShell>
+    )
+  }
+
+  if (isAdvancing || isFinalizingVote) {
+    return (
+      <PageShell compact>
+        <Loader fullPage label="Transitioning" />
       </PageShell>
     )
   }

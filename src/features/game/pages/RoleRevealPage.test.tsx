@@ -103,7 +103,7 @@ describe('RoleRevealPage', () => {
 
     renderRoleRevealPage()
 
-    expect(screen.getByText('Loading Room...')).toBeInTheDocument()
+    expect(screen.getByText('Loading room')).toBeInTheDocument()
   })
 
   it('redirects to join when the room is not found', () => {
@@ -165,7 +165,7 @@ describe('RoleRevealPage', () => {
 
     renderRoleRevealPage()
 
-    expect(screen.getByText('Loading your word...')).toBeInTheDocument()
+    expect(screen.getByText('Loading your word')).toBeInTheDocument()
   })
 
   it('shows an error when the current player has no reveal', () => {

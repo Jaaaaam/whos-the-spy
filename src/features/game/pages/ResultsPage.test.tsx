@@ -79,7 +79,7 @@ describe('ResultsPage', () => {
 
     renderResultsPage()
 
-    expect(screen.getByText('Loading results...')).toBeInTheDocument()
+    expect(screen.getByText('Loading results')).toBeInTheDocument()
   })
 
   it('redirects to join when room is not found', () => {
@@ -102,7 +102,7 @@ describe('ResultsPage', () => {
 
     renderResultsPage()
 
-    expect(screen.getByText('Loading results...')).toBeInTheDocument()
+    expect(screen.getByText('Loading results')).toBeInTheDocument()
   })
 
   it('shows spy caught outcome when spy was eliminated', () => {

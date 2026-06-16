@@ -1,6 +1,7 @@
 import { Navigate, useParams } from 'react-router-dom'
 import { Button } from '../../../shared/components/Button'
 import { Card } from '../../../shared/components/Card'
+import { Loader } from '../../../shared/components/Loader'
 import { PageShell } from '../../../shared/layouts/PageShell'
 import { PlayerList } from '../../room/components/PlayerList'
 import { IntelFeed } from '../components/IntelFeed'
@@ -121,9 +122,7 @@ export function DiscussionPage() {
   if (isRoomLoading) {
     return (
       <PageShell compact>
-        <Card className="my-8 text-center text-on-surface-variant">
-          Loading room...
-        </Card>
+        <Loader fullPage label="Loading room" />
       </PageShell>
     )
   }
@@ -147,9 +146,15 @@ export function DiscussionPage() {
   if (isDiscussionLoading || arePlayersLoading || isRevealLoading) {
     return (
       <PageShell compact>
-        <Card className="my-8 text-center text-on-surface-variant">
-          Loading discussion...
-        </Card>
+        <Loader fullPage label="Loading discussion" />
+      </PageShell>
+    )
+  }
+
+  if (isAdvancing) {
+    return (
+      <PageShell compact>
+        <Loader fullPage label="Transitioning" />
       </PageShell>
     )
   }

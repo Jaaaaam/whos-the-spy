@@ -8,6 +8,8 @@ import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { clearCurrentPlayerId, saveCurrentPlayerId } from '../../room/lib/currentPlayer'
 import { useCastVote } from '../hooks/useCastVote'
 import { useFinalizeVoting } from '../hooks/useFinalizeVoting'
+import { useAdvanceVotingIfExpired } from '../hooks/useAdvanceVotingIfExpired'
+import { useSkipVote } from '../hooks/useSkipVote'
 import { useVoteProgress } from '../hooks/useVoteProgress'
 import { VotingPage } from './VotingPage'
 
@@ -16,6 +18,8 @@ vi.mock('../../room/hooks/usePlayersByRoom')
 vi.mock('../hooks/useVoteProgress')
 vi.mock('../hooks/useCastVote')
 vi.mock('../hooks/useFinalizeVoting')
+vi.mock('../hooks/useAdvanceVotingIfExpired')
+vi.mock('../hooks/useSkipVote')
 
 const roomId = 'room_1' as Id<'rooms'>
 const roundId = 'round_1' as Id<'rounds'>
@@ -113,6 +117,16 @@ describe('VotingPage', () => {
       isFinalizingVote: false,
       error: null,
     })
+    vi.mocked(useAdvanceVotingIfExpired).mockReturnValue({
+      advanceVotingIfExpired: vi.fn(),
+      isAdvancing: false,
+      error: null,
+    })
+    vi.mocked(useSkipVote).mockReturnValue({
+      skipVote: vi.fn(),
+      isSkipping: false,
+      error: null,
+    })
   })
 
   it('shows a loading state while the room is loading', () => {
@@ -124,7 +138,7 @@ describe('VotingPage', () => {
 
     renderVotingPage()
 
-    expect(screen.getByText('Loading room...')).toBeInTheDocument()
+    expect(screen.getByText('Loading room')).toBeInTheDocument()
   })
 
   it('redirects to join when the room is not found', () => {
@@ -201,7 +215,7 @@ describe('VotingPage', () => {
 
     renderVotingPage()
 
-    expect(screen.getByText('Loading voting...')).toBeInTheDocument()
+    expect(screen.getByText('Loading voting')).toBeInTheDocument()
   })
 
   it('renders connected players and vote progress', () => {

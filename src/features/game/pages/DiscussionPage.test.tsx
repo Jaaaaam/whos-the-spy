@@ -135,7 +135,7 @@ describe('DiscussionPage', () => {
 
     renderDiscussionPage()
 
-    expect(screen.getByText('Loading room...')).toBeInTheDocument()
+    expect(screen.getByText('Loading room')).toBeInTheDocument()
   })
 
   it('redirects to join when the room is not found', () => {
@@ -212,7 +212,7 @@ describe('DiscussionPage', () => {
 
     renderDiscussionPage()
 
-    expect(screen.getByText('Loading discussion...')).toBeInTheDocument()
+    expect(screen.getByText('Loading discussion')).toBeInTheDocument()
   })
 
   it('redirects to the lobby when discussion state is missing', () => {
