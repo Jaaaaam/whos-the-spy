@@ -15,6 +15,7 @@ import {
 } from "./game/reveal"
 import { startRoundHandler } from "./game/startRound"
 import {
+  advanceVotingIfExpiredHandler,
   castVoteHandler,
   finalizeVotingHandler,
   getVoteProgressHandler,
@@ -146,6 +147,14 @@ export const playAgain = mutation({
     hostPlayerId: v.id(TABLE.PLAYERS)
   },
   handler: playAgainHandler
+})
+
+export const advanceVotingIfExpired = mutation({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+  },
+  handler: advanceVotingIfExpiredHandler,
 })
 
 export const skipVote = mutation({

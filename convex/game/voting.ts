@@ -271,6 +271,47 @@ export async function finalizeVotingHandler(ctx: MutationCtx, { roomId, roundId 
   return { isTie: false as const, eliminatedPlayerId: eliminatedPlayer._id, didSpyWon }
 }
 
+export async function advanceVotingIfExpiredHandler(ctx: MutationCtx, { roomId, roundId }: RoomRoundArgs) {
+  const room = await ctx.db.get(roomId)
+  if (!room) throw new Error(GAME_ERROR.ROOM_NOT_FOUND)
+
+  if (room.status !== GAME_STATUS.VOTING) {
+    return { advanced: false }
+  }
+
+  if (room.currentRoundId !== roundId) {
+    throw new Error(GAME_ERROR.NOT_CURRENT_ROOM_ROUND)
+  }
+
+  const round = await ctx.db.get(roundId)
+  if (!round || round.roomId !== roomId) throw new Error(GAME_ERROR.ROUND_NOT_FOUND)
+
+  if (!round.votingEndsAt || Date.now() < round.votingEndsAt) {
+    return { advanced: false }
+  }
+
+  const activePlayers = await getActivePlayersByRoom(ctx, roomId)
+  const votes = await getVotesByRoomRound(ctx, { roomId, roundId })
+  const voterIds = new Set(votes.map((v) => v.voterPlayerId))
+  const now = Date.now()
+
+  for (const player of activePlayers) {
+    if (!voterIds.has(player._id)) {
+      await ctx.db.insert(TABLE.VOTES, {
+        roomId,
+        roundId,
+        voterPlayerId: player._id,
+        createdAt: now,
+        updatedAt: now,
+      })
+    }
+  }
+
+  await finalizeVotingHandler(ctx, { roomId, roundId })
+
+  return { advanced: true }
+}
+
 export async function skipVoteHandler(ctx: MutationCtx, { voterPlayerId, roomId, roundId }: SkipVoteArgs) {
   await getCurrentVotingRound(ctx, { roomId, roundId })
 
