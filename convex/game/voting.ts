@@ -206,7 +206,7 @@ export async function finalizeVotingHandler(ctx: MutationCtx, { roomId, roundId 
 
   if (activeVotes.length === 0 || abstentions.length > activeVotes.length) {
     await Promise.all([
-      ctx.db.patch(roundId, { eliminatedPlayerId: undefined, isTie: false, isGameOver: false }),
+      ctx.db.patch(roundId, { eliminatedPlayerId: undefined, isTie: false, isGameOver: false, hadElimination: false }),
       ctx.db.patch(roomId, { status: GAME_STATUS.RESULTS })
     ])
     return { isTie: false as const, eliminatedPlayerId: undefined, didSpyWon: undefined }
@@ -261,7 +261,7 @@ export async function finalizeVotingHandler(ctx: MutationCtx, { roomId, roundId 
     gameOver = false
   }
 
-  await ctx.db.patch(roundId, { eliminatedPlayerId: eliminatedPlayer._id, didSpyWon, isTie: false, isGameOver: gameOver })
+  await ctx.db.patch(roundId, { eliminatedPlayerId: eliminatedPlayer._id, didSpyWon, isTie: false, isGameOver: gameOver, hadElimination: true })
   await ctx.db.patch(roomId, { status: GAME_STATUS.RESULTS })
 
   return { isTie: false as const, eliminatedPlayerId: eliminatedPlayer._id, didSpyWon }

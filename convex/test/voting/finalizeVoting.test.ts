@@ -48,7 +48,7 @@ describe('finalizeVotingHandler', () => {
 
     expect(result).toEqual({ isTie: false, eliminatedPlayerId: spyId, didSpyWon: false })
     expect(tables.players.find(p => p._id === spyId)?.isEliminated).toBe(true)
-    expect(tables.rounds[0]).toMatchObject({ eliminatedPlayerId: spyId, didSpyWon: false, isTie: false })
+    expect(tables.rounds[0]).toMatchObject({ eliminatedPlayerId: spyId, didSpyWon: false, isTie: false, hadElimination: true })
     expect(tables.rooms[0].status).toBe(GAME_STATUS.RESULTS)
   })
 
@@ -126,7 +126,7 @@ describe('finalizeVotingHandler', () => {
 
     expect(result).toEqual({ isTie: false, eliminatedPlayerId: civilian1Id, didSpyWon: true })
     expect(tables.players.find(p => p._id === civilian1Id)?.isEliminated).toBe(true)
-    expect(tables.rounds[0]).toMatchObject({ eliminatedPlayerId: civilian1Id, didSpyWon: true, isTie: false })
+    expect(tables.rounds[0]).toMatchObject({ eliminatedPlayerId: civilian1Id, didSpyWon: true, isTie: false, hadElimination: true })
     expect(tables.rooms[0].status).toBe(GAME_STATUS.RESULTS)
   })
 
@@ -273,7 +273,7 @@ describe('finalizeVotingHandler', () => {
 
     expect(result).toEqual({ isTie: false, eliminatedPlayerId: undefined, didSpyWon: undefined })
     expect(tables.rooms[0].status).toBe(GAME_STATUS.RESULTS)
-    expect(tables.rounds[0]).toMatchObject({ eliminatedPlayerId: undefined, isTie: false, isGameOver: false })
+    expect(tables.rounds[0]).toMatchObject({ eliminatedPlayerId: undefined, isTie: false, isGameOver: false, hadElimination: false })
     expect(tables.players.every(p => !p.isEliminated)).toBe(true)
   })
 
@@ -310,6 +310,7 @@ describe('finalizeVotingHandler', () => {
     expect(result).toEqual({ isTie: false, eliminatedPlayerId: undefined, didSpyWon: undefined })
     expect(tables.rooms[0].status).toBe(GAME_STATUS.RESULTS)
     expect(tables.rounds[0].eliminatedPlayerId).toBeUndefined()
+    expect(tables.rounds[0].hadElimination).toBe(false)
     expect(tables.players.every(p => !p.isEliminated)).toBe(true)
   })
 
