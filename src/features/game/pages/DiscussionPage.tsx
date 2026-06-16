@@ -120,7 +120,6 @@ export function DiscussionPage() {
   ])
 
   if (isRoomLoading) {
-    console.log('test')
     return (
       <PageShell compact>
         <Loader fullPage label="Loading room" />
