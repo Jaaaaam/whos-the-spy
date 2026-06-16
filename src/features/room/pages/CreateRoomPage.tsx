@@ -11,7 +11,7 @@ const discussionTimerOptions = [
   { label: '1 min', value: 60_000 },
   { label: '2 min', value: 120_000 },
   { label: '3 min', value: 180_000 },
-]
+] as const
 const minPlayersToStart = 4
 
 type RuleSetting = {
@@ -60,7 +60,7 @@ export function CreateRoomPage() {
   const [expectedPlayers, setExpectedPlayers] = useState(8)
   const [rules, setRules] = useState(initialRules)
   const [validationError, setValidationError] = useState<string | null>(null)
-  const [discussionTurnDurationMs, setDiscussionTurnDurationMs] = useState(60_000)
+  const [discussionTurnDurationMs, setDiscussionTurnDurationMs] = useState<60000 | 120000 | 180000>(60_000)
 
   const recommendedSpyCount = getRecommendedSpyCount(expectedPlayers)
   const timerProgress = timerMinutes === 5 ? '40%' : timerMinutes === 8 ? '66%' : '90%'

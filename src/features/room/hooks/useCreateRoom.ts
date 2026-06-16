@@ -8,7 +8,7 @@ export function useCreateRoom() {
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function createRoom(playerName: string, discussionTurnDurationMs: number) {
+  async function createRoom(playerName: string, discussionTurnDurationMs: 60000 | 120000 | 180000) {
     setIsCreating(true)
     setError(null)
 
