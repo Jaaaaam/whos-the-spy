@@ -6,13 +6,20 @@ type VotingCardProps = {
   player: Doc<'players'>
   isSelf: boolean
   isSelected: boolean
+  isAbstained: boolean
   disabled: boolean
   isSubmitting: boolean
   onVote: () => void
 }
 
-export function VotingCard({ player, isSelf, isSelected, disabled, isSubmitting, onVote }: VotingCardProps) {
+export function VotingCard({ player, isSelf, isSelected, isAbstained, disabled, isSubmitting, onVote }: VotingCardProps) {
   const initials = player.name.slice(0, 2).toUpperCase()
+
+  function getBadgeLabel() {
+    if (isSelf) return isAbstained ? 'Abstained' : 'You'
+    return isSelected ? 'Selected' : 'Suspect'
+  }
+
   return (
     <div
       className={cn(
@@ -33,7 +40,7 @@ export function VotingCard({ player, isSelf, isSelected, disabled, isSubmitting,
             isSelected && 'bg-tertiary/20 text-tertiary',
           )}
         >
-          {isSelf ? 'You' : isSelected ? 'Selected' : 'Suspect'}
+          {getBadgeLabel()}
         </span>
       </div>
       {isSelf ? (

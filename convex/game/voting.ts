@@ -184,11 +184,7 @@ export async function finalizeVotingHandler(ctx: MutationCtx, { roomId, roundId 
   if (!room) throw new Error(GAME_ERROR.ROOM_NOT_FOUND)
 
   if (room.status !== GAME_STATUS.VOTING) {
-    const round = await ctx.db.get(roundId)
-    if (round && round.roomId === roomId && (round.eliminatedPlayerId !== undefined || round.isTie)) {
-      return { isTie: round.isTie as boolean, eliminatedPlayerId: round.eliminatedPlayerId, didSpyWon: round.didSpyWon }
-    }
-    throw new Error(GAME_ERROR.ROOM_NOT_IN_CURRENT_VOTING)
+    return
   }
 
   await getCurrentVotingRound(ctx, { roomId, roundId })

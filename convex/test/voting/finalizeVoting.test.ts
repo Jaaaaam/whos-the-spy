@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { GAME_STATUS } from '../../../shared/gameStatus'
 import { finalizeVotingHandler } from '../../game/voting'
-import { GAME_ERROR } from '../../game/errors'
 import {
   createCtx,
   createPlayer,
@@ -207,9 +206,10 @@ describe('finalizeVotingHandler', () => {
 
     const result = await finalizeVotingHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
 
-    expect(result.isTie).toBe(true)
-    expect(result.eliminatedPlayerId).toBeUndefined()
-    expect(result.didSpyWon).toBeUndefined()
+    expect(result).toBeDefined()
+    expect(result!.isTie).toBe(true)
+    expect(result!.eliminatedPlayerId).toBeUndefined()
+    expect(result!.didSpyWon).toBeUndefined()
     expect(tables.rounds[0].isTie).toBe(true)
     expect(tables.rounds[0].tieCandidateIds).toHaveLength(3)
     expect(tables.rooms[0].status).toBe(GAME_STATUS.BATTLE)
@@ -313,7 +313,7 @@ describe('finalizeVotingHandler', () => {
     expect(tables.players.every(p => !p.isEliminated)).toBe(true)
   })
 
-  it('returns the existing result when called a second time after voting is already finalized', async () => {
+  it('is idempotent — second call after voting is finalized returns without error', async () => {
     const currentRoomId = roomId('room_1')
     const currentRoundId = roundId('round_1')
     const spyId = playerId('player_1')
@@ -340,10 +340,10 @@ describe('finalizeVotingHandler', () => {
     }
     const ctx = createCtx(tables)
 
-    const firstResult = await finalizeVotingHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
-    const secondResult = await finalizeVotingHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
-
-    expect(secondResult).toEqual(firstResult)
+    await finalizeVotingHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+    await expect(
+      finalizeVotingHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId }),
+    ).resolves.toBeUndefined()
     expect(tables.rooms[0].status).toBe(GAME_STATUS.RESULTS)
   })
 
@@ -392,7 +392,7 @@ describe('finalizeVotingHandler', () => {
     expect(tables.rooms[0].status).toBe(GAME_STATUS.RESULTS)
   })
 
-  it('throws when the room is not in the voting phase', async () => {
+  it('is a no-op when the room is not in the voting phase', async () => {
     const currentRoomId = roomId('room_1')
     const currentRoundId = roundId('round_1')
     const tables: StoredTables = {
@@ -406,6 +406,7 @@ describe('finalizeVotingHandler', () => {
 
     await expect(
       finalizeVotingHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId }),
-    ).rejects.toThrow(GAME_ERROR.ROOM_NOT_IN_CURRENT_VOTING)
+    ).resolves.toBeUndefined()
+    expect(tables.rooms[0].status).toBe(GAME_STATUS.DISCUSSION)
   })
 })
