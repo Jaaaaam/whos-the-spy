@@ -216,7 +216,37 @@ describe('finalizeVotingHandler', () => {
     expect(tables.players.every(p => !p.isEliminated)).toBe(true)
   })
 
-  it('throws when not all players have voted', async () => {
+  it('finalizes with partial votes — does not require everyone to vote', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const spyId = playerId('player_1')
+    const civilianId = playerId('player_2')
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+      players: [
+        createPlayer(spyId, currentRoomId),
+        createPlayer(civilianId, currentRoomId),
+      ],
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments: [
+        createRoleAssignment(roleAssignmentId('ra_1'), currentRoomId, currentRoundId, spyId, 'spy'),
+        createRoleAssignment(roleAssignmentId('ra_2'), currentRoomId, currentRoundId, civilianId, 'civilian'),
+      ],
+      votes: [
+        createVote(voteId('vote_1'), currentRoomId, currentRoundId, civilianId, spyId),
+        // spyId has not voted — partial votes should still proceed
+      ],
+    }
+    const ctx = createCtx(tables)
+
+    const result = await finalizeVotingHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+
+    expect(result).toEqual({ isTie: false, eliminatedPlayerId: spyId, didSpyWon: false })
+    expect(tables.players.find(p => p._id === spyId)?.isEliminated).toBe(true)
+    expect(tables.rooms[0].status).toBe(GAME_STATUS.RESULTS)
+  })
+
+  it('skips elimination when zero real votes are cast', async () => {
     const currentRoomId = roomId('room_1')
     const currentRoundId = roundId('round_1')
     const player1Id = playerId('player_1')
@@ -233,15 +263,54 @@ describe('finalizeVotingHandler', () => {
         createRoleAssignment(roleAssignmentId('ra_2'), currentRoomId, currentRoundId, player2Id, 'civilian'),
       ],
       votes: [
-        createVote(voteId('vote_1'), currentRoomId, currentRoundId, player1Id, player2Id),
-        // player2 has not voted
+        createVote(voteId('vote_1'), currentRoomId, currentRoundId, player1Id),
+        createVote(voteId('vote_2'), currentRoomId, currentRoundId, player2Id),
       ],
     }
     const ctx = createCtx(tables)
 
-    await expect(
-      finalizeVotingHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId }),
-    ).rejects.toThrow(GAME_ERROR.VOTING_NOT_COMPLETE)
+    const result = await finalizeVotingHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+
+    expect(result).toEqual({ isTie: false, eliminatedPlayerId: undefined, didSpyWon: undefined })
+    expect(tables.rooms[0].status).toBe(GAME_STATUS.RESULTS)
+    expect(tables.rounds[0]).toMatchObject({ eliminatedPlayerId: undefined, isTie: false, isGameOver: false })
+    expect(tables.players.every(p => !p.isEliminated)).toBe(true)
+  })
+
+  it('skips elimination when abstentions outnumber real votes', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const player1Id = playerId('player_1')
+    const player2Id = playerId('player_2')
+    const player3Id = playerId('player_3')
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+      players: [
+        createPlayer(player1Id, currentRoomId),
+        createPlayer(player2Id, currentRoomId),
+        createPlayer(player3Id, currentRoomId),
+      ],
+      rounds: [createRound(currentRoundId, currentRoomId)],
+      roleAssignments: [
+        createRoleAssignment(roleAssignmentId('ra_1'), currentRoomId, currentRoundId, player1Id, 'spy'),
+        createRoleAssignment(roleAssignmentId('ra_2'), currentRoomId, currentRoundId, player2Id, 'civilian'),
+        createRoleAssignment(roleAssignmentId('ra_3'), currentRoomId, currentRoundId, player3Id, 'civilian'),
+      ],
+      votes: [
+        createVote(voteId('vote_1'), currentRoomId, currentRoundId, player1Id, player2Id), // 1 real vote
+        createVote(voteId('vote_2'), currentRoomId, currentRoundId, player2Id),             // abstention
+        createVote(voteId('vote_3'), currentRoomId, currentRoundId, player3Id),             // abstention
+      ],
+    }
+    const ctx = createCtx(tables)
+
+    // abstentions (2) > real votes (1) → no elimination
+    const result = await finalizeVotingHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+
+    expect(result).toEqual({ isTie: false, eliminatedPlayerId: undefined, didSpyWon: undefined })
+    expect(tables.rooms[0].status).toBe(GAME_STATUS.RESULTS)
+    expect(tables.rounds[0].eliminatedPlayerId).toBeUndefined()
+    expect(tables.players.every(p => !p.isEliminated)).toBe(true)
   })
 
   it('returns the existing result when called a second time after voting is already finalized', async () => {

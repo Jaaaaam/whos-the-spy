@@ -204,10 +204,17 @@ export async function finalizeVotingHandler(ctx: MutationCtx, { roomId, roundId 
       activePlayerIds.has(vote.targetPlayerId),
   )
 
-  if (activeVotes.length < activePlayers.length) {
-    throw new Error(GAME_ERROR.VOTING_NOT_COMPLETE)
-  }
+  const abstentions = votes.filter(
+    (vote) => activePlayerIds.has(vote.voterPlayerId) && vote.targetPlayerId === undefined,
+  )
 
+  if (activeVotes.length === 0 || abstentions.length > activeVotes.length) {
+    await Promise.all([
+      ctx.db.patch(roundId, { eliminatedPlayerId: undefined, isTie: false, isGameOver: false }),
+      ctx.db.patch(roomId, { status: GAME_STATUS.RESULTS })
+    ])
+    return { isTie: false as const, eliminatedPlayerId: undefined, didSpyWon: undefined }
+  }
   const voteCounts = buildVoteCounts(activeVotes, activePlayerIds, activePlayers)
 
   const topCount = Math.max(0, ...voteCounts.values())
