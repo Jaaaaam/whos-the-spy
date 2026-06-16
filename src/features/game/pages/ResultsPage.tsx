@@ -191,7 +191,7 @@ export function ResultsPage() {
                 >
                   <p className="font-headline font-bold">{vote.voterName}</p>
                   <p className="mt-1 text-xs font-medium text-error">
-                    Voted for: {vote.targetName}
+                    Voted for: {vote.targetName ?? 'Skipped'}
                   </p>
                 </div>
               ))}
