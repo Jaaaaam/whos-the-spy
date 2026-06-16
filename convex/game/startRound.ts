@@ -92,7 +92,8 @@ export async function startRoundHandler(
     spyCount: currentSpyCount,
     roundNumber,
     startedAt,
-    revealEndsAt: existingRounds.length ? undefined : startedAt + REVEAL_DURATION_MS
+    revealEndsAt: existingRounds.length ? undefined : startedAt + REVEAL_DURATION_MS,
+    hadElimination: true
   })
 
   await Promise.all(assignedRoles.map((assignedRole) =>

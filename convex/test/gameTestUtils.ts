@@ -104,6 +104,7 @@ export function createRound(
     spyCount: 1,
     roundNumber: 1,
     startedAt: 0,
+    hadElimination: true,
   }
 }
 

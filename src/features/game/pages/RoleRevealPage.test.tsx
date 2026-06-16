@@ -41,6 +41,7 @@ const round: Doc<'rounds'> = {
   roundNumber: 1,
   startedAt: 0,
   revealEndsAt: Date.now() + 30_000,
+  hadElimination: true,
 }
 
 function renderRoleRevealPage() {
