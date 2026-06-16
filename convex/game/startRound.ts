@@ -93,7 +93,7 @@ export async function startRoundHandler(
     roundNumber,
     startedAt,
     revealEndsAt: existingRounds.length ? undefined : startedAt + REVEAL_DURATION_MS,
-    hadElimination: true
+    hadElimination: false
   })
 
   await Promise.all(assignedRoles.map((assignedRole) =>
