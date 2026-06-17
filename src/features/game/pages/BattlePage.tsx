@@ -63,7 +63,7 @@ export function BattlePage() {
   }
 
   const tiedPlayers = battleState?.tiedPlayers ?? []
-
+  console.log('check')
   return (
     <PageShell showFooter={false}>
       <div className="flex min-h-[calc(100vh-7rem)] flex-col items-center justify-center gap-12 py-12">
