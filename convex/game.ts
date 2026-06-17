@@ -18,6 +18,7 @@ import {
   advanceVotingIfExpiredHandler,
   castVoteHandler,
   finalizeVotingHandler,
+  getBattleStateHandler,
   getVoteProgressHandler,
   getVotingResultsHandler,
   skipVoteHandler,
@@ -164,4 +165,12 @@ export const skipVote = mutation({
     voterPlayerId: v.id(TABLE.PLAYERS)
   },
   handler: skipVoteHandler
+})
+
+export const getBattleState = query({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+  },
+  handler: getBattleStateHandler,
 })

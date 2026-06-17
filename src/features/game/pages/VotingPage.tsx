@@ -155,6 +155,10 @@ export function VotingPage() {
     return <Navigate to={`/room/${room.code}`} replace />
   }
 
+  if (room.status === GAME_STATUS.BATTLE) {
+    return <Navigate to={`/room/${room.code}/battle`} replace />
+  }
+
   if (arePlayersLoading || isVoteProgressLoading) {
     return (
       <PageShell compact>
@@ -215,7 +219,7 @@ export function VotingPage() {
                   isAbstained={player._id === currentPlayerId && hasVoted && !voteProgress?.selectedTargetPlayerId}
                   disabled={isSpectating ? true : isCastingVote || hasVoted}
                   isSubmitting={isCastingVote}
-                  onVote={isSpectating ? () => {} : () => void handleVote(player._id)}
+                  onVote={isSpectating ? () => { } : () => void handleVote(player._id)}
                 />
               ))}
             </div>

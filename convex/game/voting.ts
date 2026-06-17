@@ -308,6 +308,21 @@ export async function advanceVotingIfExpiredHandler(ctx: MutationCtx, { roomId, 
   return { advanced: true }
 }
 
+export async function getBattleStateHandler(ctx: QueryCtx, { roomId, roundId }: RoomRoundArgs) {
+  const room = await ctx.db.get(roomId)
+  if (!room || room.status !== GAME_STATUS.BATTLE || room.currentRoundId !== roundId) {
+    return null
+  }
+  const round = await ctx.db.get(roundId)
+  if (!round || !round.tieCandidateIds) return null
+
+  const tiedPlayers = (
+    await Promise.all(round.tieCandidateIds.map((id) => ctx.db.get(id)))
+  ).filter((p): p is NonNullable<typeof p> => p !== null)
+
+  return { tiedPlayers }
+}
+
 export async function skipVoteHandler(ctx: MutationCtx, { voterPlayerId, roomId, roundId }: SkipVoteArgs) {
   await getCurrentVotingRound(ctx, { roomId, roundId })
 

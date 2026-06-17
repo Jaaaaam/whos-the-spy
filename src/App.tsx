@@ -7,6 +7,7 @@ import { HomePage } from './features/home/pages/HomePage'
 import { CreateRoomPage } from './features/room/pages/CreateRoomPage'
 import { JoinRoomPage } from './features/room/pages/JoinRoomPage'
 import { LobbyPage } from './features/room/pages/LobbyPage'
+import { BattlePage } from './features/game/pages/BattlePage'
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/room/:roomCode/discussion" element={<DiscussionPage />} />
         <Route path="/room/:roomCode/voting" element={<VotingPage />} />
         <Route path="/room/:roomCode/results" element={<ResultsPage />} />
+        <Route path="/room/:roomCode/battle" element={<BattlePage />} />
         <Route path="/room/demo" element={<LobbyPage />} />
         <Route path="/room/demo/role" element={<RoleRevealPage />} />
         <Route path="/room/demo/discussion" element={<DiscussionPage />} />

@@ -74,6 +74,7 @@ function renderVotingPage() {
         <Route path="/room/:roomCode/role" element={<div>Role redirect</div>} />
         <Route path="/room/:roomCode/discussion" element={<div>Discussion redirect</div>} />
         <Route path="/room/:roomCode/results" element={<div>Results redirect</div>} />
+        <Route path="/room/:roomCode/battle" element={<div>Battle redirect</div>} />
         <Route path="/room/:roomCode" element={<div>Lobby redirect</div>} />
         <Route path="/join" element={<div>Join redirect</div>} />
       </Routes>
@@ -422,6 +423,18 @@ describe('VotingPage', () => {
     renderVotingPage()
 
     expect(screen.getByText('Results redirect')).toBeInTheDocument()
+  })
+
+  it('redirects to battle when room status becomes BATTLE', () => {
+    vi.mocked(useRoomByCode).mockReturnValue({
+      room: { ...room, status: GAME_STATUS.BATTLE },
+      isLoading: false,
+      notFound: false,
+    })
+
+    renderVotingPage()
+
+    expect(screen.getByText('Battle redirect')).toBeInTheDocument()
   })
 
   it('redirects to lobby when room status becomes LOBBY', () => {

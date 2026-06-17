@@ -79,3 +79,15 @@ input {
   background-image: radial-gradient(rgba(161, 142, 255, 0.22) 1px, transparent 1px);
   background-size: 30px 30px;
 }
+
+.vs-glitch {
+  text-shadow: 2px 0 #7cfffe, -2px 0 #fd6f85;
+  animation: vs-glitch 2s infinite linear alternate-reverse;
+}
+
+@keyframes vs-glitch {
+  0%   { transform: skew(0deg); }
+  20%  { transform: skew(-1deg); }
+  40%  { transform: skew(1deg); }
+  100% { transform: skew(0deg); }
+}
