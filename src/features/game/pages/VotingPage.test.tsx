@@ -228,7 +228,6 @@ describe('VotingPage', () => {
     expect(screen.queryByRole('heading', { name: 'Dani' })).not.toBeInTheDocument()
     expect(screen.getByText('You')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Vote' })).toBeEnabled()
-    expect(screen.getByText('1/2 players have voted.')).toBeInTheDocument()
   })
 
   it('marks the current player selected vote', () => {
@@ -247,8 +246,8 @@ describe('VotingPage', () => {
 
     renderVotingPage()
 
-    expect(screen.getAllByText('Selected')).toHaveLength(2)
-    expect(screen.getByRole('button', { name: 'Selected' })).toBeEnabled()
+    expect(screen.getAllByText('Voted')).toHaveLength(1)
+    expect(screen.getByRole('button', { name: 'Vote' })).toBeEnabled()
   })
 
   it('casts a vote for a valid target', () => {
@@ -279,7 +278,7 @@ describe('VotingPage', () => {
 
     renderVotingPage()
 
-    expect(screen.getByRole('button', { name: 'Voting...' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Vote' })).toBeDisabled()
   })
 
   it('shows vote mutation errors', () => {

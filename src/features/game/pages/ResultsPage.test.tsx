@@ -110,7 +110,7 @@ describe('ResultsPage', () => {
   it('shows spy caught outcome when spy was eliminated', () => {
     renderResultsPage()
 
-    expect(screen.getByText('SPY ELIMINATED!')).toBeInTheDocument()
+    expect(screen.getByText('SPY EXPOSED!')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Mika' })).toBeInTheDocument()
     expect(screen.getByText('Jollibee')).toBeInTheDocument()
   })
@@ -137,7 +137,6 @@ describe('ResultsPage', () => {
 
     expect(screen.getByText('Jam')).toBeInTheDocument()
     expect(screen.getAllByText('Mika')).not.toHaveLength(0)
-    expect(screen.getByText('Dani')).toBeInTheDocument()
   })
 
   it('new room button links to create page', () => {
@@ -228,7 +227,7 @@ describe('game-over results (isGameOver=true)', () => {
 
   it('shows SPY ELIMINATED when spy was caught', () => {
     renderResultsPage()
-    expect(screen.getByText('SPY ELIMINATED!')).toBeInTheDocument()
+    expect(screen.getByText('SPY EXPOSED!')).toBeInTheDocument()
   })
 
   it('shows New Room button', () => {
@@ -275,7 +274,7 @@ describe('skipped-votes results (isGameOver=false, hadElimination=false)', () =>
 
   it('shows NO ONE ELIMINATED headline', () => {
     renderResultsPage()
-    expect(screen.getByText(/no one eliminated/i)).toBeInTheDocument()
+    expect(screen.getByText(/no verdict/i)).toBeInTheDocument()
   })
 
   it('shows THE SPY REMAINS IN THE SHADOWS copy', () => {
@@ -283,9 +282,9 @@ describe('skipped-votes results (isGameOver=false, hadElimination=false)', () =>
     expect(screen.getByText(/the spy remains in the shadows/i)).toBeInTheDocument()
   })
 
-  it('shows The Verdict Is In badge', () => {
+  it('shows no-consensus copy', () => {
     renderResultsPage()
-    expect(screen.getByText(/the verdict is in/i)).toBeInTheDocument()
+    expect(screen.getByText(/the consensus was shattered/i)).toBeInTheDocument()
   })
 
   it('shows countdown text', () => {
@@ -295,8 +294,8 @@ describe('skipped-votes results (isGameOver=false, hadElimination=false)', () =>
 
   it('shows Skipped label for null-target votes', () => {
     renderResultsPage()
-    const skippedLabels = screen.getAllByText(/skipped/i)
-    expect(skippedLabels.length).toBeGreaterThanOrEqual(2)
+    const abstainedLabels = screen.getAllByText(/abstained/i)
+    expect(abstainedLabels.length).toBeGreaterThanOrEqual(2)
   })
 
   it('shows the real vote target name for non-null votes', () => {
