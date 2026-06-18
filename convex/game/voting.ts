@@ -381,7 +381,10 @@ export async function advanceBattleIfExpiredHandler(ctx: MutationCtx, { roomId, 
   const durationMs = room.discussionTurnDurationMs ?? DISCUSSION_TURN_DURATION_MS
   const turnStartedAt = Date.now()
 
+  const existingVotes = await getVotesByRoomRound(ctx, { roomId, roundId })
+
   await Promise.all([
+    ...existingVotes.map((v) => ctx.db.delete(v._id)),
     ctx.db.patch(roundId, {
       discussionOrder: round.tieCandidateIds,
       currentTurnIndex: 0,

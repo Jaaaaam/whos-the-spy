@@ -1,15 +1,22 @@
-import { Fragment } from 'react'
+import { Fragment, useEffect, useRef } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { Loader } from '../../../shared/components/Loader'
 import { PageShell } from '../../../shared/layouts/PageShell'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
 import { useBattleState } from '../hooks/state/useBattleState'
+import { useAdvanceBattleIfExpired } from '../hooks/advance/useAdvanceBattleIfExpired'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { SuspectCard } from '../components/SuspectCard'
 import { VsDivider } from '../components/VsDivider'
+import { Timer } from '../components/Timer'
+import { useNow } from '../hooks/useNow'
+import { getSecondsRemaining, formatSeconds, getTimerProgress } from '../lib/timerUtils'
+
+const BATTLE_DURATION_MS = 30_000
 
 export function BattlePage() {
+  const hasRequestedAdvanceRef = useRef(false)
   const { roomCode } = useParams()
   const currentPlayerId = getCurrentPlayerId()
   const { room, isLoading: isRoomLoading, notFound: isRoomNotFound } = useRoomByCode(roomCode)
@@ -17,6 +24,28 @@ export function BattlePage() {
     roomId: room?._id,
     roundId: room?.currentRoundId,
   })
+  const { advanceBattleIfExpired, isAdvancing } = useAdvanceBattleIfExpired()
+
+  const now = useNow()
+
+  const battleEndsAt = battleState?.battleEndsAt ?? null
+  const secondsRemaining = battleEndsAt ? getSecondsRemaining(battleEndsAt, now) : 0
+  const timerProgress = battleEndsAt ? getTimerProgress(battleEndsAt, BATTLE_DURATION_MS, now) : 100
+  const isTimerUrgent = secondsRemaining <= 10
+
+  useEffect(() => { hasRequestedAdvanceRef.current = false }, [battleEndsAt])
+
+  useEffect(() => {
+    if (!room || !room.currentRoundId || room.status !== GAME_STATUS.BATTLE) return
+    if (!battleEndsAt) return
+    if (secondsRemaining > 0 || isAdvancing) return
+    if (hasRequestedAdvanceRef.current) return
+
+    hasRequestedAdvanceRef.current = true
+    void advanceBattleIfExpired(room._id, room.currentRoundId).catch(() => {
+      hasRequestedAdvanceRef.current = false
+    })
+  }, [advanceBattleIfExpired, isAdvancing, room, secondsRemaining, battleEndsAt])
 
   if (isRoomLoading) {
     return (
@@ -63,7 +92,7 @@ export function BattlePage() {
   }
 
   const tiedPlayers = battleState?.tiedPlayers ?? []
-  console.log('check')
+
   return (
     <PageShell showFooter={false}>
       <div className="flex min-h-[calc(100vh-7rem)] flex-col items-center justify-center gap-12 py-12">
@@ -82,6 +111,18 @@ export function BattlePage() {
             <strong className="text-tertiary">Suspects only transmit next round.</strong>
           </p>
         </div>
+
+        {/* Timer */}
+        {battleEndsAt ? (
+          <div className="w-full max-w-xs">
+            <Timer
+              label="Time remaining"
+              value={formatSeconds(secondsRemaining)}
+              progress={timerProgress}
+              urgent={isTimerUrgent}
+            />
+          </div>
+        ) : null}
 
         {/* VS layout */}
         <div className="flex w-full max-w-4xl flex-wrap items-center justify-center md:flex-row md:gap-0">

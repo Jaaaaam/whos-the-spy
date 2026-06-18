@@ -11,37 +11,12 @@ import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { useDiscussionState } from '../hooks/state/useDiscussionState'
 import { usePlayersByRoom } from '../../room/hooks/usePlayersByRoom'
 import { useMyReveal } from '../hooks/state/useMyReveal'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { useEndDiscussionTurn } from '../hooks/actions/useEndDiscussionTurn'
 import { useAdvanceDiscussionIfExpired } from '../hooks/advance/useAdvanceDiscussionIfExpired'
-
-function getSecondsRemaining(turnEndsAt: number, now: number) {
-  return Math.max(0, Math.ceil((turnEndsAt - now) / 1_000))
-}
-
-function formatSeconds(seconds: number) {
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
-  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
-}
-
-function getTimerProgress(
-  turnStartedAt: number,
-  turnEndsAt: number,
-  now: number
-) {
-  const turnDuration = turnEndsAt - turnStartedAt
-
-  if (turnDuration <= 0) return 0
-
-  const remainingDuration = turnEndsAt - now
-
-  return Math.max(
-    0,
-    Math.min(100, (remainingDuration / turnDuration) * 100)
-  )
-}
+import { useNow } from '../hooks/useNow'
+import { getSecondsRemaining, formatSeconds, getTimerProgress } from '../lib/timerUtils'
 
 export function DiscussionPage() {
   const { roomCode } = useParams()
@@ -83,19 +58,9 @@ export function DiscussionPage() {
     playerId: currentPlayerId,
   })
 
-  const [now, setNow] = useState(() => Date.now())
+  const now = useNow()
   const turnEndsAt = discussionState?.round.turnEndsAt
-  const secondsRemaining = turnEndsAt
-    ? getSecondsRemaining(turnEndsAt, now)
-    : 0
-
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      setNow(Date.now())
-    }, 1_000)
-
-    return () => window.clearInterval(intervalId)
-  }, [])
+  const secondsRemaining = turnEndsAt ? getSecondsRemaining(turnEndsAt, now) : 0
 
   useEffect(() => {
     hasRequestedAdvanceRef.current = false
@@ -177,7 +142,7 @@ export function DiscussionPage() {
   } = discussionState.round
 
   const isCurrentPlayerActive = activePlayerId === currentPlayerId
-  const timerProgress = getTimerProgress(turnStartedAt, currentTurnEndsAt, now)
+  const timerProgress = getTimerProgress(currentTurnEndsAt, currentTurnEndsAt - turnStartedAt, now)
   const turnProgress = (currentTurn / totalTurns) * 100
   const roomId = room._id
   const roundId = room.currentRoundId

@@ -6,10 +6,12 @@ import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { clearCurrentPlayerId, saveCurrentPlayerId } from '../../room/lib/currentPlayer'
 import { useBattleState } from '../hooks/state/useBattleState'
+import { useAdvanceBattleIfExpired } from '../hooks/advance/useAdvanceBattleIfExpired'
 import { BattlePage } from './BattlePage'
 
 vi.mock('../../room/hooks/useRoomByCode')
 vi.mock('../hooks/state/useBattleState')
+vi.mock('../hooks/advance/useAdvanceBattleIfExpired')
 
 const roomId = 'room_1' as Id<'rooms'>
 const roundId = 'round_1' as Id<'rounds'>
@@ -71,8 +73,13 @@ describe('BattlePage', () => {
       notFound: false,
     })
     vi.mocked(useBattleState).mockReturnValue({
-      battleState: { tiedPlayers },
+      battleState: { tiedPlayers, battleEndsAt: Date.now() + 30_000 },
       isLoading: false,
+    })
+    vi.mocked(useAdvanceBattleIfExpired).mockReturnValue({
+      advanceBattleIfExpired: vi.fn().mockResolvedValue({ advanced: false }),
+      isAdvancing: false,
+      error: null,
     })
   })
 
@@ -214,5 +221,27 @@ describe('BattlePage', () => {
     renderBattlePage()
 
     expect(screen.getAllByText('Tied')).toHaveLength(2)
+  })
+
+  it('renders a timer when battleEndsAt is set', () => {
+    vi.mocked(useBattleState).mockReturnValue({
+      battleState: { tiedPlayers, battleEndsAt: Date.now() + 30_000 },
+      isLoading: false,
+    })
+
+    renderBattlePage()
+
+    expect(screen.getByText(/time remaining/i)).toBeInTheDocument()
+  })
+
+  it('does not render a timer when battleEndsAt is null', () => {
+    vi.mocked(useBattleState).mockReturnValue({
+      battleState: { tiedPlayers, battleEndsAt: null },
+      isLoading: false,
+    })
+
+    renderBattlePage()
+
+    expect(screen.queryByText(/time remaining/i)).not.toBeInTheDocument()
   })
 })

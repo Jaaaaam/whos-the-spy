@@ -12,26 +12,12 @@ import { usePlayersByRoom } from '../../room/hooks/usePlayersByRoom'
 import { useVoteProgress } from '../hooks/state/useVoteProgress'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { useCastVote } from '../hooks/actions/useCastVote'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useFinalizeVoting } from '../hooks/actions/useFinalizeVoting'
 import { useAdvanceVotingIfExpired } from '../hooks/advance/useAdvanceVotingIfExpired'
 import { useSkipVote } from '../hooks/actions/useSkipVote'
-
-function getSecondsRemaining(votingEndsAt: number, now: number) {
-  return Math.max(0, Math.ceil((votingEndsAt - now) / 1_000))
-}
-
-function formatSeconds(seconds: number) {
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
-  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
-}
-
-function getTimerProgress(votingEndsAt: number, durationMs: number, now: number) {
-  if (durationMs <= 0) return 0
-  const remainingMs = votingEndsAt - now
-  return Math.max(0, Math.min(100, (remainingMs / durationMs) * 100))
-}
+import { useNow } from '../hooks/useNow'
+import { getSecondsRemaining, formatSeconds, getTimerProgress } from '../lib/timerUtils'
 
 export function VotingPage() {
   const hasFinalizedRef = useRef(false)
@@ -64,11 +50,7 @@ export function VotingPage() {
     error,
   } = useCastVote()
 
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 1_000)
-    return () => window.clearInterval(id)
-  }, [])
+  const now = useNow()
 
   const votingEndsAt = voteProgress?.votingEndsAt ?? null
   const secondsRemaining = votingEndsAt ? getSecondsRemaining(votingEndsAt, now) : 0

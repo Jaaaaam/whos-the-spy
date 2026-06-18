@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { Card } from '../../../shared/components/Card'
 import { Loader } from '../../../shared/components/Loader'
@@ -11,12 +11,8 @@ import { useMarkRoleSeen } from '../hooks/actions/useMarkRoleSeen'
 import { useRevealState } from '../hooks/state/useRevealState'
 import { useAdvanceRevealIfExpired } from '../hooks/advance/useAdvanceRevealIfExpired'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
-
-function getSecondsRemaining(revealEndsAt: number | undefined, now: number) {
-  if (!revealEndsAt) return 0
-
-  return Math.max(0, Math.ceil((revealEndsAt - now) / 1_000))
-}
+import { useNow } from '../hooks/useNow'
+import { getSecondsRemaining } from '../lib/timerUtils'
 
 export function RoleRevealPage() {
   const { roomCode } = useParams()
@@ -33,9 +29,9 @@ export function RoleRevealPage() {
     isLoading: isRoundLoading,
     notFound: isRoundNotFound,
   } = useRevealState({ roundId: room?.currentRoundId })
-  const [now, setNow] = useState(() => Date.now())
+  const now = useNow()
   const hasRequestedAdvanceRef = useRef(false)
-  const secondsRemaining = getSecondsRemaining(revealState?.revealEndsAt, now)
+  const secondsRemaining = revealState?.revealEndsAt ? getSecondsRemaining(revealState.revealEndsAt, now) : 0
 
   const {
     reveal,
@@ -45,14 +41,6 @@ export function RoleRevealPage() {
     roundId: room?.currentRoundId,
     playerId: currentPlayerId,
   })
-
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      setNow(Date.now())
-    }, 1_000)
-
-    return () => window.clearInterval(intervalId)
-  }, [])
 
   useEffect(() => {
     hasRequestedAdvanceRef.current = false

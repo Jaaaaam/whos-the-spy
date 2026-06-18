@@ -137,6 +137,17 @@ export function createVotingRound(
   return { ...createRound(id, room), votingEndsAt }
 }
 
+export function createBattleRound(
+  id: Id<typeof TABLE.ROUNDS>,
+  room: Id<typeof TABLE.ROOMS>,
+  options: {
+    tieCandidateIds: Id<typeof TABLE.PLAYERS>[]
+    battleEndsAt: number
+  },
+): Doc<typeof TABLE.ROUNDS> {
+  return { ...createRound(id, room), isTie: true, ...options }
+}
+
 export function createVote(
   id: Id<typeof TABLE.VOTES>,
   room: Id<typeof TABLE.ROOMS>,
