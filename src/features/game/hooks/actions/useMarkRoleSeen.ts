@@ -1,8 +1,8 @@
 import { useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "../../../../../convex/_generated/api";
 import { useState } from "react";
-import type { Id } from "../../../../convex/_generated/dataModel";
-import { getConvexErrorMessage } from "../../../shared/lib/getConvexErrorMessage";
+import type { Id } from "../../../../../convex/_generated/dataModel";
+import { getConvexErrorMessage } from "../../../../shared/lib/getConvexErrorMessage";
 
 export function useMarkRoleSeen() {
   const markRoleSeenMutation = useMutation(api.game.markRoleSeen)

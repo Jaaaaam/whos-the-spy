@@ -1,8 +1,8 @@
 import { useMutation } from "convex/react";
 import { useState } from "react";
 import type { RoomHostArgs } from "../types";
-import { getConvexErrorMessage } from "../../../shared/lib/getConvexErrorMessage";
-import { api } from "../../../../convex/_generated/api";
+import { getConvexErrorMessage } from "../../../../shared/lib/getConvexErrorMessage";
+import { api } from "../../../../../convex/_generated/api";
 
 export function usePlayAgain() {
   const playAgainMutation = useMutation(api.game.playAgain)

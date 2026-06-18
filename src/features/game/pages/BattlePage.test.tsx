@@ -5,11 +5,11 @@ import type { Doc, Id } from '../../../../convex/_generated/dataModel'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { clearCurrentPlayerId, saveCurrentPlayerId } from '../../room/lib/currentPlayer'
-import { useBattleState } from '../hooks/useBattleState'
+import { useBattleState } from '../hooks/state/useBattleState'
 import { BattlePage } from './BattlePage'
 
 vi.mock('../../room/hooks/useRoomByCode')
-vi.mock('../hooks/useBattleState')
+vi.mock('../hooks/state/useBattleState')
 
 const roomId = 'room_1' as Id<'rooms'>
 const roundId = 'round_1' as Id<'rounds'>

@@ -8,13 +8,13 @@ import { IntelFeed } from '../components/IntelFeed'
 import { Timer } from '../components/Timer'
 import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
-import { useDiscussionState } from '../hooks/useDiscussionState'
+import { useDiscussionState } from '../hooks/state/useDiscussionState'
 import { usePlayersByRoom } from '../../room/hooks/usePlayersByRoom'
-import { useMyReveal } from '../hooks/useMyReveal'
+import { useMyReveal } from '../hooks/state/useMyReveal'
 import { useEffect, useRef, useState } from 'react'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
-import { useEndDiscussionTurn } from '../hooks/useEndDiscussionTurn'
-import { useAdvanceDiscussionIfExpired } from '../hooks/useAdvanceDiscussionIfExpired'
+import { useEndDiscussionTurn } from '../hooks/actions/useEndDiscussionTurn'
+import { useAdvanceDiscussionIfExpired } from '../hooks/advance/useAdvanceDiscussionIfExpired'
 
 function getSecondsRemaining(turnEndsAt: number, now: number) {
   return Math.max(0, Math.ceil((turnEndsAt - now) / 1_000))

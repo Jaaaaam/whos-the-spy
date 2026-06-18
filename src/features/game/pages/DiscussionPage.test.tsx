@@ -6,18 +6,18 @@ import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { usePlayersByRoom } from '../../room/hooks/usePlayersByRoom'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { clearCurrentPlayerId, saveCurrentPlayerId } from '../../room/lib/currentPlayer'
-import { useAdvanceDiscussionIfExpired } from '../hooks/useAdvanceDiscussionIfExpired'
-import { useDiscussionState } from '../hooks/useDiscussionState'
-import { useEndDiscussionTurn } from '../hooks/useEndDiscussionTurn'
-import { useMyReveal } from '../hooks/useMyReveal'
+import { useAdvanceDiscussionIfExpired } from '../hooks/advance/useAdvanceDiscussionIfExpired'
+import { useDiscussionState } from '../hooks/state/useDiscussionState'
+import { useEndDiscussionTurn } from '../hooks/actions/useEndDiscussionTurn'
+import { useMyReveal } from '../hooks/state/useMyReveal'
 import { DiscussionPage } from './DiscussionPage'
 
 vi.mock('../../room/hooks/useRoomByCode')
 vi.mock('../../room/hooks/usePlayersByRoom')
-vi.mock('../hooks/useDiscussionState')
-vi.mock('../hooks/useEndDiscussionTurn')
-vi.mock('../hooks/useAdvanceDiscussionIfExpired')
-vi.mock('../hooks/useMyReveal')
+vi.mock('../hooks/state/useDiscussionState')
+vi.mock('../hooks/actions/useEndDiscussionTurn')
+vi.mock('../hooks/advance/useAdvanceDiscussionIfExpired')
+vi.mock('../hooks/state/useMyReveal')
 
 const roomId = 'room_1' as Id<'rooms'>
 const roundId = 'round_1' as Id<'rounds'>

@@ -6,20 +6,20 @@ import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { usePlayersByRoom } from '../../room/hooks/usePlayersByRoom'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { clearCurrentPlayerId, saveCurrentPlayerId } from '../../room/lib/currentPlayer'
-import { useCastVote } from '../hooks/useCastVote'
-import { useFinalizeVoting } from '../hooks/useFinalizeVoting'
-import { useAdvanceVotingIfExpired } from '../hooks/useAdvanceVotingIfExpired'
-import { useSkipVote } from '../hooks/useSkipVote'
-import { useVoteProgress } from '../hooks/useVoteProgress'
+import { useCastVote } from '../hooks/actions/useCastVote'
+import { useFinalizeVoting } from '../hooks/actions/useFinalizeVoting'
+import { useAdvanceVotingIfExpired } from '../hooks/advance/useAdvanceVotingIfExpired'
+import { useSkipVote } from '../hooks/actions/useSkipVote'
+import { useVoteProgress } from '../hooks/state/useVoteProgress'
 import { VotingPage } from './VotingPage'
 
 vi.mock('../../room/hooks/useRoomByCode')
 vi.mock('../../room/hooks/usePlayersByRoom')
-vi.mock('../hooks/useVoteProgress')
-vi.mock('../hooks/useCastVote')
-vi.mock('../hooks/useFinalizeVoting')
-vi.mock('../hooks/useAdvanceVotingIfExpired')
-vi.mock('../hooks/useSkipVote')
+vi.mock('../hooks/state/useVoteProgress')
+vi.mock('../hooks/actions/useCastVote')
+vi.mock('../hooks/actions/useFinalizeVoting')
+vi.mock('../hooks/advance/useAdvanceVotingIfExpired')
+vi.mock('../hooks/actions/useSkipVote')
 
 const roomId = 'room_1' as Id<'rooms'>
 const roundId = 'round_1' as Id<'rounds'>

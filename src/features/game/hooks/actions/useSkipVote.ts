@@ -1,9 +1,9 @@
 import { useMutation } from 'convex/react'
 import { useCallback, useState } from 'react'
-import { api } from '../../../../convex/_generated/api'
-import type { Id } from '../../../../convex/_generated/dataModel'
-import { getConvexErrorMessage } from '../../../shared/lib/getConvexErrorMessage'
-import { GAME_ERROR } from '../../../../convex/game/errors'
+import { api } from '../../../../../convex/_generated/api'
+import type { Id } from '../../../../../convex/_generated/dataModel'
+import { getConvexErrorMessage } from '../../../../shared/lib/getConvexErrorMessage'
+import { GAME_ERROR } from '../../../../../convex/game/errors'
 
 type SkipVoteArgs = {
   roomId: Id<'rooms'>

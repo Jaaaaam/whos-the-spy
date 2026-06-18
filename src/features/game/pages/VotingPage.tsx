@@ -9,13 +9,13 @@ import { VotingCard } from '../components/VotingCard'
 import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { usePlayersByRoom } from '../../room/hooks/usePlayersByRoom'
-import { useVoteProgress } from '../hooks/useVoteProgress'
+import { useVoteProgress } from '../hooks/state/useVoteProgress'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
-import { useCastVote } from '../hooks/useCastVote'
+import { useCastVote } from '../hooks/actions/useCastVote'
 import { useEffect, useRef, useState } from 'react'
-import { useFinalizeVoting } from '../hooks/useFinalizeVoting'
-import { useAdvanceVotingIfExpired } from '../hooks/useAdvanceVotingIfExpired'
-import { useSkipVote } from '../hooks/useSkipVote'
+import { useFinalizeVoting } from '../hooks/actions/useFinalizeVoting'
+import { useAdvanceVotingIfExpired } from '../hooks/advance/useAdvanceVotingIfExpired'
+import { useSkipVote } from '../hooks/actions/useSkipVote'
 
 function getSecondsRemaining(votingEndsAt: number, now: number) {
   return Math.max(0, Math.ceil((votingEndsAt - now) / 1_000))

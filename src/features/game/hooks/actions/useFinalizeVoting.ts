@@ -1,9 +1,9 @@
 import { useMutation } from "convex/react";
 import { useCallback, useState } from "react";
-import { getConvexErrorMessage } from "../../../shared/lib/getConvexErrorMessage";
-import { api } from "../../../../convex/_generated/api";
-import type { Id } from "../../../../convex/_generated/dataModel";
-import { GAME_ERROR } from "../../../../convex/game/errors";
+import { getConvexErrorMessage } from "../../../../shared/lib/getConvexErrorMessage";
+import { api } from "../../../../../convex/_generated/api";
+import type { Id } from "../../../../../convex/_generated/dataModel";
+import { GAME_ERROR } from "../../../../../convex/game/errors";
 
 type FinalizeVotingArgs = {
   roomId: Id<'rooms'>

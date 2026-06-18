@@ -1,8 +1,8 @@
 import { useMutation } from 'convex/react'
 import { useState } from 'react'
-import { api } from '../../../../convex/_generated/api'
-import type { Id } from '../../../../convex/_generated/dataModel'
-import { getConvexErrorMessage } from '../../../shared/lib/getConvexErrorMessage'
+import { api } from '../../../../../convex/_generated/api'
+import type { Id } from '../../../../../convex/_generated/dataModel'
+import { getConvexErrorMessage } from '../../../../shared/lib/getConvexErrorMessage'
 
 export function useAdvanceDiscussionIfExpired() {
   const advanceMutation = useMutation(api.game.advanceDiscussionIfExpired)

@@ -7,9 +7,9 @@ import { PageShell } from '../../../shared/layouts/PageShell'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
 import { useStartRound } from '../../room/hooks/useStartRound'
-import { useResultsState } from '../hooks/useResultsState'
+import { useResultsState } from '../hooks/state/useResultsState'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
-import { usePlayAgain } from '../hooks/usePlayAgain'
+import { usePlayAgain } from '../hooks/actions/usePlayAgain'
 
 const NEXT_ROUND_COUNTDOWN_SECONDS = 5
 

@@ -1,6 +1,7 @@
 import { GAME_STATUS } from "../../shared/gameStatus"
 import type { MutationCtx, QueryCtx } from "../_generated/server"
 import { INDEX, TABLE } from "../lib/db"
+import { BATTLE_REVEAL_DURATION_MS, DISCUSSION_TURN_DURATION_MS } from "./constants"
 import { GAME_ERROR } from "./errors"
 import type { CastVoteArgs, RoomRoundArgs, VoteProgressArgs, SkipVoteArgs } from "./types"
 
@@ -217,10 +218,12 @@ export async function finalizeVotingHandler(ctx: MutationCtx, { roomId, roundId 
   const topCandidates = activePlayers.filter((p) => voteCounts.get(p._id) === topCount)
   const isTie = topCandidates.length > 1
 
+  const startedAt = Date.now()
   if (isTie) {
     await ctx.db.patch(roundId, {
       isTie: true,
       tieCandidateIds: topCandidates.map((p) => p._id),
+      battleEndsAt: startedAt + BATTLE_REVEAL_DURATION_MS
     })
     await ctx.db.patch(roomId, { status: GAME_STATUS.BATTLE })
     return { isTie: true as const, eliminatedPlayerId: undefined, didSpyWon: undefined }
@@ -320,7 +323,10 @@ export async function getBattleStateHandler(ctx: QueryCtx, { roomId, roundId }: 
     await Promise.all(round.tieCandidateIds.map((id) => ctx.db.get(id)))
   ).filter((p): p is NonNullable<typeof p> => p !== null)
 
-  return { tiedPlayers }
+  return {
+    tiedPlayers,
+    battleEndsAt: round.battleEndsAt ?? null,
+  }
 }
 
 export async function skipVoteHandler(ctx: MutationCtx, { voterPlayerId, roomId, roundId }: SkipVoteArgs) {
@@ -351,4 +357,39 @@ export async function skipVoteHandler(ctx: MutationCtx, { voterPlayerId, roomId,
   })
 
   return { vote: voteId, isUpdated: false }
+}
+
+export async function advanceBattleIfExpiredHandler(ctx: MutationCtx, { roomId, roundId }: RoomRoundArgs) {
+  const room = await ctx.db.get(roomId)
+  if (!room) throw new Error(GAME_ERROR.ROOM_NOT_FOUND)
+
+  if (room.status !== GAME_STATUS.BATTLE) {
+    return { advanced: false }
+  }
+
+  if (room.currentRoundId !== roundId) {
+    throw new Error(GAME_ERROR.NOT_CURRENT_ROOM_ROUND)
+  }
+
+  const round = await ctx.db.get(roundId)
+  if (!round || round.roomId !== roomId) throw new Error(GAME_ERROR.ROUND_NOT_FOUND)
+
+  if (!round.battleEndsAt || Date.now() < round.battleEndsAt) {
+    return { advanced: false }
+  }
+
+  const durationMs = room.discussionTurnDurationMs ?? DISCUSSION_TURN_DURATION_MS
+  const turnStartedAt = Date.now()
+
+  await Promise.all([
+    ctx.db.patch(roundId, {
+      discussionOrder: round.tieCandidateIds,
+      currentTurnIndex: 0,
+      turnStartedAt,
+      turnEndsAt: turnStartedAt + durationMs,
+    }),
+    ctx.db.patch(roomId, { status: GAME_STATUS.DISCUSSION })
+  ])
+
+  return { advanced: true }
 }

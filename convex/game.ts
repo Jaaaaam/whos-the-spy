@@ -15,6 +15,7 @@ import {
 } from "./game/reveal"
 import { startRoundHandler } from "./game/startRound"
 import {
+  advanceBattleIfExpiredHandler,
   advanceVotingIfExpiredHandler,
   castVoteHandler,
   finalizeVotingHandler,
@@ -173,4 +174,12 @@ export const getBattleState = query({
     roundId: v.id(TABLE.ROUNDS),
   },
   handler: getBattleStateHandler,
+})
+
+export const advanceBattleIfExpired = mutation({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+  },
+  handler: advanceBattleIfExpiredHandler,
 })

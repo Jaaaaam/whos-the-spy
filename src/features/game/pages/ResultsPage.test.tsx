@@ -6,15 +6,15 @@ import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { useStartRound } from '../../room/hooks/useStartRound'
 import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
-import { useResultsState } from '../hooks/useResultsState'
-import { usePlayAgain } from '../hooks/usePlayAgain'
+import { useResultsState } from '../hooks/state/useResultsState'
+import { usePlayAgain } from '../hooks/actions/usePlayAgain'
 import { ResultsPage } from './ResultsPage'
 
 vi.mock('../../room/hooks/useRoomByCode')
-vi.mock('../hooks/useResultsState')
+vi.mock('../hooks/state/useResultsState')
 vi.mock('../../room/hooks/useStartRound')
 vi.mock('../../room/lib/currentPlayer')
-vi.mock('../hooks/usePlayAgain')
+vi.mock('../hooks/actions/usePlayAgain')
 
 const roomId = 'room_1' as Id<'rooms'>
 const roundId = 'round_1' as Id<'rounds'>

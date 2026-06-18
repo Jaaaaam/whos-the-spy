@@ -5,17 +5,17 @@ import type { Doc, Id } from '../../../../convex/_generated/dataModel'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { clearCurrentPlayerId, saveCurrentPlayerId } from '../../room/lib/currentPlayer'
-import { useAdvanceRevealIfExpired } from '../hooks/useAdvanceRevealIfExpired'
-import { useMarkRoleSeen } from '../hooks/useMarkRoleSeen'
-import { useMyReveal } from '../hooks/useMyReveal'
-import { useRevealState } from '../hooks/useRevealState'
+import { useAdvanceRevealIfExpired } from '../hooks/advance/useAdvanceRevealIfExpired'
+import { useMarkRoleSeen } from '../hooks/actions/useMarkRoleSeen'
+import { useMyReveal } from '../hooks/state/useMyReveal'
+import { useRevealState } from '../hooks/state/useRevealState'
 import { RoleRevealPage } from './RoleRevealPage'
 
 vi.mock('../../room/hooks/useRoomByCode')
-vi.mock('../hooks/useMyReveal')
-vi.mock('../hooks/useMarkRoleSeen')
-vi.mock('../hooks/useRevealState')
-vi.mock('../hooks/useAdvanceRevealIfExpired')
+vi.mock('../hooks/state/useMyReveal')
+vi.mock('../hooks/actions/useMarkRoleSeen')
+vi.mock('../hooks/state/useRevealState')
+vi.mock('../hooks/advance/useAdvanceRevealIfExpired')
 
 const roomId = 'room_1' as Id<'rooms'>
 const roundId = 'round_1' as Id<'rounds'>

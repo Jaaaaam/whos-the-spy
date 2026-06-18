@@ -22,4 +22,5 @@ export const rounds = defineTable({
   isTie: v.optional(v.boolean()),
   isGameOver: v.optional(v.boolean()),
   hadElimination: v.boolean(),
+  battleEndsAt: v.optional(v.number())
 }).index(INDEX.ROUNDS_BY_ROOM_ID, ['roomId'])
