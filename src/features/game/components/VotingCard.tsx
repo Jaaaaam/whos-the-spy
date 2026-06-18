@@ -1,6 +1,5 @@
 import { cn } from '../../../shared/lib/cn'
 import type { Doc } from '../../../../convex/_generated/dataModel'
-import { Button } from '../../../shared/components/Button'
 
 type VotingCardProps = {
   player: Doc<'players'>
@@ -17,7 +16,7 @@ export function VotingCard({ player, isSelf, isSelected, isAbstained, disabled, 
 
   function getBadgeLabel() {
     if (isSelf) return isAbstained ? 'Abstained' : 'You'
-    return isSelected ? 'Selected' : 'Suspect'
+    return isSelected ? 'Voted' : 'Suspect'
   }
 
   return (
@@ -25,8 +24,7 @@ export function VotingCard({ player, isSelf, isSelected, isAbstained, disabled, 
       className={cn(
         'flex items-center gap-4 rounded-[1.75rem] bg-surface-container p-5 transition ring-1 ring-transparent hover:bg-surface-bright',
         isSelf && 'opacity-60 grayscale',
-        isSelected &&
-        'bg-surface-container-high shadow-[0_0_24px_rgba(124,255,254,0.14)] ring-tertiary/30',
+        isSelected && 'bg-surface-container-high shadow-[0_0_24px_rgba(124,255,254,0.14)] ring-tertiary/30',
       )}
     >
       <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary font-headline font-black text-surface">
@@ -47,15 +45,27 @@ export function VotingCard({ player, isSelf, isSelected, isAbstained, disabled, 
         <span className="material-symbols-outlined text-on-surface-variant/40">
           block
         </span>
-      ) : (
-        <Button
-          className="px-4 py-2 text-xs"
-          disabled={disabled}
-          onClick={onVote}
+      ) : isSubmitting ? (
+        <button
+          disabled
+          className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-primary-container px-4 py-2 text-xs font-extrabold text-on-primary-container shadow-lg shadow-primary/10 animate-pulse"
           type="button"
         >
-          {isSubmitting ? 'Voting...' : isSelected ? 'Selected' : 'Vote'}
-        </Button>
+          <span className="material-symbols-outlined text-sm animate-spin" style={{ fontSize: '14px' }}>sync</span>
+          Transmitting...
+        </button>
+      ) : (
+        <button
+          disabled={disabled}
+          onClick={onVote}
+          className={cn(
+            'inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-primary-container px-4 py-2 text-xs font-extrabold text-on-primary-container shadow-lg shadow-primary/10 active:scale-95 transition-all',
+            disabled && 'opacity-40 pointer-events-none',
+          )}
+          type="button"
+        >
+          Vote
+        </button>
       )}
     </div>
   )

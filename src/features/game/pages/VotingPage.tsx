@@ -4,7 +4,6 @@ import { Card } from '../../../shared/components/Card'
 import { Loader } from '../../../shared/components/Loader'
 import { PageShell } from '../../../shared/layouts/PageShell'
 import { IntelFeed } from '../components/IntelFeed'
-import { Timer } from '../components/Timer'
 import { VotingCard } from '../components/VotingCard'
 import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
@@ -12,16 +11,17 @@ import { usePlayersByRoom } from '../../room/hooks/usePlayersByRoom'
 import { useVoteProgress } from '../hooks/state/useVoteProgress'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { useCastVote } from '../hooks/actions/useCastVote'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useFinalizeVoting } from '../hooks/actions/useFinalizeVoting'
 import { useAdvanceVotingIfExpired } from '../hooks/advance/useAdvanceVotingIfExpired'
 import { useSkipVote } from '../hooks/actions/useSkipVote'
 import { useNow } from '../hooks/useNow'
-import { getSecondsRemaining, formatSeconds, getTimerProgress } from '../lib/timerUtils'
+import { getSecondsRemaining, formatSeconds } from '../lib/timerUtils'
 
 export function VotingPage() {
   const hasFinalizedRef = useRef(false)
   const hasRequestedAdvanceRef = useRef(false)
+  const [pendingPlayerId, setPendingPlayerId] = useState<Id<'players'> | null>(null)
   const { roomCode } = useParams()
   const currentPlayerId = getCurrentPlayerId()
 
@@ -54,8 +54,6 @@ export function VotingPage() {
 
   const votingEndsAt = voteProgress?.votingEndsAt ?? null
   const secondsRemaining = votingEndsAt ? getSecondsRemaining(votingEndsAt, now) : 0
-  const durationMs = room?.votingDurationMs ?? 60_000
-  const timerProgress = votingEndsAt ? getTimerProgress(votingEndsAt, durationMs, now) : 100
   const isTimerUrgent = secondsRemaining <= 10
   const hasVoted = voteProgress?.hasVoted ?? false
 
@@ -92,12 +90,17 @@ export function VotingPage() {
 
   async function handleVote(targetPlayerId: Id<'players'>) {
     if (!room?.currentRoundId || !currentPlayerId) return
-    await castVote({
-      roomId: room._id,
-      roundId: room.currentRoundId,
-      voterPlayerId: currentPlayerId,
-      targetPlayerId,
-    })
+    setPendingPlayerId(targetPlayerId)
+    try {
+      await castVote({
+        roomId: room._id,
+        roundId: room.currentRoundId,
+        voterPlayerId: currentPlayerId,
+        targetPlayerId,
+      })
+    } finally {
+      setPendingPlayerId(null)
+    }
   }
 
   async function handleSkip() {
@@ -175,13 +178,30 @@ export function VotingPage() {
               </p>
             </div>
             {votingEndsAt ? (
-              <div className="w-full md:w-48 shrink-0">
-                <Timer
-                  label="Time remaining"
-                  value={formatSeconds(secondsRemaining)}
-                  progress={timerProgress}
-                  urgent={isTimerUrgent}
-                />
+              <div className="flex shrink-0 items-center gap-6 rounded-xl border border-outline-variant/20 bg-surface-container-high p-6 shadow-2xl">
+                <div className="text-center">
+                  <div className={`font-headline text-4xl font-black tracking-widest ${isTimerUrgent ? 'text-error' : 'text-on-surface'}`}>
+                    {formatSeconds(secondsRemaining)}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-tighter text-on-surface-variant">Seconds Remaining</div>
+                </div>
+                <div className="h-10 w-px bg-outline-variant/30" />
+                <div className="flex flex-col gap-1.5">
+                  <div className="text-xs font-bold text-tertiary">Voting Status</div>
+                  <div className="relative h-2 w-32 overflow-hidden rounded-full bg-surface-container-highest">
+                    <div
+                      className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-tertiary to-primary transition-all"
+                      style={{ width: `${voteProgress && voteProgress.eligibleVoterCount > 0 ? (voteProgress.votedCount / voteProgress.eligibleVoterCount) * 100 : 0}%` }}
+                    />
+                    <div
+                      className="absolute top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_10px_#fff]"
+                      style={{ left: `calc(${voteProgress && voteProgress.eligibleVoterCount > 0 ? (voteProgress.votedCount / voteProgress.eligibleVoterCount) * 100 : 0}% - 4px)` }}
+                    />
+                  </div>
+                  <div className="text-[10px] text-on-surface-variant">
+                    {voteProgress ? `${voteProgress.votedCount}/${voteProgress.eligibleVoterCount} Players Voted` : 'Waiting...'}
+                  </div>
+                </div>
               </div>
             ) : null}
           </div>
@@ -200,7 +220,7 @@ export function VotingPage() {
                   isSelected={voteProgress?.selectedTargetPlayerId === player._id}
                   isAbstained={player._id === currentPlayerId && hasVoted && !voteProgress?.selectedTargetPlayerId}
                   disabled={isSpectating ? true : isCastingVote || hasVoted}
-                  isSubmitting={isCastingVote}
+                  isSubmitting={isCastingVote && pendingPlayerId === player._id}
                   onVote={isSpectating ? () => { } : () => void handleVote(player._id)}
                 />
               ))}
@@ -233,15 +253,7 @@ export function VotingPage() {
             <Card tone="low" className="mt-auto">
               <p className="text-sm font-semibold text-on-surface-variant">Spectating</p>
             </Card>
-          ) : (
-            <Card tone="low" className="mt-auto">
-              <p className="text-sm text-on-surface-variant">
-                {voteProgress
-                  ? `${voteProgress.votedCount}/${voteProgress.eligibleVoterCount} players have voted.`
-                  : 'Waiting for votes...'}
-              </p>
-            </Card>
-          )}
+          ) : null}
 
           {finalizationError ? (
             <p className="text-center text-sm font-semibold text-error" role="alert">

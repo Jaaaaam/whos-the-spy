@@ -41,6 +41,7 @@ export async function getResultsStateHandler(ctx: QueryCtx, { roomId, roundId }:
   return {
     civilianWord: round.civilianWord,
     spyWord: round.spyWord,
+    eliminatedPlayerId: round.eliminatedPlayerId ?? null,
     eliminatedPlayerName: round.eliminatedPlayerId
       ? (playerNameById.get(round.eliminatedPlayerId) ?? null)
       : null,
