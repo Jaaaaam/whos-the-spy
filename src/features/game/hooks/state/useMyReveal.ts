@@ -1,6 +1,6 @@
 import { useQuery } from 'convex/react'
 import { api } from '../../../../../convex/_generated/api'
-import type { RoundPlayerIdArgs } from '../types'
+import type { RoundPlayerIdArgs } from '../../types'
 
 export function useMyReveal({ roundId, playerId }: RoundPlayerIdArgs) {
   const reveal = useQuery(

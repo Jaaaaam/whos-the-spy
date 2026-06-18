@@ -1,6 +1,6 @@
 import { useQuery } from 'convex/react'
 import { api } from '../../../../../convex/_generated/api'
-import type { VoteProgressIdArgs } from '../types'
+import type { VoteProgressIdArgs } from '../../types'
 
 export function useVoteProgress({
   roomId,

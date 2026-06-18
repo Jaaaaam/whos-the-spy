@@ -1,6 +1,6 @@
 import { useMutation } from "convex/react";
 import { useState } from "react";
-import type { RoomHostArgs } from "../types";
+import type { RoomHostArgs } from "../../types";
 import { getConvexErrorMessage } from "../../../../shared/lib/getConvexErrorMessage";
 import { api } from "../../../../../convex/_generated/api";
 

@@ -1,6 +1,6 @@
 import { useQuery } from 'convex/react'
 import { api } from '../../../../../convex/_generated/api'
-import type { RoomRoundIdArgs } from '../types'
+import type { RoomRoundIdArgs } from '../../types'
 
 export function useDiscussionState({
   roomId,

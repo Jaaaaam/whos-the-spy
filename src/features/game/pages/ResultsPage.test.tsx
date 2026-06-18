@@ -33,6 +33,7 @@ const room: Doc<'rooms'> = {
 const resultsState = {
   civilianWord: 'Jollibee',
   spyWord: "McDonald's",
+  eliminatedPlayerId: null,
   eliminatedPlayerName: 'Mika',
   isEliminatedPlayerSpy: true,
   didSpyWin: false,
@@ -246,6 +247,7 @@ describe('skipped-votes results (isGameOver=false, hadElimination=false)', () =>
   const skippedResultsState = {
     civilianWord: 'Jollibee',
     spyWord: "McDonald's",
+    eliminatedPlayerId: null,
     eliminatedPlayerName: null,
     isEliminatedPlayerSpy: false,
     didSpyWin: false,
