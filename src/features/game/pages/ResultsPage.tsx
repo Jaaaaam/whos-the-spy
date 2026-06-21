@@ -477,6 +477,44 @@ export function ResultsPage() {
         </div>
       </div>
 
+      {resultsState.votingHistory.length > 0 && (
+        <div className="mx-auto max-w-5xl mb-10">
+          <h3 className="font-headline text-xl font-bold mb-6 flex items-center gap-2">
+            <span className="material-symbols-outlined text-tertiary">history</span>
+            Voting History
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {resultsState.votingHistory.map((vote, i) => {
+              const isVotedEliminated = vote.targetName === eliminatedName
+              return (
+                <div key={i} className="bg-surface-container/60 p-5 rounded-xl border border-outline-variant/10 hover:bg-surface-bright transition-colors">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center bg-surface-container-highest ${isVotedEliminated ? 'text-error' : vote.targetName ? 'text-tertiary' : 'text-on-surface-variant'}`}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                        {vote.targetName ? 'how_to_reg' : 'block'}
+                      </span>
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase tracking-tighter ${isVotedEliminated ? 'text-error' : 'text-on-surface-variant'}`}>
+                      {isVotedEliminated ? (didSpyCatchSelf ? 'Exposed' : 'Eliminated') : vote.targetName ? 'Other' : 'Skip'}
+                    </span>
+                  </div>
+                  <p className="font-headline font-bold text-sm">{vote.voterName}</p>
+                  <p className="text-xs text-on-surface-variant mt-0.5">
+                    {vote.targetName ? `→ ${vote.targetName}` : 'Abstained'}
+                  </p>
+                  <div className="mt-3 h-1 rounded-full bg-surface-container-highest overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${isVotedEliminated ? 'bg-error animate-pulse' : vote.targetName ? 'bg-tertiary/40' : 'bg-outline-variant/30'}`}
+                      style={{ width: vote.targetName ? '100%' : '0%' }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 mb-8">
         <Card tone="high" className="rounded-[2rem]">
           <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Civilian Word</p>
