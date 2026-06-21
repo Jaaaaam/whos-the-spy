@@ -8,10 +8,11 @@ type VotingCardProps = {
   isAbstained: boolean
   disabled: boolean
   isSubmitting: boolean
+  isRunoffTarget?: boolean
   onVote: () => void
 }
 
-export function VotingCard({ player, isSelf, isSelected, isAbstained, disabled, isSubmitting, onVote }: VotingCardProps) {
+export function VotingCard({ player, isSelf, isSelected, isAbstained, disabled, isSubmitting, isRunoffTarget = false, onVote }: VotingCardProps) {
   const initials = player.name.slice(0, 2).toUpperCase()
 
   function getBadgeLabel() {
@@ -24,7 +25,8 @@ export function VotingCard({ player, isSelf, isSelected, isAbstained, disabled, 
       className={cn(
         'flex items-center gap-4 rounded-[1.75rem] bg-surface-container p-5 transition ring-1 ring-transparent hover:bg-surface-bright',
         isSelf && 'opacity-60 grayscale',
-        isSelected && 'bg-surface-container-high shadow-[0_0_24px_rgba(124,255,254,0.14)] ring-tertiary/30',
+        isSelected && !isRunoffTarget && 'bg-surface-container-high shadow-[0_0_24px_rgba(124,255,254,0.14)] ring-tertiary/30',
+        isSelected && isRunoffTarget && 'bg-surface-container-high shadow-[0_0_24px_rgba(239,68,68,0.14)] ring-error/40',
       )}
     >
       <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary font-headline font-black text-surface">
@@ -35,7 +37,8 @@ export function VotingCard({ player, isSelf, isSelected, isAbstained, disabled, 
         <span
           className={cn(
             'mt-1 inline-flex rounded-full bg-secondary-container px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-on-secondary-container',
-            isSelected && 'bg-tertiary/20 text-tertiary',
+            isSelected && !isRunoffTarget && 'bg-tertiary/20 text-tertiary',
+            isSelected && isRunoffTarget && 'bg-error/20 text-error',
           )}
         >
           {getBadgeLabel()}
