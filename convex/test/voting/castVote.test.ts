@@ -8,6 +8,7 @@ import {
   createRoom,
   createRoomWithStatus,
   createRound,
+  createRunoffVotingRound,
   createVote,
   playerId,
   roomId,
@@ -296,5 +297,71 @@ describe('castVoteHandler', () => {
         targetPlayerId: voterId,
       }),
     ).rejects.toThrow(GAME_ERROR.CANNOT_VOTE_SELF)
+  })
+
+  describe('runoff (tieCandidateIds set)', () => {
+    const candidate1 = playerId('player_1')
+    const candidate2 = playerId('player_2')
+    const juror = playerId('player_3')
+
+    function runoffTables(overrides: Partial<StoredTables> = {}): StoredTables {
+      return {
+        rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+        players: [
+          createPlayer(candidate1, currentRoomId, true),
+          createPlayer(candidate2, currentRoomId),
+          createPlayer(juror, currentRoomId),
+        ],
+        rounds: [createRunoffVotingRound(currentRoundId, currentRoomId, { tieCandidateIds: [candidate1, candidate2] })],
+        roleAssignments: [],
+        votes: [],
+        ...overrides,
+      }
+    }
+
+    it('rejects a vote cast by a tied candidate', async () => {
+      const tables = runoffTables()
+      const ctx = createCtx(tables)
+
+      await expect(
+        castVoteHandler(ctx, {
+          roomId: currentRoomId,
+          roundId: currentRoundId,
+          voterPlayerId: candidate1,
+          targetPlayerId: candidate2,
+        }),
+      ).rejects.toThrow(GAME_ERROR.TIED_CANDIDATE_CANNOT_VOTE)
+      expect(tables.votes).toHaveLength(0)
+    })
+
+    it('allows a non-tied player to vote for a tied candidate', async () => {
+      const tables = runoffTables()
+      const ctx = createCtx(tables)
+
+      const result = await castVoteHandler(ctx, {
+        roomId: currentRoomId,
+        roundId: currentRoundId,
+        voterPlayerId: juror,
+        targetPlayerId: candidate1,
+      })
+
+      expect(result).toEqual({ vote: voteId('vote_1'), isUpdated: false })
+      expect(tables.votes).toHaveLength(1)
+    })
+
+    it('rejects a vote for a non-tied player during runoff', async () => {
+      const tables = runoffTables()
+      const ctx = createCtx(tables)
+
+      await expect(
+        castVoteHandler(ctx, {
+          roomId: currentRoomId,
+          roundId: currentRoundId,
+          voterPlayerId: juror,
+          targetPlayerId: juror, // juror is not a tie candidate
+        }),
+      ).rejects.toThrow(GAME_ERROR.TARGET_NOT_TIE_CANDIDATE)
+      expect(tables.votes).toHaveLength(0)
+    })
   })
 })

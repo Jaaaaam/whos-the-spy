@@ -16,8 +16,10 @@ export const GAME_ERROR = {
   TARGET_NOT_IN_ROOM: 'Target not in room.',
   VOTER_NOT_IN_ROOM: 'Voter not in room.',
   CANNOT_VOTE_SELF: 'You cannot vote yourself.',
+  TIED_CANDIDATE_CANNOT_VOTE: 'Tied candidates cannot vote during the runoff.',
   VOTING_NOT_COMPLETE: 'Voting not complete.',
   ROOM_NOT_IN_RESULTS: 'Room is not in the results phase.',
+  TARGET_NOT_TIE_CANDIDATE: 'Target is not a tie candidate',
   INVALID_STATUS: 'Invalid status.',
   GENERIC_ERROR: 'Something went wrong.'
 } as const

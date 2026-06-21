@@ -148,6 +148,23 @@ export function createBattleRound(
   return { ...createRound(id, room), isTie: true, ...options }
 }
 
+export function createRunoffVotingRound(
+  id: Id<typeof TABLE.ROUNDS>,
+  room: Id<typeof TABLE.ROOMS>,
+  options: {
+    tieCandidateIds: Id<typeof TABLE.PLAYERS>[]
+    votingEndsAt?: number
+  },
+): Doc<typeof TABLE.ROUNDS> {
+  const { tieCandidateIds, votingEndsAt } = options
+  return {
+    ...createRound(id, room),
+    isTie: true,
+    tieCandidateIds,
+    ...(votingEndsAt !== undefined && { votingEndsAt }),
+  }
+}
+
 export function createVote(
   id: Id<typeof TABLE.VOTES>,
   room: Id<typeof TABLE.ROOMS>,

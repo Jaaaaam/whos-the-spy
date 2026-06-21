@@ -1,4 +1,5 @@
 import { GAME_STATUS } from "../../shared/gameStatus"
+import { Id } from "../_generated/dataModel"
 import type { MutationCtx, QueryCtx } from "../_generated/server"
 import { INDEX, TABLE } from "../lib/db"
 import { BATTLE_REVEAL_DURATION_MS, DISCUSSION_TURN_DURATION_MS } from "./constants"
@@ -45,12 +46,20 @@ async function getVotesByRoomRound(ctx: QueryCtx | MutationCtx, { roomId, roundI
 }
 
 export async function castVoteHandler(ctx: MutationCtx, { roundId, roomId, voterPlayerId, targetPlayerId }: CastVoteArgs) {
-  await getCurrentVotingRound(ctx, { roomId, roundId })
+  const { round } = await getCurrentVotingRound(ctx, { roomId, roundId })
 
   const voter = await ctx.db.get(voterPlayerId);
 
   if (!voter || voter.roomId !== roomId || !voter.isConnected || voter.isEliminated) {
     throw new Error(GAME_ERROR.VOTER_NOT_IN_ROOM)
+  }
+
+  if (isRunoffRound(round) && round.tieCandidateIds!.includes(voterPlayerId)) {
+    throw new Error(GAME_ERROR.TIED_CANDIDATE_CANNOT_VOTE)
+  }
+
+  if (isRunoffRound(round) && !round.tieCandidateIds!.includes(targetPlayerId)) {
+    throw new Error(GAME_ERROR.TARGET_NOT_TIE_CANDIDATE)
   }
 
   const target = await ctx.db.get(targetPlayerId)
@@ -106,10 +115,12 @@ export async function getVoteProgressHandler(ctx: QueryCtx, { roomId, roundId, v
   const activePlayers = await getActivePlayersByRoom(ctx, roomId)
   const activePlayerIds = new Set(activePlayers.map(player => player._id))
   const votes = await getVotesByRoomRound(ctx, { roomId, roundId })
+  const eligibleVoters = round ? getEligibleVoters(activePlayers, round) : activePlayers
+  const eligibleVoterIds = new Set(eligibleVoters.map((player) => player._id))
 
   const activeVotes = votes.filter(
     (vote) =>
-      activePlayerIds.has(vote.voterPlayerId) &&
+      eligibleVoterIds.has(vote.voterPlayerId) &&
       (vote.targetPlayerId === undefined || activePlayerIds.has(vote.targetPlayerId)),
   )
 
@@ -131,8 +142,8 @@ export async function getVoteProgressHandler(ctx: QueryCtx, { roomId, roundId, v
 
   return {
     votedCount: activeVotes.length,
-    eligibleVoterCount: activePlayers.length,
-    isComplete: activeVotes.length === activePlayers.length,
+    eligibleVoterCount: eligibleVoters.length,
+    isComplete: activeVotes.length === eligibleVoters.length,
     selectedTargetPlayerId,
     votingEndsAt: round?.votingEndsAt ?? null,
     hasVoted
@@ -153,12 +164,28 @@ function buildVoteCounts(
   return voteCounts
 }
 
+function isRunoffRound(round: { tieCandidateIds?: Id<'players'>[] }) {
+  return !!round.tieCandidateIds && round.tieCandidateIds.length > 0
+}
+
+function getEligibleVoters<T extends { _id: Id<'players'> }>(
+  activePlayers: T[],
+  round: { tieCandidateIds?: Id<'players'>[] },
+) {
+  if (!isRunoffRound(round)) return activePlayers
+  const tied = new Set(round.tieCandidateIds)
+  return activePlayers.filter((p) => !tied.has(p._id))
+}
+
 export async function getVotingResultsHandler(ctx: QueryCtx, { roomId, roundId }: RoomRoundArgs) {
-  await getCurrentVotingRound(ctx, { roomId, roundId })
+  const { round } = await getCurrentVotingRound(ctx, { roomId, roundId })
   const activePlayers = await getActivePlayersByRoom(ctx, roomId)
   const activePlayerIds = new Set(activePlayers.map(player => player._id))
+  const eligibleVoterIds = new Set(getEligibleVoters(activePlayers, round).map(player => player._id))
+
   const votes = await getVotesByRoomRound(ctx, { roomId, roundId })
-  const voteCounts = buildVoteCounts(votes, activePlayerIds, activePlayers)
+  const eligibleVotes = votes.filter((vote) => eligibleVoterIds.has(vote.voterPlayerId))
+  const voteCounts = buildVoteCounts(eligibleVotes, activePlayerIds, activePlayers)
 
   const results = activePlayers
     .map(player => ({
@@ -188,26 +215,29 @@ export async function finalizeVotingHandler(ctx: MutationCtx, { roomId, roundId 
     return
   }
 
-  await getCurrentVotingRound(ctx, { roomId, roundId })
+  const { round } = await getCurrentVotingRound(ctx, { roomId, roundId })
 
   const activePlayers = await getActivePlayersByRoom(ctx, roomId)
   const activePlayerIds = new Set(activePlayers.map((p) => p._id))
   const votes = await getVotesByRoomRound(ctx, { roomId, roundId })
+  const eligibleVoters = getEligibleVoters(activePlayers, round)
+  const eligibleVoterIds = new Set(eligibleVoters.map(voter => voter._id))
+  const tieCandidateIds = round.tieCandidateIds ? new Set(round.tieCandidateIds) : null
 
   const activeVotes = votes.filter(
     (vote) =>
-      activePlayerIds.has(vote.voterPlayerId) &&
+      eligibleVoterIds.has(vote.voterPlayerId) &&
       !!vote.targetPlayerId &&
-      activePlayerIds.has(vote.targetPlayerId),
+      (!tieCandidateIds || tieCandidateIds.has(vote.targetPlayerId))
   )
 
   const abstentions = votes.filter(
-    (vote) => activePlayerIds.has(vote.voterPlayerId) && vote.targetPlayerId === undefined,
+    (vote) => eligibleVoterIds.has(vote.voterPlayerId) && vote.targetPlayerId === undefined,
   )
 
   if (activeVotes.length === 0 || abstentions.length > activeVotes.length) {
     await Promise.all([
-      ctx.db.patch(roundId, { eliminatedPlayerId: undefined, isTie: false, isGameOver: false, hadElimination: false }),
+      ctx.db.patch(roundId, { eliminatedPlayerId: undefined, isTie: false, isGameOver: false, hadElimination: false, tieCandidateIds: undefined }),
       ctx.db.patch(roomId, { status: GAME_STATUS.RESULTS })
     ])
     return { isTie: false as const, eliminatedPlayerId: undefined, didSpyWon: undefined }
@@ -220,6 +250,14 @@ export async function finalizeVotingHandler(ctx: MutationCtx, { roomId, roundId 
 
   const startedAt = Date.now()
   if (isTie) {
+    if (isRunoffRound(round)) {
+      await Promise.all([
+        ctx.db.patch(roundId, { eliminatedPlayerId: undefined, isTie: false, isGameOver: false, hadElimination: false, tieCandidateIds: undefined }),
+        ctx.db.patch(roomId, { status: GAME_STATUS.RESULTS })
+      ])
+      return { isTie: false as const, eliminatedPlayerId: undefined, didSpyWon: undefined }
+    }
+
     await ctx.db.patch(roundId, {
       isTie: true,
       tieCandidateIds: topCandidates.map((p) => p._id),
@@ -264,7 +302,7 @@ export async function finalizeVotingHandler(ctx: MutationCtx, { roomId, roundId 
     gameOver = false
   }
 
-  await ctx.db.patch(roundId, { eliminatedPlayerId: eliminatedPlayer._id, didSpyWon, isTie: false, isGameOver: gameOver, hadElimination: true })
+  await ctx.db.patch(roundId, { eliminatedPlayerId: eliminatedPlayer._id, didSpyWon, isTie: false, isGameOver: gameOver, hadElimination: true, tieCandidateIds: undefined })
   await ctx.db.patch(roomId, { status: GAME_STATUS.RESULTS })
 
   return { isTie: false as const, eliminatedPlayerId: eliminatedPlayer._id, didSpyWon }
@@ -290,21 +328,24 @@ export async function advanceVotingIfExpiredHandler(ctx: MutationCtx, { roomId, 
   }
 
   const activePlayers = await getActivePlayersByRoom(ctx, roomId)
+  const eligibleVoters = getEligibleVoters(activePlayers, round)
   const votes = await getVotesByRoomRound(ctx, { roomId, roundId })
   const voterIds = new Set(votes.map((v) => v.voterPlayerId))
   const now = Date.now()
 
-  for (const player of activePlayers) {
-    if (!voterIds.has(player._id)) {
-      await ctx.db.insert(TABLE.VOTES, {
-        roomId,
-        roundId,
-        voterPlayerId: player._id,
-        createdAt: now,
-        updatedAt: now,
-      })
-    }
-  }
+  await Promise.all(
+    eligibleVoters
+      .filter((player) => !voterIds.has(player._id))
+      .map((player) =>
+        ctx.db.insert(TABLE.VOTES, {
+          roomId,
+          roundId,
+          voterPlayerId: player._id,
+          createdAt: now,
+          updatedAt: now,
+        })
+      )
+  )
 
   await finalizeVotingHandler(ctx, { roomId, roundId })
 
@@ -330,11 +371,15 @@ export async function getBattleStateHandler(ctx: QueryCtx, { roomId, roundId }: 
 }
 
 export async function skipVoteHandler(ctx: MutationCtx, { voterPlayerId, roomId, roundId }: SkipVoteArgs) {
-  await getCurrentVotingRound(ctx, { roomId, roundId })
+  const { round } = await getCurrentVotingRound(ctx, { roomId, roundId })
 
   const voter = await ctx.db.get(voterPlayerId)
   if (!voter || voter.roomId !== roomId || !voter.isConnected || voter.isEliminated) {
     throw new Error(GAME_ERROR.VOTER_NOT_IN_ROOM)
+  }
+
+  if (isRunoffRound(round) && round.tieCandidateIds!.includes(voterPlayerId)) {
+    throw new Error(GAME_ERROR.TIED_CANDIDATE_CANNOT_VOTE)
   }
 
   const existingVote = await ctx.db

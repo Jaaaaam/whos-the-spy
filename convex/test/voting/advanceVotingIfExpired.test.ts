@@ -5,6 +5,7 @@ import {
   createCtx,
   createPlayer,
   createRoomWithStatus,
+  createRunoffVotingRound,
   createVote,
   createVotingRound,
   playerId,
@@ -68,5 +69,29 @@ describe('advanceVotingIfExpiredHandler', () => {
     })
     const result = await advanceVotingIfExpiredHandler(createCtx(tables), { roomId: currentRoomId, roundId: currentRoundId })
     expect(result.advanced).toBe(false)
+  })
+
+  it('does not insert abstentions for tied candidates on runoff expiry', async () => {
+    vi.setSystemTime(90_000)
+    const candidate1 = playerId('player_1')
+    const candidate2 = playerId('player_2')
+    const juror = playerId('player_3')
+    const tables = baseTables({
+      players: [
+        createPlayer(candidate1, currentRoomId),
+        createPlayer(candidate2, currentRoomId),
+        createPlayer(juror, currentRoomId),
+      ],
+      rounds: [createRunoffVotingRound(currentRoundId, currentRoomId, {
+        tieCandidateIds: [candidate1, candidate2],
+        votingEndsAt: 60_000,
+      })],
+      votes: [],
+    })
+    await advanceVotingIfExpiredHandler(createCtx(tables), { roomId: currentRoomId, roundId: currentRoundId })
+
+    // Only the single non-tied juror gets an abstention inserted; the two candidates do not.
+    expect(tables.votes).toHaveLength(1)
+    expect(tables.votes?.[0]?.voterPlayerId).toBe(juror)
   })
 })

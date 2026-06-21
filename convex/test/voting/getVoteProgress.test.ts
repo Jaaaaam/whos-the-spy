@@ -6,6 +6,7 @@ import {
   createPlayer,
   createRoomWithStatus,
   createRound,
+  createRunoffVotingRound,
   createVote,
   createVotingRound,
   playerId,
@@ -368,5 +369,89 @@ describe('getVoteProgressHandler', () => {
 
     expect(progress?.votedCount).toBe(1)
     expect(progress?.selectedTargetPlayerId).toBeNull()
+  })
+
+  describe('runoff (tieCandidateIds set)', () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const candidate1 = playerId('player_1')
+    const candidate2 = playerId('player_2')
+    const juror1 = playerId('player_3')
+    const juror2 = playerId('player_4')
+
+    it('excludes tied candidates from eligibleVoterCount', async () => {
+      const tables: StoredTables = {
+        rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+        players: [
+          createPlayer(candidate1, currentRoomId),
+          createPlayer(candidate2, currentRoomId),
+          createPlayer(juror1, currentRoomId),
+          createPlayer(juror2, currentRoomId),
+        ],
+        rounds: [createRunoffVotingRound(currentRoundId, currentRoomId, { tieCandidateIds: [candidate1, candidate2] })],
+        roleAssignments: [],
+        votes: [],
+      }
+      const ctx = createCtx(tables)
+
+      const progress = await getVoteProgressHandler(ctx, {
+        roomId: currentRoomId,
+        roundId: currentRoundId,
+      })
+
+      // 4 active players, but the 2 tied candidates are not eligible voters
+      expect(progress?.eligibleVoterCount).toBe(2)
+      expect(progress?.isComplete).toBe(false)
+    })
+
+    it('marks complete when every non-tied player has voted', async () => {
+      const tables: StoredTables = {
+        rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+        players: [
+          createPlayer(candidate1, currentRoomId),
+          createPlayer(candidate2, currentRoomId),
+          createPlayer(juror1, currentRoomId),
+          createPlayer(juror2, currentRoomId),
+        ],
+        rounds: [createRunoffVotingRound(currentRoundId, currentRoomId, { tieCandidateIds: [candidate1, candidate2] })],
+        roleAssignments: [],
+        votes: [
+          createVote(voteId('vote_1'), currentRoomId, currentRoundId, juror1, candidate1),
+          createVote(voteId('vote_2'), currentRoomId, currentRoundId, juror2, candidate2),
+        ],
+      }
+      const ctx = createCtx(tables)
+
+      const progress = await getVoteProgressHandler(ctx, {
+        roomId: currentRoomId,
+        roundId: currentRoundId,
+      })
+
+      expect(progress?.votedCount).toBe(2)
+      expect(progress?.eligibleVoterCount).toBe(2)
+      expect(progress?.isComplete).toBe(true)
+    })
+
+    it('reports complete when no eligible voters remain (all active players are tied candidates)', async () => {
+      const tables: StoredTables = {
+        rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+        players: [
+          createPlayer(candidate1, currentRoomId),
+          createPlayer(candidate2, currentRoomId),
+        ],
+        rounds: [createRunoffVotingRound(currentRoundId, currentRoomId, { tieCandidateIds: [candidate1, candidate2] })],
+        roleAssignments: [],
+        votes: [],
+      }
+      const ctx = createCtx(tables)
+
+      const progress = await getVoteProgressHandler(ctx, {
+        roomId: currentRoomId,
+        roundId: currentRoundId,
+      })
+
+      expect(progress?.eligibleVoterCount).toBe(0)
+      expect(progress?.isComplete).toBe(true)
+    })
   })
 })

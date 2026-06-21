@@ -7,6 +7,7 @@ import {
   createPlayer,
   createRoomWithStatus,
   createRound,
+  createRunoffVotingRound,
   createVote,
   playerId,
   roomId,
@@ -136,5 +137,35 @@ describe('getVotingResultsHandler', () => {
         roundId: currentRoundId,
       }),
     ).rejects.toThrow(GAME_ERROR.ROOM_NOT_IN_CURRENT_VOTING)
+  })
+
+  it('ignores votes cast by tied candidates during a runoff', async () => {
+    const currentRoomId = roomId('room_1')
+    const currentRoundId = roundId('round_1')
+    const candidate1 = playerId('player_1')
+    const candidate2 = playerId('player_2')
+    const juror = playerId('player_3')
+    const tables: StoredTables = {
+      rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+      players: [
+        { ...createPlayer(candidate1, currentRoomId, true), name: 'Jam' },
+        { ...createPlayer(candidate2, currentRoomId), name: 'Mika' },
+        { ...createPlayer(juror, currentRoomId), name: 'Alex' },
+      ],
+      rounds: [createRunoffVotingRound(currentRoundId, currentRoomId, { tieCandidateIds: [candidate1, candidate2] })],
+      roleAssignments: [],
+      votes: [
+        createVote(voteId('vote_1'), currentRoomId, currentRoundId, juror, candidate1),
+        // candidate2 should not be able to vote; their vote must be ignored in the tally
+        createVote(voteId('vote_2'), currentRoomId, currentRoundId, candidate2, candidate1),
+      ],
+    }
+    const ctx = createCtx(tables)
+
+    const results = await getVotingResultsHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId })
+
+    // Only the juror's vote counts → candidate1 has 1, not 2
+    expect(results.totalVotes).toBe(1)
+    expect(results.results.find(r => r.playerId === candidate1)?.voteCount).toBe(1)
   })
 })

@@ -7,6 +7,7 @@ import {
   createPlayer,
   createRoomWithStatus,
   createRound,
+  createRunoffVotingRound,
   createVote,
   playerId,
   roomId,
@@ -150,5 +151,24 @@ describe('skipVoteHandler', () => {
     await expect(
       skipVoteHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId, voterPlayerId: voterId }),
     ).rejects.toThrow(GAME_ERROR.VOTER_NOT_IN_ROOM)
+  })
+
+  it('rejects a skip vote from a tied candidate during a runoff', async () => {
+    const candidate1 = playerId('player_1')
+    const candidate2 = playerId('player_2')
+    const tables = baseTables({
+      players: [
+        createPlayer(candidate1, currentRoomId, true),
+        createPlayer(candidate2, currentRoomId),
+        createPlayer(playerId('player_3'), currentRoomId),
+      ],
+      rounds: [createRunoffVotingRound(currentRoundId, currentRoomId, { tieCandidateIds: [candidate1, candidate2] })],
+    })
+    const ctx = createCtx(tables)
+
+    await expect(
+      skipVoteHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId, voterPlayerId: candidate1 }),
+    ).rejects.toThrow(GAME_ERROR.TIED_CANDIDATE_CANNOT_VOTE)
+    expect(tables.votes).toHaveLength(0)
   })
 })
