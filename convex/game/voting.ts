@@ -1,5 +1,5 @@
 import { GAME_STATUS } from "../../shared/gameStatus"
-import { Id } from "../_generated/dataModel"
+import type { Id } from "../_generated/dataModel"
 import type { MutationCtx, QueryCtx } from "../_generated/server"
 import { INDEX, TABLE } from "../lib/db"
 import { BATTLE_REVEAL_DURATION_MS, DISCUSSION_TURN_DURATION_MS } from "./constants"
