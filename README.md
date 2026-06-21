@@ -1,73 +1,87 @@
-# React + TypeScript + Vite
+# Who's the Spy?
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> A real-time multiplayer deduction game. No login required.
 
-Currently, two official plugins are available:
+**[Play now → whos-the-spy-one.vercel.app](https://whos-the-spy-one.vercel.app)**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+![Home page](.github/assets/home.png)
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## What is it?
 
-## Expanding the ESLint configuration
+Who's the Spy? is a party game for 3–15 players. Every round, one player is secretly assigned as the **Spy** while everyone else becomes a **Civilian**. The twist: Civilians share a secret word, but the Spy receives a *similar* word instead — close enough to bluff, different enough to expose.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Players discuss, probe each other with questions, vote to eliminate the spy, and try not to give away the real word in the process. Best played over a voice call.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## How to play
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Phase | What happens |
+|---|---|
+| **Lobby** | Host creates a room and shares the code. Players join with no account needed. |
+| **Role Reveal** | Each player privately sees their word. The Spy gets a similar-but-different word. |
+| **Discussion** | Players take timed turns asking and answering questions to sniff out the Spy. |
+| **Voting** | Everyone votes to eliminate a suspect. Ties trigger a **runoff vote** between candidates. |
+| **Battle** | If the Spy is exposed, they get a 30-second last stand to guess the real word and steal the win. |
+| **Results** | Win/loss is revealed with voting history. The host can kick off the next round immediately. |
+
+Games are multi-round — the room persists and a new round starts automatically after results.
+
+---
+
+## Features
+
+- **No login, no friction** — players join via a short room code, identity stored in session
+- **Real-time sync** — all game state is live across every client via Convex
+- **Host controls** — only the host can start rounds and set discussion/voting durations
+- **Timed turns** — discussion turns and voting phases have configurable countdowns
+- **Tie-breaker runoff** — tied votes trigger a focused runoff between only the tied candidates
+- **Battle phase** — the outed Spy gets one last chance to name the word and reverse the result
+- **Spectator support** — eliminated players watch the rest of the round play out
+- **3–15 players** — spy count scales automatically with player count
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 19, TypeScript, Vite |
+| Styling | Tailwind CSS v4 |
+| Routing | React Router v7 |
+| Backend / realtime | Convex |
+| Testing | Vitest, Testing Library |
+| Hosting | Vercel |
+
+---
+
+## Local development
+
+**Prerequisites:** Node.js 18+, a [Convex](https://convex.dev) account.
+
+```bash
+git clone https://github.com/jaaaaam/whos-the-spy.git
+cd whos-the-spy
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Start the Convex dev server (first run will prompt you to log in and create a project):
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+npx convex dev
+```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+In a separate terminal, start the frontend:
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) and create a room.
+
+```bash
+npm test        # run unit tests
+npm run build   # production build
 ```
