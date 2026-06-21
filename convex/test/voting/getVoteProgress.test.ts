@@ -54,6 +54,7 @@ describe('getVoteProgressHandler', () => {
       selectedTargetPlayerId: null,
       votingEndsAt: null,
       hasVoted: false,
+      tieCandidateIds: null,
     })
   })
 
@@ -89,6 +90,7 @@ describe('getVoteProgressHandler', () => {
       selectedTargetPlayerId: null,
       votingEndsAt: null,
       hasVoted: false,
+      tieCandidateIds: null,
     })
   })
 
@@ -124,6 +126,7 @@ describe('getVoteProgressHandler', () => {
       selectedTargetPlayerId: targetId,
       votingEndsAt: null,
       hasVoted: true,
+      tieCandidateIds: null,
     })
   })
 
@@ -230,6 +233,7 @@ describe('getVoteProgressHandler', () => {
       selectedTargetPlayerId: null,
       votingEndsAt: null,
       hasVoted: true,
+      tieCandidateIds: null,
     })
     expect(inactiveVoterProgress).toEqual({
       votedCount: 0,
@@ -238,6 +242,7 @@ describe('getVoteProgressHandler', () => {
       selectedTargetPlayerId: null,
       votingEndsAt: null,
       hasVoted: true,
+      tieCandidateIds: null,
     })
   })
 
@@ -452,6 +457,58 @@ describe('getVoteProgressHandler', () => {
 
       expect(progress?.eligibleVoterCount).toBe(0)
       expect(progress?.isComplete).toBe(true)
+    })
+  })
+
+  describe('tieCandidateIds field', () => {
+    it('returns null when round has no tieCandidateIds', async () => {
+      const currentRoomId = roomId('room_1')
+      const currentRoundId = roundId('round_1')
+      const tables: StoredTables = {
+        rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+        players: [
+          createPlayer(playerId('player_1'), currentRoomId, true),
+          createPlayer(playerId('player_2'), currentRoomId),
+        ],
+        rounds: [createRound(currentRoundId, currentRoomId)],
+        roleAssignments: [],
+        votes: [],
+      }
+      const ctx = createCtx(tables)
+
+      const progress = await getVoteProgressHandler(ctx, {
+        roomId: currentRoomId,
+        roundId: currentRoundId,
+      })
+
+      expect(progress?.tieCandidateIds).toBeNull()
+    })
+
+    it('returns the tieCandidateIds array during a runoff', async () => {
+      const currentRoomId = roomId('room_1')
+      const currentRoundId = roundId('round_1')
+      const candidate1 = playerId('player_1')
+      const candidate2 = playerId('player_2')
+      const tables: StoredTables = {
+        rooms: [createRoomWithStatus(currentRoomId, GAME_STATUS.VOTING, currentRoundId)],
+        players: [
+          createPlayer(candidate1, currentRoomId),
+          createPlayer(candidate2, currentRoomId),
+        ],
+        rounds: [createRunoffVotingRound(currentRoundId, currentRoomId, {
+          tieCandidateIds: [candidate1, candidate2],
+        })],
+        roleAssignments: [],
+        votes: [],
+      }
+      const ctx = createCtx(tables)
+
+      const progress = await getVoteProgressHandler(ctx, {
+        roomId: currentRoomId,
+        roundId: currentRoundId,
+      })
+
+      expect(progress?.tieCandidateIds).toEqual([candidate1, candidate2])
     })
   })
 })

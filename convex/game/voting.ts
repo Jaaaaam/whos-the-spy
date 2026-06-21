@@ -146,7 +146,8 @@ export async function getVoteProgressHandler(ctx: QueryCtx, { roomId, roundId, v
     isComplete: activeVotes.length === eligibleVoters.length,
     selectedTargetPlayerId,
     votingEndsAt: round?.votingEndsAt ?? null,
-    hasVoted
+    hasVoted,
+    tieCandidateIds: round?.tieCandidateIds ?? null,
   }
 
 }
