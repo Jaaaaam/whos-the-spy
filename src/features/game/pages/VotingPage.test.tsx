@@ -104,6 +104,7 @@ describe('VotingPage', () => {
         selectedTargetPlayerId: null,
         votingEndsAt: null,
         hasVoted: false,
+        tieCandidateIds: null,
       },
       isLoading: false,
       notFound: false,
@@ -239,6 +240,7 @@ describe('VotingPage', () => {
         selectedTargetPlayerId: secondPlayerId,
         votingEndsAt: null,
         hasVoted: false,
+        tieCandidateIds: null,
       },
       isLoading: false,
       notFound: false,
@@ -370,6 +372,7 @@ describe('VotingPage', () => {
         selectedTargetPlayerId: secondPlayerId,
         votingEndsAt: null,
         hasVoted: true,
+        tieCandidateIds: null,
       },
       isLoading: false,
       notFound: false,
@@ -399,6 +402,7 @@ describe('VotingPage', () => {
         selectedTargetPlayerId: null,
         votingEndsAt: null,
         hasVoted: false,
+        tieCandidateIds: null,
       },
       isLoading: false,
       notFound: false,
@@ -481,6 +485,92 @@ describe('VotingPage', () => {
     expect(finalizeVoting).toHaveBeenCalledWith({
       roomId,
       roundId,
+    })
+  })
+
+  describe('runoff voter view', () => {
+    const fourthPlayerId = 'player_4' as Id<'players'>
+
+    beforeEach(() => {
+      vi.mocked(usePlayersByRoom).mockReturnValue({
+        players: [
+          ...players.filter(p => p.isConnected),
+          {
+            _id: fourthPlayerId,
+            _creationTime: 0,
+            roomId,
+            name: 'Alex',
+            isHost: false,
+            isConnected: true,
+            joinedAt: 0,
+          },
+        ],
+        isLoading: false,
+        isEmpty: false,
+      })
+      vi.mocked(useVoteProgress).mockReturnValue({
+        voteProgress: {
+          votedCount: 0,
+          eligibleVoterCount: 1,
+          isComplete: false,
+          selectedTargetPlayerId: null,
+          votingEndsAt: null,
+          hasVoted: false,
+          tieCandidateIds: [secondPlayerId, fourthPlayerId],
+        },
+        isLoading: false,
+        notFound: false,
+      })
+    })
+
+    it('shows the tiebreaker heading when tieCandidateIds is set and current player is not a candidate', () => {
+      renderVotingPage()
+      expect(screen.getByRole('heading', { name: 'Break the Tie' })).toBeInTheDocument()
+    })
+
+    it('only renders tied candidates as vote targets', () => {
+      renderVotingPage()
+      expect(screen.getByRole('heading', { name: 'Mika' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Alex' })).toBeInTheDocument()
+      expect(screen.queryByRole('heading', { name: 'Jam' })).not.toBeInTheDocument()
+    })
+
+    it('shows the Tiebreaker Round chip', () => {
+      renderVotingPage()
+      expect(screen.getByText('Tiebreaker Round')).toBeInTheDocument()
+    })
+  })
+
+  describe('runoff candidate view', () => {
+    beforeEach(() => {
+      vi.mocked(useVoteProgress).mockReturnValue({
+        voteProgress: {
+          votedCount: 0,
+          eligibleVoterCount: 1,
+          isComplete: false,
+          selectedTargetPlayerId: null,
+          votingEndsAt: null,
+          hasVoted: false,
+          tieCandidateIds: [playerId, secondPlayerId],
+        },
+        isLoading: false,
+        notFound: false,
+      })
+    })
+
+    it('shows the on trial heading when the current player is a tied candidate', () => {
+      renderVotingPage()
+      expect(screen.getByRole('heading', { name: "You're on Trial" })).toBeInTheDocument()
+    })
+
+    it('does not show a Vote button', () => {
+      renderVotingPage()
+      expect(screen.queryByRole('button', { name: 'Vote' })).not.toBeInTheDocument()
+    })
+
+    it('does not show a Skip Vote button', () => {
+      renderVotingPage()
+      expect(screen.queryByRole('button', { name: 'Skip Vote' })).not.toBeInTheDocument()
     })
   })
 })

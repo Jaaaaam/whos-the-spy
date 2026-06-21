@@ -17,6 +17,8 @@ import { useAdvanceVotingIfExpired } from '../hooks/advance/useAdvanceVotingIfEx
 import { useSkipVote } from '../hooks/actions/useSkipVote'
 import { useNow } from '../hooks/useNow'
 import { getSecondsRemaining, formatSeconds } from '../lib/timerUtils'
+import { RunoffVoterView } from '../components/RunoffVoterView'
+import { RunoffCandidateView } from '../components/RunoffCandidateView'
 
 export function VotingPage() {
   const hasFinalizedRef = useRef(false)
@@ -60,6 +62,13 @@ export function VotingPage() {
   const activePlayers = players?.filter((player) => player.isConnected && !player.isEliminated) ?? []
   const currentPlayer = players?.find(player => player._id === currentPlayerId)
   const isSpectating = currentPlayer?.isEliminated ?? false
+
+  const tieCandidateIds = voteProgress?.tieCandidateIds ?? null
+  const isRunoff = !!tieCandidateIds && tieCandidateIds.length > 0
+  const isCandidate = isRunoff && !!currentPlayerId && tieCandidateIds.includes(currentPlayerId)
+  const voteTargets = isRunoff
+    ? activePlayers.filter(p => tieCandidateIds!.includes(p._id))
+    : activePlayers
 
   useEffect(() => { hasRequestedAdvanceRef.current = false }, [votingEndsAt])
 
@@ -157,6 +166,38 @@ export function VotingPage() {
       <PageShell compact>
         <Loader fullPage label="Transitioning" />
       </PageShell>
+    )
+  }
+
+  if (isCandidate) {
+    return (
+      <RunoffCandidateView
+        tiedPlayers={voteTargets}
+        votingEndsAt={voteProgress?.votingEndsAt ?? null}
+        votedCount={voteProgress?.votedCount ?? 0}
+        eligibleVoterCount={voteProgress?.eligibleVoterCount ?? 0}
+      />
+    )
+  }
+
+  if (isRunoff) {
+    return (
+      <RunoffVoterView
+        voteTargets={voteTargets}
+        currentPlayerId={currentPlayerId}
+        selectedTargetPlayerId={voteProgress?.selectedTargetPlayerId ?? null}
+        hasVoted={hasVoted}
+        isCastingVote={isCastingVote}
+        isSkipping={isSkipping}
+        pendingPlayerId={pendingPlayerId}
+        votingEndsAt={voteProgress?.votingEndsAt ?? null}
+        votedCount={voteProgress?.votedCount ?? 0}
+        eligibleVoterCount={voteProgress?.eligibleVoterCount ?? 0}
+        error={error}
+        skipError={skipError}
+        onVote={handleVote}
+        onSkip={handleSkip}
+      />
     )
   }
 
