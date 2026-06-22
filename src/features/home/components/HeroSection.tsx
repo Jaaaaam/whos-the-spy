@@ -29,8 +29,8 @@ export function HeroSection() {
               Best with Voices
             </h2>
             <p className="text-sm leading-6 text-on-surface-variant">
-              The mockup recommends a voice call. Subtle clues are hidden in every
-              pause, laugh, and suspiciously confident answer.
+              This game is best played on a voice or video call. Subtle clues are
+              hidden in every pause, laugh, and suspiciously confident answer.
             </p>
           </div>
         </div>
