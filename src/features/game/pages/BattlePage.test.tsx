@@ -10,7 +10,7 @@ import { useAdvanceBattleIfExpired } from '../hooks/advance/useAdvanceBattleIfEx
 import { BattlePage } from './BattlePage'
 
 vi.mock('../../room/hooks/useRoomByCode')
-vi.mock('../../room/hooks/useHeartBeat')
+vi.mock('../../room/hooks/useHeartbeat')
 vi.mock('../hooks/state/useBattleState')
 vi.mock('../hooks/advance/useAdvanceBattleIfExpired')
 

@@ -14,7 +14,7 @@ import { useVoteProgress } from '../hooks/state/useVoteProgress'
 import { VotingPage } from './VotingPage'
 
 vi.mock('../../room/hooks/useRoomByCode')
-vi.mock('../../room/hooks/useHeartBeat')
+vi.mock('../../room/hooks/useHeartbeat')
 vi.mock('../../room/hooks/usePlayersByRoom')
 vi.mock('../hooks/state/useVoteProgress')
 vi.mock('../hooks/actions/useCastVote')

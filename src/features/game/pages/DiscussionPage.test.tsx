@@ -13,7 +13,7 @@ import { useMyReveal } from '../hooks/state/useMyReveal'
 import { DiscussionPage } from './DiscussionPage'
 
 vi.mock('../../room/hooks/useRoomByCode')
-vi.mock('../../room/hooks/useHeartBeat')
+vi.mock('../../room/hooks/useHeartbeat')
 vi.mock('../../room/hooks/usePlayersByRoom')
 vi.mock('../hooks/state/useDiscussionState')
 vi.mock('../hooks/actions/useEndDiscussionTurn')

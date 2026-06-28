@@ -13,7 +13,7 @@ import { useRoomByCode } from '../hooks/useRoomByCode'
 import { MAX_PLAYERS_PER_ROOM } from '../../../../shared/gameSettings'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { clearCurrentPlayerId, getCurrentPlayerId } from '../lib/currentPlayer'
-import { useHeartbeat } from '../hooks/useHeartBeat'
+import { useHeartbeat } from '../hooks/useHeartbeat'
 
 export function LobbyPage() {
   const { roomCode } = useParams()

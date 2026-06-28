@@ -12,7 +12,7 @@ import { useRevealState } from '../hooks/state/useRevealState'
 import { RoleRevealPage } from './RoleRevealPage'
 
 vi.mock('../../room/hooks/useRoomByCode')
-vi.mock('../../room/hooks/useHeartBeat')
+vi.mock('../../room/hooks/useHeartbeat')
 vi.mock('../hooks/state/useMyReveal')
 vi.mock('../hooks/actions/useMarkRoleSeen')
 vi.mock('../hooks/state/useRevealState')

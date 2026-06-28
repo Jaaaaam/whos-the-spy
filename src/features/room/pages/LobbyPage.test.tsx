@@ -12,7 +12,7 @@ import { saveCurrentPlayerId } from '../lib/currentPlayer'
 import { LobbyPage } from './LobbyPage'
 
 vi.mock('../hooks/useRoomByCode')
-vi.mock('../hooks/useHeartBeat')
+vi.mock('../hooks/useHeartbeat')
 vi.mock('../hooks/usePlayersByRoom')
 vi.mock('../hooks/useStartRound')
 vi.mock('../hooks/usePlayerConnection')
@@ -120,6 +120,7 @@ describe('LobbyPage', () => {
           isHost: false,
           isConnected: false,
           joinedAt: 0,
+          lastSeenAt: 0,
         },
       ],
       isLoading: false,

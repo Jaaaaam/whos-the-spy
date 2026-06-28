@@ -1,8 +1,9 @@
 import { renderHook } from '@testing-library/react'
 import { useMutation } from 'convex/react'
+import type { ReactMutation } from 'convex/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { HEARTBEAT_INTERVAL_FE_MS } from '../../../../convex/game/constants'
-import { useHeartbeat } from './useHeartBeat'
+import { useHeartbeat } from './useHeartbeat'
 
 vi.mock('convex/react', () => ({
   useMutation: vi.fn(),
@@ -21,7 +22,7 @@ describe('useHeartbeat', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     sendHeartbeat = vi.fn()
-    vi.mocked(useMutation).mockReturnValue(sendHeartbeat)
+    vi.mocked(useMutation).mockReturnValue(sendHeartbeat as unknown as ReactMutation<never>)
   })
 
   afterEach(() => {

@@ -11,7 +11,7 @@ import { usePlayAgain } from '../hooks/actions/usePlayAgain'
 import { ResultsPage } from './ResultsPage'
 
 vi.mock('../../room/hooks/useRoomByCode')
-vi.mock('../../room/hooks/useHeartBeat')
+vi.mock('../../room/hooks/useHeartbeat')
 vi.mock('../hooks/state/useResultsState')
 vi.mock('../../room/hooks/useStartRound')
 vi.mock('../../room/lib/currentPlayer')
