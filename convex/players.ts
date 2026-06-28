@@ -1,9 +1,11 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { MAX_PLAYERS_PER_ROOM } from "../shared/gameSettings";
 import { INDEX, TABLE } from "./lib/db";
+import { GAME_ERROR } from "./game/errors";
+import { HEARTBEAT_INTERVAL_MS } from "./game/constants";
 
 type JoinRoomArgs = {
   roomCode: string
@@ -11,11 +13,15 @@ type JoinRoomArgs = {
   currentPlayerId?: Id<typeof TABLE.PLAYERS>
 }
 
-type SetPlayerConnectionArgs = {
+type PlayerRoomArgs = {
   roomId: Id<typeof TABLE.ROOMS>
   playerId: Id<typeof TABLE.PLAYERS>
+}
+
+type SetPlayerConnectionArgs = PlayerRoomArgs & {
   isConnected: boolean
 }
+
 
 async function getPlayersByRoomId(
   ctx: QueryCtx | MutationCtx,
@@ -45,6 +51,7 @@ export async function joinRoomHandler(ctx: MutationCtx, args: JoinRoomArgs) {
   if (currentPlayer) {
     await ctx.db.patch(currentPlayer._id, {
       isConnected: true,
+      lastSeenAt: Date.now(),
     })
 
     return {
@@ -73,6 +80,7 @@ export async function joinRoomHandler(ctx: MutationCtx, args: JoinRoomArgs) {
     isHost: false,
     isConnected: true,
     joinedAt: Date.now(),
+    lastSeenAt: Date.now()
   })
 
   return {
@@ -103,6 +111,30 @@ export async function setPlayerConnectionHandler(
   }
 }
 
+export async function setHeartbeatHandler(ctx: MutationCtx, { playerId, roomId }: PlayerRoomArgs) {
+  const player = await ctx.db.get(playerId);
+  if (!player || player.roomId !== roomId) {
+    throw new Error(GAME_ERROR.PLAYER_NOT_IN_ROOM)
+  }
+  await ctx.db.patch(playerId, {
+    lastSeenAt: Date.now()
+  })
+}
+
+export async function markDisconnectedPlayersHandler(ctx: MutationCtx) {
+  const threshold = Date.now() - HEARTBEAT_INTERVAL_MS
+
+  const stalePlayers = await ctx.db
+    .query(TABLE.PLAYERS)
+    .filter(q =>
+      q.and(
+        q.eq(q.field('isConnected'), true),
+        q.lt(q.field('lastSeenAt'), threshold)
+      )
+    ).collect()
+
+  await Promise.all(stalePlayers.map(p => ctx.db.patch(p._id, { isConnected: false })));
+}
 export const joinRoom = mutation({
   args: {
     roomCode: v.string(),
@@ -128,4 +160,17 @@ export const getPlayersInRoom = query({
   handler: async (ctx, args) => {
     return getPlayersByRoomId(ctx, args.roomId);
   }
+})
+
+export const heartBeat = mutation({
+  args: {
+    playerId: v.id(TABLE.PLAYERS),
+    roomId: v.id(TABLE.ROOMS)
+  },
+  handler: setHeartbeatHandler
+})
+
+export const markDisconnectedPlayers = internalMutation({
+  args: {},
+  handler: markDisconnectedPlayersHandler
 })

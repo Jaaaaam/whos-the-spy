@@ -2,6 +2,7 @@ export const GAME_ERROR = {
   CANNOT_START_DISCUSSION_WITHOUT_PLAYERS: 'Cannot start discussion without players.',
   DISCUSSION_STATE_INCOMPLETE: 'Discussion state is incomplete.',
   HOST_NOT_IN_ROOM: 'Host does not belong to this room.',
+  PLAYER_NOT_IN_ROOM: 'Player does not belong to this room.',
   HOST_PLAYER_NOT_FOUND: 'Host player not found.',
   INVALID_PLAYER_COUNT: 'Invalid player count.',
   INVALID_SPY_COUNT: 'Invalid spy count.',

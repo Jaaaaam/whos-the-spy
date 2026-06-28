@@ -9,4 +9,5 @@ export const players = defineTable({
   isConnected: v.boolean(),
   isEliminated: v.optional(v.boolean()),
   joinedAt: v.number(),
+  lastSeenAt: v.number(),
 }).index(INDEX.PLAYERS_BY_ROOM_ID, ['roomId'])

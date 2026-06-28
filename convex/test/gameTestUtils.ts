@@ -68,6 +68,7 @@ export function createPlayer(
     isHost,
     isConnected: true,
     joinedAt: 0,
+    lastSeenAt: 0,
   }
 }
 
@@ -248,6 +249,26 @@ export function createCtx(tables: StoredTables) {
 
                 return documents[0] ?? null
               },
+            }
+          },
+          filter(buildFilter: (q: {
+            field: (name: string) => (doc: StoredDocument) => unknown
+            eq: (fieldFn: (doc: StoredDocument) => unknown, value: unknown) => (doc: StoredDocument) => boolean
+            lt: (fieldFn: (doc: StoredDocument) => unknown, value: unknown) => (doc: StoredDocument) => boolean
+            and: (...exprs: ((doc: StoredDocument) => boolean)[]) => (doc: StoredDocument) => boolean
+          }) => (doc: StoredDocument) => boolean) {
+            const q = {
+              field: (name: string) => (doc: StoredDocument) => doc[name as keyof StoredDocument],
+              eq: (fieldFn: (doc: StoredDocument) => unknown, value: unknown) =>
+                (doc: StoredDocument) => fieldFn(doc) === value,
+              lt: (fieldFn: (doc: StoredDocument) => unknown, value: unknown) =>
+                (doc: StoredDocument) => (fieldFn(doc) as number) < (value as number),
+              and: (...exprs: ((doc: StoredDocument) => boolean)[]) =>
+                (doc: StoredDocument) => exprs.every(e => e(doc)),
+            }
+            const predicate = buildFilter(q)
+            return {
+              collect: async () => storedTables[table].filter(predicate),
             }
           },
         }

@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { joinRoomHandler, setPlayerConnectionHandler } from '../players'
+import { describe, expect, it, vi, afterEach } from 'vitest'
+import { joinRoomHandler, setPlayerConnectionHandler, setHeartbeatHandler, markDisconnectedPlayersHandler } from '../players'
 import {
   createCtx,
   createPlayer,
@@ -8,6 +8,11 @@ import {
   roomId,
   type StoredTables,
 } from './gameTestUtils'
+import { HEARTBEAT_INTERVAL_MS } from '../game/constants'
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 describe('joinRoomHandler', () => {
   it('reconnects a saved player instead of creating a duplicate', async () => {
@@ -118,5 +123,127 @@ describe('setPlayerConnectionHandler', () => {
       isConnected: false,
     })
     expect(tables.players[0].isConnected).toBe(false)
+  })
+})
+
+describe('setHeartbeatHandler', () => {
+  it('updates lastSeenAt for a connected player', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(1_000_000)
+
+    const currentRoomId = roomId('room_1')
+    const currentPlayerId = playerId('player_1')
+    const tables: StoredTables = {
+      rooms: [createRoom(currentRoomId)],
+      players: [{ ...createPlayer(currentPlayerId, currentRoomId), lastSeenAt: 0 }],
+      rounds: [],
+      roleAssignments: [],
+    }
+    const ctx = createCtx(tables)
+
+    await setHeartbeatHandler(ctx, { playerId: currentPlayerId, roomId: currentRoomId })
+
+    expect(tables.players[0].lastSeenAt).toBe(1_000_000)
+  })
+
+  it('throws if the player does not belong to the given room', async () => {
+    const currentRoomId = roomId('room_1')
+    const otherRoomId = roomId('room_2')
+    const currentPlayerId = playerId('player_1')
+    const tables: StoredTables = {
+      rooms: [createRoom(currentRoomId)],
+      players: [createPlayer(currentPlayerId, otherRoomId)],
+      rounds: [],
+      roleAssignments: [],
+    }
+    const ctx = createCtx(tables)
+
+    await expect(
+      setHeartbeatHandler(ctx, { playerId: currentPlayerId, roomId: currentRoomId })
+    ).rejects.toThrow()
+  })
+})
+
+describe('markDisconnectedPlayersHandler', () => {
+  it('marks a stale connected player as disconnected', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(HEARTBEAT_INTERVAL_MS + 1)
+
+    const currentRoomId = roomId('room_1')
+    const currentPlayerId = playerId('player_1')
+    const tables: StoredTables = {
+      rooms: [createRoom(currentRoomId)],
+      players: [{ ...createPlayer(currentPlayerId, currentRoomId), lastSeenAt: 0 }],
+      rounds: [],
+      roleAssignments: [],
+    }
+    const ctx = createCtx(tables)
+
+    await markDisconnectedPlayersHandler(ctx)
+
+    expect(tables.players[0].isConnected).toBe(false)
+  })
+
+  it('does not disconnect a player who heartbeated recently', async () => {
+    vi.useFakeTimers()
+    const now = HEARTBEAT_INTERVAL_MS + 1
+    vi.setSystemTime(now)
+
+    const currentRoomId = roomId('room_1')
+    const currentPlayerId = playerId('player_1')
+    const tables: StoredTables = {
+      rooms: [createRoom(currentRoomId)],
+      players: [{ ...createPlayer(currentPlayerId, currentRoomId), lastSeenAt: now - 5_000 }],
+      rounds: [],
+      roleAssignments: [],
+    }
+    const ctx = createCtx(tables)
+
+    await markDisconnectedPlayersHandler(ctx)
+
+    expect(tables.players[0].isConnected).toBe(true)
+  })
+
+  it('does not touch an already-disconnected player', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(HEARTBEAT_INTERVAL_MS + 1)
+
+    const currentRoomId = roomId('room_1')
+    const currentPlayerId = playerId('player_1')
+    const tables: StoredTables = {
+      rooms: [createRoom(currentRoomId)],
+      players: [{ ...createPlayer(currentPlayerId, currentRoomId), isConnected: false, lastSeenAt: 0 }],
+      rounds: [],
+      roleAssignments: [],
+    }
+    const ctx = createCtx(tables)
+
+    await markDisconnectedPlayersHandler(ctx)
+
+    expect(tables.players[0].isConnected).toBe(false)
+  })
+
+  it('marks multiple stale players as disconnected', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(HEARTBEAT_INTERVAL_MS + 1)
+
+    const currentRoomId = roomId('room_1')
+    const player1 = playerId('player_1')
+    const player2 = playerId('player_2')
+    const tables: StoredTables = {
+      rooms: [createRoom(currentRoomId)],
+      players: [
+        { ...createPlayer(player1, currentRoomId), lastSeenAt: 0 },
+        { ...createPlayer(player2, currentRoomId), lastSeenAt: 0 },
+      ],
+      rounds: [],
+      roleAssignments: [],
+    }
+    const ctx = createCtx(tables)
+
+    await markDisconnectedPlayersHandler(ctx)
+
+    expect(tables.players[0].isConnected).toBe(false)
+    expect(tables.players[1].isConnected).toBe(false)
   })
 })
