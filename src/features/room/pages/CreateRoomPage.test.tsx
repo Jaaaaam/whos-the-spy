@@ -26,26 +26,20 @@ describe('CreateRoomPage', () => {
     renderCreateRoomPage()
 
     expect(screen.getByRole('heading', { name: 'Room Configuration' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Your Name')).toHaveValue('')
-    expect(screen.getByLabelText('Expected Players')).toHaveValue(8)
+    expect(screen.getByPlaceholderText('YOUR CODENAME...')).toHaveValue('')
     expect(
       screen.getByText((text) => text.includes(`Room capacity is ${MAX_PLAYERS_PER_ROOM}.`)),
     ).toBeInTheDocument()
   })
 
-  it('updates spy count, timer, and rule toggles', () => {
+  it('selects a discussion turn timer', () => {
     renderCreateRoomPage()
 
-    fireEvent.click(screen.getByLabelText('Increase spy count'))
-    expect(screen.getByText('3')).toBeInTheDocument()
+    const twoMin = screen.getByRole('button', { name: '2 min' })
+    fireEvent.click(twoMin)
+    expect(twoMin).toHaveClass('bg-primary-container')
 
-    fireEvent.click(screen.getByRole('button', { name: '10m' }))
-    expect(screen.getByRole('button', { name: '10m' })).toHaveClass('bg-primary-container')
-
-    const anonymousVoting = screen.getByRole('switch', { name: 'Anonymous Voting' })
-    expect(anonymousVoting).toHaveAttribute('aria-checked', 'false')
-
-    fireEvent.click(anonymousVoting)
-    expect(anonymousVoting).toHaveAttribute('aria-checked', 'true')
+    const oneMin = screen.getByRole('button', { name: '1 min' })
+    expect(oneMin).not.toHaveClass('bg-primary-container')
   })
 })

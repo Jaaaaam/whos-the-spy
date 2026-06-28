@@ -124,6 +124,69 @@ describe('setPlayerConnectionHandler', () => {
     })
     expect(tables.players[0].isConnected).toBe(false)
   })
+
+  it('promotes the earliest-joined connected player when the host explicitly disconnects', async () => {
+    const currentRoomId = roomId('room_1')
+    const hostId = playerId('player_1')
+    const earlierGuestId = playerId('player_2')
+    const laterGuestId = playerId('player_3')
+    const tables: StoredTables = {
+      rooms: [{ ...createRoom(currentRoomId), hostPlayerId: hostId }],
+      players: [
+        { ...createPlayer(hostId, currentRoomId, true), joinedAt: 100 },
+        { ...createPlayer(earlierGuestId, currentRoomId), joinedAt: 200 },
+        { ...createPlayer(laterGuestId, currentRoomId), joinedAt: 300 },
+      ],
+      rounds: [],
+      roleAssignments: [],
+    }
+    const ctx = createCtx(tables)
+
+    await setPlayerConnectionHandler(ctx, { roomId: currentRoomId, playerId: hostId, isConnected: false })
+
+    expect(tables.players.find(p => p._id === earlierGuestId)?.isHost).toBe(true)
+    expect(tables.players.find(p => p._id === laterGuestId)?.isHost).toBeFalsy()
+    expect(tables.rooms[0].hostPlayerId).toBe(earlierGuestId)
+  })
+
+  it('does not migrate host when the host is the last connected player', async () => {
+    const currentRoomId = roomId('room_1')
+    const hostId = playerId('player_1')
+    const tables: StoredTables = {
+      rooms: [{ ...createRoom(currentRoomId), hostPlayerId: hostId }],
+      players: [{ ...createPlayer(hostId, currentRoomId, true), joinedAt: 100 }],
+      rounds: [],
+      roleAssignments: [],
+    }
+    const ctx = createCtx(tables)
+
+    await expect(
+      setPlayerConnectionHandler(ctx, { roomId: currentRoomId, playerId: hostId, isConnected: false })
+    ).resolves.not.toThrow()
+
+    expect(tables.rooms[0].hostPlayerId).toBe(hostId)
+  })
+
+  it('does not migrate host when a non-host disconnects', async () => {
+    const currentRoomId = roomId('room_1')
+    const hostId = playerId('player_1')
+    const guestId = playerId('player_2')
+    const tables: StoredTables = {
+      rooms: [{ ...createRoom(currentRoomId), hostPlayerId: hostId }],
+      players: [
+        createPlayer(hostId, currentRoomId, true),
+        createPlayer(guestId, currentRoomId),
+      ],
+      rounds: [],
+      roleAssignments: [],
+    }
+    const ctx = createCtx(tables)
+
+    await setPlayerConnectionHandler(ctx, { roomId: currentRoomId, playerId: guestId, isConnected: false })
+
+    expect(tables.players.find(p => p._id === hostId)?.isHost).toBe(true)
+    expect(tables.rooms[0].hostPlayerId).toBe(hostId)
+  })
 })
 
 describe('setHeartbeatHandler', () => {
@@ -221,6 +284,55 @@ describe('markDisconnectedPlayersHandler', () => {
     await markDisconnectedPlayersHandler(ctx)
 
     expect(tables.players[0].isConnected).toBe(false)
+  })
+
+  it('migrates host to earliest-joined connected player when host goes stale', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(HEARTBEAT_INTERVAL_MS + 1)
+
+    const currentRoomId = roomId('room_1')
+    const hostId = playerId('player_1')
+    const guestId = playerId('player_2')
+    const tables: StoredTables = {
+      rooms: [{ ...createRoom(currentRoomId), hostPlayerId: hostId }],
+      players: [
+        { ...createPlayer(hostId, currentRoomId, true), lastSeenAt: 0, joinedAt: 100 },
+        { ...createPlayer(guestId, currentRoomId), lastSeenAt: HEARTBEAT_INTERVAL_MS, joinedAt: 200 },
+      ],
+      rounds: [],
+      roleAssignments: [],
+    }
+    const ctx = createCtx(tables)
+
+    await markDisconnectedPlayersHandler(ctx)
+
+    expect(tables.players.find(p => p._id === hostId)?.isConnected).toBe(false)
+    expect(tables.players.find(p => p._id === guestId)?.isHost).toBe(true)
+    expect(tables.rooms[0].hostPlayerId).toBe(guestId)
+  })
+
+  it('does not migrate host when a non-host goes stale', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(HEARTBEAT_INTERVAL_MS + 1)
+
+    const currentRoomId = roomId('room_1')
+    const hostId = playerId('player_1')
+    const guestId = playerId('player_2')
+    const tables: StoredTables = {
+      rooms: [{ ...createRoom(currentRoomId), hostPlayerId: hostId }],
+      players: [
+        { ...createPlayer(hostId, currentRoomId, true), lastSeenAt: HEARTBEAT_INTERVAL_MS },
+        { ...createPlayer(guestId, currentRoomId), lastSeenAt: 0 },
+      ],
+      rounds: [],
+      roleAssignments: [],
+    }
+    const ctx = createCtx(tables)
+
+    await markDisconnectedPlayersHandler(ctx)
+
+    expect(tables.players.find(p => p._id === hostId)?.isHost).toBe(true)
+    expect(tables.rooms[0].hostPlayerId).toBe(hostId)
   })
 
   it('marks multiple stale players as disconnected', async () => {

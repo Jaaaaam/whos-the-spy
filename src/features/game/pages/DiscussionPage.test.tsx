@@ -13,6 +13,7 @@ import { useMyReveal } from '../hooks/state/useMyReveal'
 import { DiscussionPage } from './DiscussionPage'
 
 vi.mock('../../room/hooks/useRoomByCode')
+vi.mock('../../room/hooks/useHeartBeat')
 vi.mock('../../room/hooks/usePlayersByRoom')
 vi.mock('../hooks/state/useDiscussionState')
 vi.mock('../hooks/actions/useEndDiscussionTurn')
@@ -42,6 +43,7 @@ const players: Doc<'players'>[] = [
     isHost: true,
     isConnected: true,
     joinedAt: 0,
+    lastSeenAt: 0,
   },
   {
     _id: secondPlayerId,
@@ -51,6 +53,7 @@ const players: Doc<'players'>[] = [
     isHost: false,
     isConnected: true,
     joinedAt: 0,
+    lastSeenAt: 0,
   },
 ]
 

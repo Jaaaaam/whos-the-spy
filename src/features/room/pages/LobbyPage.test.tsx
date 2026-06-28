@@ -12,6 +12,7 @@ import { saveCurrentPlayerId } from '../lib/currentPlayer'
 import { LobbyPage } from './LobbyPage'
 
 vi.mock('../hooks/useRoomByCode')
+vi.mock('../hooks/useHeartBeat')
 vi.mock('../hooks/usePlayersByRoom')
 vi.mock('../hooks/useStartRound')
 vi.mock('../hooks/usePlayerConnection')
@@ -33,6 +34,7 @@ const players: Doc<'players'>[] = [
     isHost: true,
     isConnected: true,
     joinedAt: 0,
+    lastSeenAt: 0,
   },
   {
     _id: 'player_2' as Id<'players'>,
@@ -42,6 +44,7 @@ const players: Doc<'players'>[] = [
     isHost: false,
     isConnected: true,
     joinedAt: 0,
+    lastSeenAt: 0,
   },
 ]
 
@@ -55,6 +58,7 @@ const readyPlayers: Doc<'players'>[] = [
     isHost: false,
     isConnected: true,
     joinedAt: 0,
+    lastSeenAt: 0,
   },
 ]
 

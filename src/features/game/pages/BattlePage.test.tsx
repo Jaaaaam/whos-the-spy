@@ -10,6 +10,7 @@ import { useAdvanceBattleIfExpired } from '../hooks/advance/useAdvanceBattleIfEx
 import { BattlePage } from './BattlePage'
 
 vi.mock('../../room/hooks/useRoomByCode')
+vi.mock('../../room/hooks/useHeartBeat')
 vi.mock('../hooks/state/useBattleState')
 vi.mock('../hooks/advance/useAdvanceBattleIfExpired')
 
@@ -35,6 +36,7 @@ const tiedPlayers: Doc<'players'>[] = [
     isHost: false,
     isConnected: true,
     joinedAt: 0,
+    lastSeenAt: 0,
   },
   {
     _id: 'player_3' as Id<'players'>,
@@ -44,6 +46,7 @@ const tiedPlayers: Doc<'players'>[] = [
     isHost: false,
     isConnected: true,
     joinedAt: 0,
+    lastSeenAt: 0,
   },
 ]
 

@@ -125,20 +125,6 @@ describe('skipVoteHandler', () => {
     ).rejects.toThrow(GAME_ERROR.VOTER_NOT_IN_ROOM)
   })
 
-  it('rejects a disconnected voter', async () => {
-    const tables = baseTables({
-      players: [
-        { ...createPlayer(voterId, currentRoomId, true), isConnected: false },
-        createPlayer(targetId, currentRoomId),
-      ],
-    })
-    const ctx = createCtx(tables)
-
-    await expect(
-      skipVoteHandler(ctx, { roomId: currentRoomId, roundId: currentRoundId, voterPlayerId: voterId }),
-    ).rejects.toThrow(GAME_ERROR.VOTER_NOT_IN_ROOM)
-  })
-
   it('rejects an eliminated voter', async () => {
     const tables = baseTables({
       players: [

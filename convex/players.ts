@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
+import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
 import { MAX_PLAYERS_PER_ROOM } from "../shared/gameSettings";
 import { INDEX, TABLE } from "./lib/db";
 import { GAME_ERROR } from "./game/errors";
@@ -31,6 +31,23 @@ async function getPlayersByRoomId(
     .query(TABLE.PLAYERS)
     .withIndex(INDEX.PLAYERS_BY_ROOM_ID, (q) => q.eq('roomId', roomId))
     .collect();
+}
+
+async function migrateHost(
+  ctx: MutationCtx,
+  disconnectingPlayer: Doc<typeof TABLE.PLAYERS>,
+) {
+  if (!disconnectingPlayer.isHost) return;
+
+  const allPlayers = await getPlayersByRoomId(ctx, disconnectingPlayer.roomId);
+  const nextHost = allPlayers
+    .filter(p => p._id !== disconnectingPlayer._id && p.isConnected)
+    .sort((a, b) => a.joinedAt - b.joinedAt)[0];
+
+  if (!nextHost) return;
+
+  await ctx.db.patch(nextHost._id, { isHost: true });
+  await ctx.db.patch(disconnectingPlayer.roomId, { hostPlayerId: nextHost._id });
 }
 
 export async function joinRoomHandler(ctx: MutationCtx, args: JoinRoomArgs) {
@@ -105,6 +122,10 @@ export async function setPlayerConnectionHandler(
     isConnected: args.isConnected,
   })
 
+  if (!args.isConnected) {
+    await migrateHost(ctx, player);
+  }
+
   return {
     playerId: player._id,
     isConnected: args.isConnected,
@@ -135,6 +156,11 @@ export async function markDisconnectedPlayersHandler(ctx: MutationCtx) {
     ).collect()
 
   await Promise.all(stalePlayers.map(p => ctx.db.patch(p._id, { isConnected: false })));
+
+  const staleHost = stalePlayers.find(p => p.isHost);
+  if (staleHost) {
+    await migrateHost(ctx, staleHost);
+  }
 }
 export const joinRoom = mutation({
   args: {

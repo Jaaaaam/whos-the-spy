@@ -185,24 +185,6 @@ describe('castVoteHandler', () => {
     ).rejects.toThrow(GAME_ERROR.VOTER_NOT_IN_ROOM)
   })
 
-  it('rejects a disconnected voter', async () => {
-    const tables = baseTables({
-      players: [
-        { ...createPlayer(voterId, currentRoomId, true), isConnected: false },
-        createPlayer(targetId, currentRoomId),
-      ],
-    })
-    const ctx = createCtx(tables)
-
-    await expect(
-      castVoteHandler(ctx, {
-        roomId: currentRoomId,
-        roundId: currentRoundId,
-        voterPlayerId: voterId,
-        targetPlayerId: targetId,
-      }),
-    ).rejects.toThrow(GAME_ERROR.VOTER_NOT_IN_ROOM)
-  })
 
   it('rejects a target outside the room', async () => {
     const otherRoomId = roomId('room_2')

@@ -11,6 +11,7 @@ import { usePlayAgain } from '../hooks/actions/usePlayAgain'
 import { ResultsPage } from './ResultsPage'
 
 vi.mock('../../room/hooks/useRoomByCode')
+vi.mock('../../room/hooks/useHeartBeat')
 vi.mock('../hooks/state/useResultsState')
 vi.mock('../../room/hooks/useStartRound')
 vi.mock('../../room/lib/currentPlayer')
@@ -135,7 +136,7 @@ describe('ResultsPage', () => {
   it('shows real voting history', () => {
     renderResultsPage()
 
-    expect(screen.getByText('Jam')).toBeInTheDocument()
+    expect(screen.getAllByText('Jam')).not.toHaveLength(0)
     expect(screen.getAllByText('Mika')).not.toHaveLength(0)
   })
 

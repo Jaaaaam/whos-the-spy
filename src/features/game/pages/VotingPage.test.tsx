@@ -14,6 +14,7 @@ import { useVoteProgress } from '../hooks/state/useVoteProgress'
 import { VotingPage } from './VotingPage'
 
 vi.mock('../../room/hooks/useRoomByCode')
+vi.mock('../../room/hooks/useHeartBeat')
 vi.mock('../../room/hooks/usePlayersByRoom')
 vi.mock('../hooks/state/useVoteProgress')
 vi.mock('../hooks/actions/useCastVote')
@@ -45,6 +46,7 @@ const players: Doc<'players'>[] = [
     isHost: true,
     isConnected: true,
     joinedAt: 0,
+    lastSeenAt: 0,
   },
   {
     _id: secondPlayerId,
@@ -54,6 +56,7 @@ const players: Doc<'players'>[] = [
     isHost: false,
     isConnected: true,
     joinedAt: 0,
+    lastSeenAt: 0,
   },
   {
     _id: disconnectedPlayerId,
@@ -63,6 +66,7 @@ const players: Doc<'players'>[] = [
     isHost: false,
     isConnected: false,
     joinedAt: 0,
+    lastSeenAt: 0,
   },
 ]
 
@@ -307,6 +311,7 @@ describe('VotingPage', () => {
           isHost: false,
           isConnected: true,
           joinedAt: 0,
+          lastSeenAt: 0,
           isEliminated: true,
         },
       ],
@@ -332,6 +337,7 @@ describe('VotingPage', () => {
           isHost: false,
           isConnected: true,
           joinedAt: 0,
+          lastSeenAt: 0,
           isEliminated: true,
         },
       ],
@@ -503,6 +509,7 @@ describe('VotingPage', () => {
             isHost: false,
             isConnected: true,
             joinedAt: 0,
+            lastSeenAt: 0,
           },
         ],
         isLoading: false,
