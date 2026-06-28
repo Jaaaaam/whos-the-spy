@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as crons from "../crons.js";
 import type * as game from "../game.js";
 import type * as game_constants from "../game/constants.js";
 import type * as game_discussion from "../game/discussion.js";
@@ -38,6 +39,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  crons: typeof crons;
   game: typeof game;
   "game/constants": typeof game_constants;
   "game/discussion": typeof game_discussion;

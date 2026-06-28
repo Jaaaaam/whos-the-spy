@@ -117,7 +117,8 @@ export async function setHeartbeatHandler(ctx: MutationCtx, { playerId, roomId }
     throw new Error(GAME_ERROR.PLAYER_NOT_IN_ROOM)
   }
   await ctx.db.patch(playerId, {
-    lastSeenAt: Date.now()
+    lastSeenAt: Date.now(),
+    isConnected: true,
   })
 }
 
@@ -162,7 +163,7 @@ export const getPlayersInRoom = query({
   }
 })
 
-export const heartBeat = mutation({
+export const heartbeat = mutation({
   args: {
     playerId: v.id(TABLE.PLAYERS),
     roomId: v.id(TABLE.ROOMS)

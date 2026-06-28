@@ -8,3 +8,5 @@ crons.interval(
   { seconds: 20 },
   internal.players.markDisconnectedPlayers
 )
+
+export default crons

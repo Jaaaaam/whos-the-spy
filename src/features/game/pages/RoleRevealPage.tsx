@@ -4,6 +4,7 @@ import { Card } from '../../../shared/components/Card'
 import { Loader } from '../../../shared/components/Loader'
 import { PageShell } from '../../../shared/layouts/PageShell'
 import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
+import { useHeartbeat } from '../../room/hooks/useHeartBeat'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { RevealCard } from '../components/RevealCard'
 import { useMyReveal } from '../hooks/state/useMyReveal'
@@ -18,6 +19,7 @@ export function RoleRevealPage() {
   const { roomCode } = useParams()
   const { room, isLoading: isRoomLoading, notFound } = useRoomByCode(roomCode)
   const currentPlayerId = getCurrentPlayerId()
+  useHeartbeat(room?._id, currentPlayerId ?? undefined)
   const { markRoleSeen, isMarkingSeen, error } = useMarkRoleSeen()
   const {
     advanceRevealIfExpired,

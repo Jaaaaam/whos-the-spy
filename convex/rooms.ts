@@ -27,6 +27,7 @@ export async function createRoomHandler(ctx: MutationCtx, args: CreateRoomArgs) 
     isHost: true,
     isConnected: true,
     joinedAt: Date.now(),
+    lastSeenAt: Date.now()
   });
 
   await ctx.db.patch(roomId, {

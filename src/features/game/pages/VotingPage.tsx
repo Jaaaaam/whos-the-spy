@@ -6,6 +6,7 @@ import { PageShell } from '../../../shared/layouts/PageShell'
 import { IntelFeed } from '../components/IntelFeed'
 import { VotingCard } from '../components/VotingCard'
 import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
+import { useHeartbeat } from '../../room/hooks/useHeartBeat'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { usePlayersByRoom } from '../../room/hooks/usePlayersByRoom'
 import { useVoteProgress } from '../hooks/state/useVoteProgress'
@@ -28,6 +29,7 @@ export function VotingPage() {
   const currentPlayerId = getCurrentPlayerId()
 
   const { room, isLoading: isRoomLoading, notFound: isRoomNotFound } = useRoomByCode(roomCode)
+  useHeartbeat(room?._id, currentPlayerId ?? undefined)
   const { finalizeVoting, isFinalizingVote, error: finalizationError } = useFinalizeVoting()
   const { advanceVotingIfExpired, isAdvancing } = useAdvanceVotingIfExpired()
   const { skipVote, isSkipping, error: skipError } = useSkipVote()

@@ -7,6 +7,7 @@ import { PlayerList } from '../../room/components/PlayerList'
 import { IntelFeed } from '../components/IntelFeed'
 import { Timer } from '../components/Timer'
 import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
+import { useHeartbeat } from '../../room/hooks/useHeartBeat'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { useDiscussionState } from '../hooks/state/useDiscussionState'
 import { usePlayersByRoom } from '../../room/hooks/usePlayersByRoom'
@@ -22,6 +23,7 @@ export function DiscussionPage() {
   const { roomCode } = useParams()
   const currentPlayerId = getCurrentPlayerId()
   const { room, isLoading: isRoomLoading, notFound: isRoomNotFound } = useRoomByCode(roomCode)
+  useHeartbeat(room?._id, currentPlayerId ?? undefined)
   const {
     endDiscussionTurn,
     isEndingTurn,

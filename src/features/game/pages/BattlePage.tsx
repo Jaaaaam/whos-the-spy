@@ -4,6 +4,7 @@ import { Loader } from '../../../shared/components/Loader'
 import { PageShell } from '../../../shared/layouts/PageShell'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
+import { useHeartbeat } from '../../room/hooks/useHeartBeat'
 import { useBattleState } from '../hooks/state/useBattleState'
 import { useAdvanceBattleIfExpired } from '../hooks/advance/useAdvanceBattleIfExpired'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
@@ -20,6 +21,7 @@ export function BattlePage() {
   const { roomCode } = useParams()
   const currentPlayerId = getCurrentPlayerId()
   const { room, isLoading: isRoomLoading, notFound: isRoomNotFound } = useRoomByCode(roomCode)
+  useHeartbeat(room?._id, currentPlayerId ?? undefined)
   const { battleState, isLoading: isBattleLoading } = useBattleState({
     roomId: room?._id,
     roundId: room?.currentRoundId,

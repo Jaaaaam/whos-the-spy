@@ -13,6 +13,7 @@ import { useRoomByCode } from '../hooks/useRoomByCode'
 import { MAX_PLAYERS_PER_ROOM } from '../../../../shared/gameSettings'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { clearCurrentPlayerId, getCurrentPlayerId } from '../lib/currentPlayer'
+import { useHeartbeat } from '../hooks/useHeartBeat'
 
 export function LobbyPage() {
   const { roomCode } = useParams()
@@ -26,6 +27,7 @@ export function LobbyPage() {
   const { startRound, isStarting, error } = useStartRound()
   const { reconnectPlayer, disconnectPlayer } = usePlayerConnection()
   const currentPlayerId = getCurrentPlayerId()
+  useHeartbeat(room?._id, currentPlayerId ?? undefined)
 
   useEffect(() => {
     if (!room?._id || !currentPlayerId) return

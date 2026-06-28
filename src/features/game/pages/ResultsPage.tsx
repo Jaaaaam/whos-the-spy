@@ -6,6 +6,7 @@ import { Loader } from '../../../shared/components/Loader'
 import { PageShell } from '../../../shared/layouts/PageShell'
 import { useRoomByCode } from '../../room/hooks/useRoomByCode'
 import { getCurrentPlayerId } from '../../room/lib/currentPlayer'
+import { useHeartbeat } from '../../room/hooks/useHeartBeat'
 import { useStartRound } from '../../room/hooks/useStartRound'
 import { useResultsState } from '../hooks/state/useResultsState'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
@@ -31,6 +32,7 @@ export function ResultsPage() {
 
   const isGameOver = resultsState?.isGameOver ?? true
   const currentPlayerId = getCurrentPlayerId()
+  useHeartbeat(room?._id, currentPlayerId ?? undefined)
   const isHost = !!room?.hostPlayerId && currentPlayerId === room.hostPlayerId
 
   useEffect(() => {
