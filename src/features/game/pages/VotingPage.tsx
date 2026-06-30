@@ -262,7 +262,7 @@ export function VotingPage() {
                   isSelf={player._id === currentPlayerId}
                   isSelected={voteProgress?.selectedTargetPlayerId === player._id}
                   isAbstained={player._id === currentPlayerId && hasVoted && !voteProgress?.selectedTargetPlayerId}
-                  disabled={isSpectating ? true : isCastingVote || hasVoted}
+                  disabled={isSpectating ? true : isCastingVote}
                   isSubmitting={isCastingVote && pendingPlayerId === player._id}
                   onVote={isSpectating ? () => { } : () => void handleVote(player._id)}
                 />

@@ -47,6 +47,7 @@ async function migrateHost(
   if (!nextHost) return;
 
   await ctx.db.patch(nextHost._id, { isHost: true });
+  await ctx.db.patch(disconnectingPlayer._id, { isHost: false });
   await ctx.db.patch(disconnectingPlayer.roomId, { hostPlayerId: nextHost._id });
 }
 

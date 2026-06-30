@@ -480,7 +480,7 @@ export function ResultsPage() {
       </div>
 
       {resultsState.votingHistory.length > 0 && (
-        <div className="mx-auto max-w-5xl mb-10">
+        <div className="mx-auto mb-10">
           <h3 className="font-headline text-xl font-bold mb-6 flex items-center gap-2">
             <span className="material-symbols-outlined text-tertiary">history</span>
             Voting History
