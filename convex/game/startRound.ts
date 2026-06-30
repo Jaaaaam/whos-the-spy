@@ -5,7 +5,8 @@ import {
   getRecommendedSpyCount,
   isValidPlayerCount,
 } from "../gameRules"
-import { getRandomWordPair } from "../wordPairs"
+import { wordPairs } from "../wordPairs"
+import type { WordPair } from "../wordPairs"
 import { GAME_STATUS } from "../../shared/gameStatus"
 import { INDEX, TABLE } from "../lib/db"
 import { REVEAL_DURATION_MS } from "./constants"
@@ -59,11 +60,27 @@ export async function startRoundHandler(
     .collect()
 
   const roundNumber = existingRounds.length + 1
-  const firstRoundData = existingRounds[0];
+
+  const lastRound = existingRounds[existingRounds.length - 1]
+  const isNewGame = !existingRounds.length || lastRound?.isGameOver === true
+
+  let wordPair: WordPair
+  if (isNewGame) {
+    const usedCivilianWords = new Set(existingRounds.map(r => r.civilianWord))
+    const availablePairs = wordPairs.filter(p => !usedCivilianWords.has(p.civilianWord))
+    const pool = availablePairs.length > 0 ? availablePairs : wordPairs
+    wordPair = pool[Math.floor(Math.random() * pool.length)]
+  } else {
+    let gameStartIdx = existingRounds.length - 1
+    while (gameStartIdx > 0 && !existingRounds[gameStartIdx - 1].isGameOver) {
+      gameStartIdx--
+    }
+    const currentGameFirstRound = existingRounds[gameStartIdx]
+    wordPair = { civilianWord: currentGameFirstRound.civilianWord, spyWord: currentGameFirstRound.spyWord }
+  }
 
   let assignedRoles: PlayerRoleAssignment[]
   let currentSpyCount: number
-  const wordPair = existingRounds.length ? { civilianWord: firstRoundData.civilianWord, spyWord: firstRoundData.spyWord } : getRandomWordPair()
   if (roundNumber === 1) {
     currentSpyCount = spyCount ?? getRecommendedSpyCount(connectedPlayers.length)
     assignedRoles = assignRandomRoles(roomPlayerIds, currentSpyCount)
