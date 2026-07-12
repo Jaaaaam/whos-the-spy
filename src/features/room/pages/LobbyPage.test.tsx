@@ -2,11 +2,13 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Doc, Id } from '../../../../convex/_generated/dataModel'
+import { GAME_MODE } from '../../../../shared/gameMode'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { MAX_PLAYERS_PER_ROOM } from '../../../../shared/gameSettings'
 import { usePlayersByRoom } from '../hooks/usePlayersByRoom'
 import { usePlayerConnection } from '../hooks/usePlayerConnection'
 import { useRoomByCode } from '../hooks/useRoomByCode'
+import { useSetRoomMode } from '../hooks/useSetRoomMode'
 import { useStartRound } from '../hooks/useStartRound'
 import { saveCurrentPlayerId } from '../lib/currentPlayer'
 import { LobbyPage } from './LobbyPage'
@@ -16,6 +18,7 @@ vi.mock('../hooks/useHeartbeat')
 vi.mock('../hooks/usePlayersByRoom')
 vi.mock('../hooks/useStartRound')
 vi.mock('../hooks/usePlayerConnection')
+vi.mock('../hooks/useSetRoomMode')
 
 const room: Doc<'rooms'> = {
   _id: 'room_1' as Id<'rooms'>,
@@ -83,6 +86,11 @@ describe('LobbyPage', () => {
     vi.mocked(usePlayerConnection).mockReturnValue({
       reconnectPlayer: vi.fn().mockResolvedValue(null),
       disconnectPlayer: vi.fn().mockResolvedValue(null),
+    })
+    vi.mocked(useSetRoomMode).mockReturnValue({
+      setRoomMode: vi.fn(),
+      isSettingMode: false,
+      error: null,
     })
   })
 
@@ -242,5 +250,59 @@ describe('LobbyPage', () => {
       expect(disconnectPlayer).toHaveBeenCalledWith(room._id, readyPlayers[0]._id)
     })
     expect(localStorage.getItem('whos-the-spy.currentPlayerId')).toBeNull()
+  })
+
+  it('lets the host switch the game mode', async () => {
+    const setRoomMode = vi.fn().mockResolvedValue({ mode: GAME_MODE.WORDLESS_SPY })
+    vi.mocked(useSetRoomMode).mockReturnValue({ setRoomMode, isSettingMode: false, error: null })
+    vi.mocked(useRoomByCode).mockReturnValue({ room, isLoading: false, notFound: false })
+    vi.mocked(usePlayersByRoom).mockReturnValue({ players, isLoading: false, isEmpty: false })
+    saveCurrentPlayerId(players[0]._id)
+
+    renderLobbyPage()
+    fireEvent.click(screen.getByRole('button', { name: /Wordless Spy/i }))
+
+    await waitFor(() => {
+      expect(setRoomMode).toHaveBeenCalledWith({
+        roomId: room._id,
+        hostPlayerId: players[0]._id,
+        mode: GAME_MODE.WORDLESS_SPY,
+      })
+    })
+  })
+
+  it('shows the mode to non-hosts without buttons', () => {
+    vi.mocked(useRoomByCode).mockReturnValue({
+      room: { ...room, mode: GAME_MODE.WORDLESS_SPY },
+      isLoading: false,
+      notFound: false,
+    })
+    vi.mocked(usePlayersByRoom).mockReturnValue({ players, isLoading: false, isEmpty: false })
+    saveCurrentPlayerId(players[1]._id)
+
+    renderLobbyPage()
+
+    expect(screen.getByText('Wordless Spy')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Wordless Spy/i })).not.toBeInTheDocument()
+  })
+
+  it('redirects to the category suggestion page when the wordless round starts', () => {
+    vi.mocked(useRoomByCode).mockReturnValue({
+      room: { ...room, status: GAME_STATUS.CATEGORY_SUGGESTION, mode: GAME_MODE.WORDLESS_SPY },
+      isLoading: false,
+      notFound: false,
+    })
+    vi.mocked(usePlayersByRoom).mockReturnValue({ players, isLoading: false, isEmpty: false })
+
+    render(
+      <MemoryRouter initialEntries={['/room/SPY247']}>
+        <Routes>
+          <Route path="/room/:roomCode" element={<LobbyPage />} />
+          <Route path="/room/:roomCode/category-suggestion" element={<div>Category suggestion redirect</div>} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Category suggestion redirect')).toBeInTheDocument()
   })
 })

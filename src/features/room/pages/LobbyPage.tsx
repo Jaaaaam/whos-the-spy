@@ -10,10 +10,13 @@ import { useStartRound } from '../hooks/useStartRound'
 import { usePlayersByRoom } from '../hooks/usePlayersByRoom'
 import { usePlayerConnection } from '../hooks/usePlayerConnection'
 import { useRoomByCode } from '../hooks/useRoomByCode'
+import { useSetRoomMode } from '../hooks/useSetRoomMode'
 import { MAX_PLAYERS_PER_ROOM } from '../../../../shared/gameSettings'
+import { GAME_MODE, type GameMode } from '../../../../shared/gameMode'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { clearCurrentPlayerId, getCurrentPlayerId } from '../lib/currentPlayer'
 import { useHeartbeat } from '../hooks/useHeartbeat'
+import { getPathForStatus } from '../../game/lib/statusRoutes'
 
 export function LobbyPage() {
   const { roomCode } = useParams()
@@ -26,6 +29,7 @@ export function LobbyPage() {
   } = usePlayersByRoom(room?._id)
   const { startRound, isStarting, error } = useStartRound()
   const { reconnectPlayer, disconnectPlayer } = usePlayerConnection()
+  const { setRoomMode, isSettingMode, error: modeError } = useSetRoomMode()
   const currentPlayerId = getCurrentPlayerId()
   useHeartbeat(room?._id, currentPlayerId ?? undefined)
 
@@ -65,6 +69,13 @@ export function LobbyPage() {
   const isCurrentPlayerHost = currentPlayer?.isHost ?? false
   const canStartRound =
     isCurrentPlayerHost && Boolean(currentPlayer?.isConnected) && connectedPlayerCount >= 3 && !arePlayersLoading
+  const currentMode = currentRoom.mode ?? GAME_MODE.SIMILAR_WORDS
+
+  async function handleSetMode(mode: GameMode) {
+    if (!isCurrentPlayerHost || !currentPlayer || mode === currentMode) return
+
+    await setRoomMode({ roomId: currentRoom._id, hostPlayerId: currentPlayer._id, mode }).catch(() => {})
+  }
   const startButtonLabel = isStarting
     ? 'Starting...'
     : isCurrentPlayerHost
@@ -90,8 +101,8 @@ export function LobbyPage() {
     navigate('/')
   }
 
-  if (currentRoom.status === GAME_STATUS.ROLE_REVEAL) {
-    return <Navigate to={`/room/${currentRoom.code}/role`} replace />
+  if (currentRoom.status !== GAME_STATUS.LOBBY) {
+    return <Navigate to={getPathForStatus(currentRoom.status, currentRoom.code)} replace />
   }
 
   return (
@@ -124,6 +135,38 @@ export function LobbyPage() {
                 <p className="mt-1 font-headline text-3xl font-black">{value}</p>
               </Card>
             ))}
+            <Card tone="low" className="rounded-[1.5rem]">
+              <span className="material-symbols-outlined text-tertiary">stylus_note</span>
+              <p className="mt-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                Mode
+              </p>
+              {isCurrentPlayerHost ? (
+                <div className="mt-2 flex flex-col gap-2">
+                  {([
+                    [GAME_MODE.SIMILAR_WORDS, 'Similar Words'],
+                    [GAME_MODE.WORDLESS_SPY, 'Wordless Spy'],
+                  ] as const).map(([mode, label]) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      disabled={isSettingMode}
+                      onClick={() => void handleSetMode(mode)}
+                      className={`rounded-[1rem] px-4 py-2 text-left text-sm font-bold ring-1 transition ${
+                        currentMode === mode
+                          ? 'bg-tertiary/20 text-tertiary ring-tertiary/40'
+                          : 'text-on-surface-variant ring-outline-variant/20 hover:text-tertiary'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-1 font-headline text-3xl font-black">
+                  {currentMode === GAME_MODE.WORDLESS_SPY ? 'Wordless Spy' : 'Similar Words'}
+                </p>
+              )}
+            </Card>
           </div>
           <div className="flex flex-col gap-4 sm:flex-row">
             <Button
@@ -143,9 +186,9 @@ export function LobbyPage() {
               Leave Game
             </Button>
           </div>
-          {error ? (
+          {error || modeError ? (
             <p className="text-sm font-semibold text-error" role="alert">
-              {error}
+              {error ?? modeError}
             </p>
           ) : null}
         </section>
