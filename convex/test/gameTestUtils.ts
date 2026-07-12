@@ -11,6 +11,9 @@ type StoredDocument =
   | Doc<typeof TABLE.ROUNDS>
   | Doc<typeof TABLE.ROLE_ASSIGNMENTS>
   | Doc<typeof TABLE.VOTES>
+  | Doc<typeof TABLE.CATEGORY_SUGGESTIONS>
+  | Doc<typeof TABLE.CATEGORY_VOTES>
+  | Doc<typeof TABLE.WORD_SUBMISSIONS>
 
 export type StoredTables = {
   rooms: Doc<typeof TABLE.ROOMS>[]
@@ -18,6 +21,9 @@ export type StoredTables = {
   rounds: Doc<typeof TABLE.ROUNDS>[]
   roleAssignments: Doc<typeof TABLE.ROLE_ASSIGNMENTS>[]
   votes?: Doc<typeof TABLE.VOTES>[]
+  categorySuggestions?: Doc<typeof TABLE.CATEGORY_SUGGESTIONS>[]
+  categoryVotes?: Doc<typeof TABLE.CATEGORY_VOTES>[]
+  wordSubmissions?: Doc<typeof TABLE.WORD_SUBMISSIONS>[]
 }
 
 type QueryFilter = {
@@ -43,6 +49,18 @@ export function roleAssignmentId(id: string) {
 
 export function voteId(id: string) {
   return id as Id<typeof TABLE.VOTES>
+}
+
+export function categorySuggestionId(id: string) {
+  return id as Id<typeof TABLE.CATEGORY_SUGGESTIONS>
+}
+
+export function categoryVoteId(id: string) {
+  return id as Id<typeof TABLE.CATEGORY_VOTES>
+}
+
+export function wordSubmissionId(id: string) {
+  return id as Id<typeof TABLE.WORD_SUBMISSIONS>
 }
 
 export function createRoom(id: Id<typeof TABLE.ROOMS>): Doc<typeof TABLE.ROOMS> {
@@ -185,16 +203,52 @@ export function createVote(
   }
 }
 
+export function createCategorySuggestion(
+  id: Id<typeof TABLE.CATEGORY_SUGGESTIONS>,
+  room: Id<typeof TABLE.ROOMS>,
+  round: Id<typeof TABLE.ROUNDS>,
+  player: Id<typeof TABLE.PLAYERS>,
+  text: string,
+): Doc<typeof TABLE.CATEGORY_SUGGESTIONS> {
+  return { _id: id, _creationTime: 0, roomId: room, roundId: round, playerId: player, text, createdAt: 0 }
+}
+
+export function createCategoryVote(
+  id: Id<typeof TABLE.CATEGORY_VOTES>,
+  room: Id<typeof TABLE.ROOMS>,
+  round: Id<typeof TABLE.ROUNDS>,
+  voterPlayerId: Id<typeof TABLE.PLAYERS>,
+  suggestionId: Id<typeof TABLE.CATEGORY_SUGGESTIONS>,
+): Doc<typeof TABLE.CATEGORY_VOTES> {
+  return { _id: id, _creationTime: 0, roomId: room, roundId: round, voterPlayerId, suggestionId, createdAt: 0, updatedAt: 0 }
+}
+
+export function createWordSubmission(
+  id: Id<typeof TABLE.WORD_SUBMISSIONS>,
+  room: Id<typeof TABLE.ROOMS>,
+  round: Id<typeof TABLE.ROUNDS>,
+  player: Id<typeof TABLE.PLAYERS>,
+  word: string,
+): Doc<typeof TABLE.WORD_SUBMISSIONS> {
+  return { _id: id, _creationTime: 0, roomId: room, roundId: round, playerId: player, word, createdAt: 0 }
+}
+
 export function createCtx(tables: StoredTables) {
   const storedTables = {
     ...tables,
     votes: tables.votes ?? [],
+    categorySuggestions: tables.categorySuggestions ?? [],
+    categoryVotes: tables.categoryVotes ?? [],
+    wordSubmissions: tables.wordSubmissions ?? [],
   }
   let nextRound = 1
   let nextRoom = 1
   let nextPlayer = 1
   let nextRoleAssignment = 1
   let nextVote = 1
+  let nextCategorySuggestion = 1
+  let nextCategoryVote = 1
+  let nextWordSubmission = 1
 
   const findDocument = (id: string) => {
     for (const documents of Object.values(storedTables)) {
@@ -319,6 +373,24 @@ export function createCtx(tables: StoredTables) {
             ...value,
           } as Doc<typeof TABLE.VOTES>)
 
+          return id
+        }
+
+        if (table === TABLE.CATEGORY_SUGGESTIONS) {
+          const id = `categorySuggestion_${nextCategorySuggestion++}` as Id<typeof TABLE.CATEGORY_SUGGESTIONS>
+          storedTables.categorySuggestions.push({ _id: id, _creationTime: 0, ...value } as Doc<typeof TABLE.CATEGORY_SUGGESTIONS>)
+          return id
+        }
+
+        if (table === TABLE.CATEGORY_VOTES) {
+          const id = `categoryVote_${nextCategoryVote++}` as Id<typeof TABLE.CATEGORY_VOTES>
+          storedTables.categoryVotes.push({ _id: id, _creationTime: 0, ...value } as Doc<typeof TABLE.CATEGORY_VOTES>)
+          return id
+        }
+
+        if (table === TABLE.WORD_SUBMISSIONS) {
+          const id = `wordSubmission_${nextWordSubmission++}` as Id<typeof TABLE.WORD_SUBMISSIONS>
+          storedTables.wordSubmissions.push({ _id: id, _creationTime: 0, ...value } as Doc<typeof TABLE.WORD_SUBMISSIONS>)
           return id
         }
 
