@@ -1,12 +1,17 @@
 import { defineTable } from 'convex/server'
 import { v } from 'convex/values'
+import { GAME_MODE } from '../../shared/gameMode'
 import { INDEX, TABLE } from '../lib/db'
 
 export const rounds = defineTable({
   roomId: v.id(TABLE.ROOMS),
-  mode: v.literal('similar_words'),
-  civilianWord: v.string(),
-  spyWord: v.string(),
+  mode: v.union(v.literal(GAME_MODE.SIMILAR_WORDS), v.literal(GAME_MODE.WORDLESS_SPY)),
+  civilianWord: v.optional(v.string()),
+  spyWord: v.optional(v.string()),
+  category: v.optional(v.string()),
+  suggestionEndsAt: v.optional(v.number()),
+  categoryVoteEndsAt: v.optional(v.number()),
+  wordSubmissionEndsAt: v.optional(v.number()),
   spyCount: v.number(),
   roundNumber: v.number(),
   startedAt: v.number(),

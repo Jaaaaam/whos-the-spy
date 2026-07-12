@@ -32,6 +32,8 @@ const room: Doc<'rooms'> = {
 }
 
 const resultsState = {
+  mode: 'similar_words' as const,
+  category: null,
   civilianWord: 'Jollibee',
   spyWord: "McDonald's",
   eliminatedPlayerId: null,
@@ -245,6 +247,8 @@ describe('game-over results (isGameOver=true)', () => {
 
 describe('skipped-votes results (isGameOver=false, hadElimination=false)', () => {
   const skippedResultsState = {
+    mode: 'similar_words' as const,
+    category: null,
     civilianWord: 'Jollibee',
     spyWord: "McDonald's",
     eliminatedPlayerId: null,

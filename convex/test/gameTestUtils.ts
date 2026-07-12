@@ -127,6 +127,24 @@ export function createRound(
   }
 }
 
+export function createWordlessRound(
+  id: Id<typeof TABLE.ROUNDS>,
+  room: Id<typeof TABLE.ROOMS>,
+  overrides: Partial<Doc<typeof TABLE.ROUNDS>> = {},
+): Doc<typeof TABLE.ROUNDS> {
+  return {
+    _id: id,
+    _creationTime: 0,
+    roomId: room,
+    mode: 'wordless_spy',
+    spyCount: 1,
+    roundNumber: 1,
+    startedAt: 0,
+    hadElimination: false,
+    ...overrides,
+  }
+}
+
 export function createRoomWithStatus(
   id: Id<typeof TABLE.ROOMS>,
   status: Doc<typeof TABLE.ROOMS>['status'],

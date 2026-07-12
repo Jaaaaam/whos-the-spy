@@ -68,7 +68,7 @@ describe('RoleRevealPage', () => {
       notFound: false,
     })
     vi.mocked(useMyReveal).mockReturnValue({
-      reveal: { word: 'Sandwich', seenAt: undefined },
+      reveal: { word: 'Sandwich', category: null, seenAt: undefined },
       isLoading: false,
       notFound: false,
     })
@@ -209,7 +209,7 @@ describe('RoleRevealPage', () => {
 
   it('shows a waiting state when the role has already been seen', () => {
     vi.mocked(useMyReveal).mockReturnValue({
-      reveal: { word: 'Sandwich', seenAt: 1 },
+      reveal: { word: 'Sandwich', category: null, seenAt: 1 },
       isLoading: false,
       notFound: false,
     })
@@ -263,7 +263,7 @@ describe('RoleRevealPage', () => {
 
   it('does not reveal whether the current player is spy or civilian', () => {
     vi.mocked(useMyReveal).mockReturnValue({
-      reveal: { word: 'Burger', seenAt: undefined },
+      reveal: { word: 'Burger', category: null, seenAt: undefined },
       isLoading: false,
       notFound: false,
     })

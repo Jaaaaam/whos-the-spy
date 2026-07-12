@@ -2,7 +2,7 @@ import { Button } from '../../../shared/components/Button'
 import { Card } from '../../../shared/components/Card'
 
 type RevealCardProps = {
-  word: string
+  word: string | null
   secondsRemaining: number
   onMarkRoleSeen: () => void
   isMarkingSeen: boolean
@@ -40,7 +40,7 @@ export function RevealCard({
             Secret Word
           </p>
           <div className="mt-3 font-headline text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-on-surface-variant sm:text-7xl">
-            {word}
+            {word ?? '???'}
           </div>
         </div>
         <div className="rounded-[1.5rem] bg-surface-container-highest/40 px-6 py-4 ring-1 ring-outline-variant/10">

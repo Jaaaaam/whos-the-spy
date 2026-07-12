@@ -109,7 +109,7 @@ describe('DiscussionPage', () => {
       isEmpty: false,
     })
     vi.mocked(useMyReveal).mockReturnValue({
-      reveal: { word: 'Sandwich', seenAt: 1 },
+      reveal: { word: 'Sandwich', category: null, seenAt: 1 },
       isLoading: false,
       notFound: false,
     })
