@@ -36,6 +36,11 @@ import {
   castCategoryVoteHandler,
   getCategoryVotingStateHandler,
 } from "./game/categoryVoting"
+import {
+  advanceWordSubmissionIfExpiredHandler,
+  getWordSubmissionStateHandler,
+  submitWordHandler,
+} from "./game/wordSubmission"
 
 export const startRound = mutation({
   args: {
@@ -246,4 +251,31 @@ export const advanceCategoryVotingIfExpired = mutation({
     roundId: v.id(TABLE.ROUNDS),
   },
   handler: advanceCategoryVotingIfExpiredHandler,
+})
+
+export const submitWord = mutation({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+    playerId: v.id(TABLE.PLAYERS),
+    word: v.string(),
+  },
+  handler: submitWordHandler,
+})
+
+export const getWordSubmissionState = query({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+    playerId: v.optional(v.id(TABLE.PLAYERS)),
+  },
+  handler: getWordSubmissionStateHandler,
+})
+
+export const advanceWordSubmissionIfExpired = mutation({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+  },
+  handler: advanceWordSubmissionIfExpiredHandler,
 })
