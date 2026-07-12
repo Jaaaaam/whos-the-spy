@@ -36,8 +36,17 @@ export async function playAgainHandler(
     ),
   )
 
+  const phaseRows = await Promise.all(
+    rounds.flatMap((round) => [
+      ctx.db.query(TABLE.CATEGORY_SUGGESTIONS).withIndex(INDEX.CATEGORY_SUGGESTIONS_BY_ROUND_ID, (q) => q.eq('roundId', round._id)).collect(),
+      ctx.db.query(TABLE.CATEGORY_VOTES).withIndex(INDEX.CATEGORY_VOTES_BY_ROUND_ID, (q) => q.eq('roundId', round._id)).collect(),
+      ctx.db.query(TABLE.WORD_SUBMISSIONS).withIndex(INDEX.WORD_SUBMISSIONS_BY_ROUND_ID, (q) => q.eq('roundId', round._id)).collect(),
+    ]),
+  )
+
   await Promise.all([
     ...votes.flat().map((v) => ctx.db.delete(v._id)),
+    ...phaseRows.flat().map((row) => ctx.db.delete(row._id)),
     ...roleAssignments.map((ra) => ctx.db.delete(ra._id)),
     ...rounds.map((r) => ctx.db.delete(r._id)),
     ...players.filter((p) => p.isEliminated).map((p) => ctx.db.patch(p._id, { isEliminated: false })),
