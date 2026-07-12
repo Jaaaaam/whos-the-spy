@@ -44,3 +44,22 @@ export type VoteProgressArgs = RoomRoundArgs & {
 export type SkipVoteArgs = RoomRoundArgs & {
   voterPlayerId: Id<typeof TABLE.PLAYERS>
 }
+
+export type SubmitCategorySuggestionArgs = RoomRoundArgs & {
+  playerId: Id<typeof TABLE.PLAYERS>
+  text: string
+}
+
+export type PhaseStateArgs = RoomRoundArgs & {
+  playerId?: Id<typeof TABLE.PLAYERS>
+}
+
+export type CastCategoryVoteArgs = RoomRoundArgs & {
+  voterPlayerId: Id<typeof TABLE.PLAYERS>
+  suggestionId: Id<typeof TABLE.CATEGORY_SUGGESTIONS>
+}
+
+export type SubmitWordArgs = RoomRoundArgs & {
+  playerId: Id<typeof TABLE.PLAYERS>
+  word: string
+}

@@ -2,6 +2,7 @@ import { GAME_STATUS } from "../../shared/gameStatus"
 import type { Id } from "../_generated/dataModel"
 import type { MutationCtx, QueryCtx } from "../_generated/server"
 import { INDEX, TABLE } from "../lib/db"
+import { getActivePlayersByRoom } from "./activePlayers"
 import { BATTLE_REVEAL_DURATION_MS, DISCUSSION_TURN_DURATION_MS } from "./constants"
 import { GAME_ERROR } from "./errors"
 import type { CastVoteArgs, RoomRoundArgs, VoteProgressArgs, SkipVoteArgs } from "./types"
@@ -25,16 +26,6 @@ async function getCurrentVotingRound(ctx: QueryCtx | MutationCtx, { roomId, roun
   }
 
   return { room, round }
-}
-
-async function getActivePlayersByRoom(ctx: QueryCtx | MutationCtx, roomId: RoomRoundArgs['roomId']) {
-  const playersInRoom = await ctx.db
-    .query(TABLE.PLAYERS)
-    .withIndex(INDEX.PLAYERS_BY_ROOM_ID, (q) =>
-      q.eq('roomId', roomId))
-    .collect()
-
-  return playersInRoom.filter(player => player.isConnected && !player.isEliminated)
 }
 
 async function getVotesByRoomRound(ctx: QueryCtx | MutationCtx, { roomId, roundId }: RoomRoundArgs) {

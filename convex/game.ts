@@ -26,6 +26,11 @@ import {
 } from "./game/voting"
 import { getResultsStateHandler } from "./game/results"
 import { playAgainHandler } from "./game/playAgain"
+import {
+  advanceCategorySuggestionIfExpiredHandler,
+  getCategorySuggestionStateHandler,
+  submitCategorySuggestionHandler,
+} from "./game/categorySuggestion"
 
 export const startRound = mutation({
   args: {
@@ -182,4 +187,31 @@ export const advanceBattleIfExpired = mutation({
     roundId: v.id(TABLE.ROUNDS),
   },
   handler: advanceBattleIfExpiredHandler,
+})
+
+export const submitCategorySuggestion = mutation({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+    playerId: v.id(TABLE.PLAYERS),
+    text: v.string(),
+  },
+  handler: submitCategorySuggestionHandler,
+})
+
+export const getCategorySuggestionState = query({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+    playerId: v.optional(v.id(TABLE.PLAYERS)),
+  },
+  handler: getCategorySuggestionStateHandler,
+})
+
+export const advanceCategorySuggestionIfExpired = mutation({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+  },
+  handler: advanceCategorySuggestionIfExpiredHandler,
 })
