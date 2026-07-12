@@ -13,6 +13,7 @@ export const GAME_ERROR = {
   ROOM_NOT_FOUND: 'Room not found.',
   ROOM_NOT_IN_CURRENT_DISCUSSION: 'Room is not in the current discussion.',
   ROOM_NOT_IN_CURRENT_VOTING: 'Room is not in the current voting.',
+  ROOM_NOT_IN_LOBBY: 'Room is not in the lobby.',
   ROUND_NOT_FOUND: 'Round not found.',
   TARGET_NOT_IN_ROOM: 'Target not in room.',
   VOTER_NOT_IN_ROOM: 'Voter not in room.',
