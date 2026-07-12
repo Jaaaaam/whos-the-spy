@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { CategorySuggestionPage } from './features/game/pages/CategorySuggestionPage'
+import { CategoryVotingPage } from './features/game/pages/CategoryVotingPage'
 import { DiscussionPage } from './features/game/pages/DiscussionPage'
 import { ResultsPage } from './features/game/pages/ResultsPage'
 import { RoleRevealPage } from './features/game/pages/RoleRevealPage'
@@ -19,6 +20,7 @@ function App() {
         <Route path="/join" element={<JoinRoomPage />} />
         <Route path="/room/:roomCode" element={<LobbyPage />} />
         <Route path="/room/:roomCode/category-suggestion" element={<CategorySuggestionPage />} />
+        <Route path="/room/:roomCode/category-voting" element={<CategoryVotingPage />} />
         <Route path="/room/:roomCode/role" element={<RoleRevealPage />} />
         <Route path="/room/:roomCode/discussion" element={<DiscussionPage />} />
         <Route path="/room/:roomCode/voting" element={<VotingPage />} />
