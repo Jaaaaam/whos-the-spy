@@ -68,7 +68,7 @@ describe('RoleRevealPage', () => {
       notFound: false,
     })
     vi.mocked(useMyReveal).mockReturnValue({
-      reveal: { word: 'Sandwich', seenAt: undefined },
+      reveal: { word: 'Sandwich', category: null, seenAt: undefined },
       isLoading: false,
       notFound: false,
     })
@@ -209,7 +209,7 @@ describe('RoleRevealPage', () => {
 
   it('shows a waiting state when the role has already been seen', () => {
     vi.mocked(useMyReveal).mockReturnValue({
-      reveal: { word: 'Sandwich', seenAt: 1 },
+      reveal: { word: 'Sandwich', category: null, seenAt: 1 },
       isLoading: false,
       notFound: false,
     })
@@ -263,7 +263,7 @@ describe('RoleRevealPage', () => {
 
   it('does not reveal whether the current player is spy or civilian', () => {
     vi.mocked(useMyReveal).mockReturnValue({
-      reveal: { word: 'Burger', seenAt: undefined },
+      reveal: { word: 'Burger', category: null, seenAt: undefined },
       isLoading: false,
       notFound: false,
     })
@@ -273,5 +273,32 @@ describe('RoleRevealPage', () => {
     expect(screen.getByText('Burger')).toBeInTheDocument()
     expect(screen.queryByText('YOU ARE THE SPY')).not.toBeInTheDocument()
     expect(screen.queryByText('YOU ARE A VILLAGER')).not.toBeInTheDocument()
+  })
+
+  it('shows the category and word for a wordless civilian', () => {
+    vi.mocked(useMyReveal).mockReturnValue({
+      reveal: { word: 'Lion', category: 'Animals', seenAt: undefined },
+      isLoading: false,
+      notFound: false,
+    })
+
+    renderRoleRevealPage()
+
+    expect(screen.getByText('Lion')).toBeInTheDocument()
+    expect(screen.getByText('Animals')).toBeInTheDocument()
+  })
+
+  it('shows a no-word briefing for the wordless spy', () => {
+    vi.mocked(useMyReveal).mockReturnValue({
+      reveal: { word: null, category: 'Animals', seenAt: undefined },
+      isLoading: false,
+      notFound: false,
+    })
+
+    renderRoleRevealPage()
+
+    expect(screen.getByText('No Word. Blend In.')).toBeInTheDocument()
+    expect(screen.getByText('Animals')).toBeInTheDocument()
+    expect(screen.queryByText('Keep It Quiet')).not.toBeInTheDocument()
   })
 })

@@ -13,6 +13,7 @@ export const GAME_ERROR = {
   ROOM_NOT_FOUND: 'Room not found.',
   ROOM_NOT_IN_CURRENT_DISCUSSION: 'Room is not in the current discussion.',
   ROOM_NOT_IN_CURRENT_VOTING: 'Room is not in the current voting.',
+  ROOM_NOT_IN_LOBBY: 'Room is not in the lobby.',
   ROUND_NOT_FOUND: 'Round not found.',
   TARGET_NOT_IN_ROOM: 'Target not in room.',
   VOTER_NOT_IN_ROOM: 'Voter not in room.',
@@ -22,5 +23,11 @@ export const GAME_ERROR = {
   ROOM_NOT_IN_RESULTS: 'Room is not in the results phase.',
   TARGET_NOT_TIE_CANDIDATE: 'Target is not a tie candidate',
   INVALID_STATUS: 'Invalid status.',
-  GENERIC_ERROR: 'Something went wrong.'
+  GENERIC_ERROR: 'Something went wrong.',
+  ROOM_NOT_IN_CATEGORY_SUGGESTION: 'Room is not in the category suggestion phase.',
+  ROOM_NOT_IN_CATEGORY_VOTING: 'Room is not in the category voting phase.',
+  ROOM_NOT_IN_WORD_SUBMISSION: 'Room is not in the word submission phase.',
+  EMPTY_SUBMISSION: 'Submission cannot be empty.',
+  CANNOT_VOTE_OWN_CATEGORY: 'You cannot vote for your own category.',
+  SUGGESTION_NOT_FOUND: 'Category suggestion not found.',
 } as const

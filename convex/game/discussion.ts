@@ -64,7 +64,8 @@ export async function getDiscussionStateHandler(
       currentTurn: currentTurnIndex + 1,
       totalTurns: discussionOrder.length,
       turnEndsAt,
-      turnStartedAt: round.turnStartedAt
+      turnStartedAt: round.turnStartedAt,
+      category: round.category ?? null,
     },
   }
 }

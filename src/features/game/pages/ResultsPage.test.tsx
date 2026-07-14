@@ -32,6 +32,8 @@ const room: Doc<'rooms'> = {
 }
 
 const resultsState = {
+  mode: 'similar_words' as const,
+  category: null,
   civilianWord: 'Jollibee',
   spyWord: "McDonald's",
   eliminatedPlayerId: null,
@@ -146,6 +148,25 @@ describe('ResultsPage', () => {
     const newRoomLinks = screen.getAllByRole('link', { name: /new room/i })
     expect(newRoomLinks.some((link) => link.getAttribute('href') === '/create')).toBe(true)
   })
+
+  it('shows the category and hides the spy word in wordless mode', () => {
+    vi.mocked(useResultsState).mockReturnValue({
+      resultsState: {
+        ...resultsState,
+        mode: 'wordless_spy' as const,
+        category: 'Animals',
+        civilianWord: 'Lion',
+        spyWord: null,
+      },
+      isLoading: false,
+    })
+
+    renderResultsPage()
+
+    expect(screen.getByText('Animals')).toBeInTheDocument()
+    expect(screen.getByText('Lion')).toBeInTheDocument()
+    expect(screen.queryByText(/Spy Word/i)).not.toBeInTheDocument()
+  })
 })
 
 describe('mid-game results (isGameOver=false)', () => {
@@ -245,6 +266,8 @@ describe('game-over results (isGameOver=true)', () => {
 
 describe('skipped-votes results (isGameOver=false, hadElimination=false)', () => {
   const skippedResultsState = {
+    mode: 'similar_words' as const,
+    category: null,
     civilianWord: 'Jollibee',
     spyWord: "McDonald's",
     eliminatedPlayerId: null,

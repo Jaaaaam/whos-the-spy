@@ -26,6 +26,21 @@ import {
 } from "./game/voting"
 import { getResultsStateHandler } from "./game/results"
 import { playAgainHandler } from "./game/playAgain"
+import {
+  advanceCategorySuggestionIfExpiredHandler,
+  getCategorySuggestionStateHandler,
+  submitCategorySuggestionHandler,
+} from "./game/categorySuggestion"
+import {
+  advanceCategoryVotingIfExpiredHandler,
+  castCategoryVoteHandler,
+  getCategoryVotingStateHandler,
+} from "./game/categoryVoting"
+import {
+  advanceWordSubmissionIfExpiredHandler,
+  getWordSubmissionStateHandler,
+  submitWordHandler,
+} from "./game/wordSubmission"
 
 export const startRound = mutation({
   args: {
@@ -182,4 +197,85 @@ export const advanceBattleIfExpired = mutation({
     roundId: v.id(TABLE.ROUNDS),
   },
   handler: advanceBattleIfExpiredHandler,
+})
+
+export const submitCategorySuggestion = mutation({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+    playerId: v.id(TABLE.PLAYERS),
+    text: v.string(),
+  },
+  handler: submitCategorySuggestionHandler,
+})
+
+export const getCategorySuggestionState = query({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+    playerId: v.optional(v.id(TABLE.PLAYERS)),
+  },
+  handler: getCategorySuggestionStateHandler,
+})
+
+export const advanceCategorySuggestionIfExpired = mutation({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+  },
+  handler: advanceCategorySuggestionIfExpiredHandler,
+})
+
+export const castCategoryVote = mutation({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+    voterPlayerId: v.id(TABLE.PLAYERS),
+    suggestionId: v.id(TABLE.CATEGORY_SUGGESTIONS),
+  },
+  handler: castCategoryVoteHandler,
+})
+
+export const getCategoryVotingState = query({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+    playerId: v.optional(v.id(TABLE.PLAYERS)),
+  },
+  handler: getCategoryVotingStateHandler,
+})
+
+export const advanceCategoryVotingIfExpired = mutation({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+  },
+  handler: advanceCategoryVotingIfExpiredHandler,
+})
+
+export const submitWord = mutation({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+    playerId: v.id(TABLE.PLAYERS),
+    word: v.string(),
+  },
+  handler: submitWordHandler,
+})
+
+export const getWordSubmissionState = query({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+    playerId: v.optional(v.id(TABLE.PLAYERS)),
+  },
+  handler: getWordSubmissionStateHandler,
+})
+
+export const advanceWordSubmissionIfExpired = mutation({
+  args: {
+    roomId: v.id(TABLE.ROOMS),
+    roundId: v.id(TABLE.ROUNDS),
+  },
+  handler: advanceWordSubmissionIfExpiredHandler,
 })

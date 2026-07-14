@@ -1,4 +1,5 @@
 import type { MutationCtx, QueryCtx } from "../_generated/server"
+import { GAME_MODE } from "../../shared/gameMode"
 import { GAME_STATUS } from "../../shared/gameStatus"
 import { INDEX, TABLE } from "../lib/db"
 import { startDiscussion } from "./discussion"
@@ -49,8 +50,12 @@ export async function getMyRevealHandler(
     return null
   }
 
+  const isSpy = roleAssignment.role === 'spy'
+  const isWordlessMode = round.mode === GAME_MODE.WORDLESS_SPY
+
   return {
-    word: roleAssignment.role === 'spy' ? round.spyWord : round.civilianWord,
+    word: (isWordlessMode && isSpy ? null : (isSpy ? round.spyWord : round.civilianWord)) ?? null,
+    category: round.category ?? null,
     seenAt: roleAssignment.seenAt,
   }
 }

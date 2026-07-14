@@ -133,6 +133,7 @@ export function RoleRevealPage() {
       <div className="py-8">
         <RevealCard
           word={reveal.word}
+          category={reveal.category}
           secondsRemaining={secondsRemaining}
           onMarkRoleSeen={handleMarkRoleSeen}
           hasMarkedRoleSeen={Boolean(reveal.seenAt)}

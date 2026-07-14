@@ -101,7 +101,7 @@ describe('getMyRevealHandler', () => {
       playerId: currentPlayerId,
     })
 
-    expect(reveal).toEqual({ word: 'Sandwich', seenAt: undefined })
+    expect(reveal).toEqual({ word: 'Sandwich', category: null, seenAt: undefined })
   })
 
   it('returns the civilian word for a civilian', async () => {
@@ -129,7 +129,7 @@ describe('getMyRevealHandler', () => {
       playerId: currentPlayerId,
     })
 
-    expect(reveal).toEqual({ word: 'Burger', seenAt: undefined })
+    expect(reveal).toEqual({ word: 'Burger', category: null, seenAt: undefined })
   })
 
   it('returns null when the player has no role assignment', async () => {

@@ -68,6 +68,7 @@ describe('getDiscussionStateHandler', () => {
         totalTurns: 2,
         turnStartedAt: 1_000,
         turnEndsAt: 30_000,
+        category: null,
       },
     })
   })

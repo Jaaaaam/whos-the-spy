@@ -10,10 +10,13 @@ import { useStartRound } from '../hooks/useStartRound'
 import { usePlayersByRoom } from '../hooks/usePlayersByRoom'
 import { usePlayerConnection } from '../hooks/usePlayerConnection'
 import { useRoomByCode } from '../hooks/useRoomByCode'
+import { useSetRoomMode } from '../hooks/useSetRoomMode'
 import { MAX_PLAYERS_PER_ROOM } from '../../../../shared/gameSettings'
+import { GAME_MODE, type GameMode } from '../../../../shared/gameMode'
 import { GAME_STATUS } from '../../../../shared/gameStatus'
 import { clearCurrentPlayerId, getCurrentPlayerId } from '../lib/currentPlayer'
 import { useHeartbeat } from '../hooks/useHeartbeat'
+import { getPathForStatus } from '../../game/lib/statusRoutes'
 
 export function LobbyPage() {
   const { roomCode } = useParams()
@@ -26,6 +29,7 @@ export function LobbyPage() {
   } = usePlayersByRoom(room?._id)
   const { startRound, isStarting, error } = useStartRound()
   const { reconnectPlayer, disconnectPlayer } = usePlayerConnection()
+  const { setRoomMode, isSettingMode, error: modeError } = useSetRoomMode()
   const currentPlayerId = getCurrentPlayerId()
   useHeartbeat(room?._id, currentPlayerId ?? undefined)
 
@@ -65,6 +69,13 @@ export function LobbyPage() {
   const isCurrentPlayerHost = currentPlayer?.isHost ?? false
   const canStartRound =
     isCurrentPlayerHost && Boolean(currentPlayer?.isConnected) && connectedPlayerCount >= 3 && !arePlayersLoading
+  const currentMode = currentRoom.mode ?? GAME_MODE.SIMILAR_WORDS
+
+  async function handleSetMode(mode: GameMode) {
+    if (!isCurrentPlayerHost || !currentPlayer || mode === currentMode) return
+
+    await setRoomMode({ roomId: currentRoom._id, hostPlayerId: currentPlayer._id, mode }).catch(() => {})
+  }
   const startButtonLabel = isStarting
     ? 'Starting...'
     : isCurrentPlayerHost
@@ -90,8 +101,8 @@ export function LobbyPage() {
     navigate('/')
   }
 
-  if (currentRoom.status === GAME_STATUS.ROLE_REVEAL) {
-    return <Navigate to={`/room/${currentRoom.code}/role`} replace />
+  if (currentRoom.status !== GAME_STATUS.LOBBY) {
+    return <Navigate to={getPathForStatus(currentRoom.status, currentRoom.code)} replace />
   }
 
   return (
@@ -124,6 +135,53 @@ export function LobbyPage() {
                 <p className="mt-1 font-headline text-3xl font-black">{value}</p>
               </Card>
             ))}
+            <Card tone="low" className="rounded-[1.5rem]">
+              <span className="material-symbols-outlined text-tertiary">stylus_note</span>
+              <div className="mt-4 flex items-center gap-1.5">
+                <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                  Mode
+                </p>
+                <div className="group relative flex">
+                  <span className="material-symbols-outlined cursor-help text-sm text-on-surface-variant/60 hover:text-tertiary" style={{ fontSize: '16px' }}>
+                    info
+                  </span>
+                  <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-64 -translate-x-1/2 rounded-[1rem] bg-surface-container-highest p-4 text-left text-xs normal-case tracking-normal text-on-surface opacity-0 shadow-2xl ring-1 ring-outline-variant/20 transition-opacity duration-150 group-hover:opacity-100">
+                    <p className="mb-2">
+                      <strong className="text-tertiary">Similar Words:</strong> civilians share one word, the spy gets a related-but-different word.
+                    </p>
+                    <p>
+                      <strong className="text-tertiary">Wordless Spy:</strong> players suggest and vote on a category, then submit words under it. One submitted word becomes the secret word — the spy gets none and must blend in.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {isCurrentPlayerHost ? (
+                <div className="mt-2 flex flex-col gap-2">
+                  {([
+                    [GAME_MODE.SIMILAR_WORDS, 'Similar Words'],
+                    [GAME_MODE.WORDLESS_SPY, 'Wordless Spy'],
+                  ] as const).map(([mode, label]) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      disabled={isSettingMode}
+                      onClick={() => void handleSetMode(mode)}
+                      className={`rounded-[1rem] px-4 py-2 text-left text-sm font-bold ring-1 transition ${
+                        currentMode === mode
+                          ? 'bg-tertiary/20 text-tertiary ring-tertiary/40'
+                          : 'text-on-surface-variant ring-outline-variant/20 hover:text-tertiary'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-1 font-headline text-3xl font-black">
+                  {currentMode === GAME_MODE.WORDLESS_SPY ? 'Wordless Spy' : 'Similar Words'}
+                </p>
+              )}
+            </Card>
           </div>
           <div className="flex flex-col gap-4 sm:flex-row">
             <Button
@@ -143,9 +201,9 @@ export function LobbyPage() {
               Leave Game
             </Button>
           </div>
-          {error ? (
+          {error || modeError ? (
             <p className="text-sm font-semibold text-error" role="alert">
-              {error}
+              {error ?? modeError}
             </p>
           ) : null}
         </section>
