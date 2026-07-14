@@ -236,12 +236,25 @@ export function DiscussionPage() {
               </p>
 
               {!isSpectating && <div className="mx-auto mt-10 max-w-xl rounded-[2rem] bg-surface-container-highest/60 p-6 ring-1 ring-outline-variant/20 sm:p-8">
-                <p className="text-xs font-bold uppercase tracking-[0.35em] text-on-surface-variant">
-                  Your Secret Word
-                </p>
-                <p className="mt-3 font-headline text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-on-surface-variant sm:text-7xl">
-                  {reveal?.word}
-                </p>
+                {reveal?.word === null ? (
+                  <>
+                    <p className="text-xs font-bold uppercase tracking-[0.35em] text-on-surface-variant">
+                      No Word. Blend In.
+                    </p>
+                    <p className="mt-3 text-base text-on-surface-variant sm:text-lg">
+                      You have no word. Rely on the category and listen closely to blend in.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs font-bold uppercase tracking-[0.35em] text-on-surface-variant">
+                      Your Secret Word
+                    </p>
+                    <p className="mt-3 font-headline text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-on-surface-variant sm:text-7xl">
+                      {reveal?.word}
+                    </p>
+                  </>
+                )}
               </div>}
 
               <div className="mx-auto mt-8 max-w-xl">

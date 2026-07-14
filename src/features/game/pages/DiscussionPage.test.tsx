@@ -330,6 +330,30 @@ describe('DiscussionPage', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Unable to end discussion turn.')
   })
 
+  it('shows the no-word briefing for the wordless spy instead of an empty secret word box', () => {
+    vi.mocked(useMyReveal).mockReturnValue({
+      reveal: { word: null, category: 'Animals', seenAt: 1 },
+      isLoading: false,
+      notFound: false,
+    })
+
+    renderDiscussionPage()
+
+    expect(screen.getByText('No Word. Blend In.')).toBeInTheDocument()
+    expect(
+      screen.getByText('You have no word. Rely on the category and listen closely to blend in.'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Your Secret Word')).not.toBeInTheDocument()
+  })
+
+  it('still shows the secret word box for players with a real word', () => {
+    renderDiscussionPage()
+
+    expect(screen.getByText('Your Secret Word')).toBeInTheDocument()
+    expect(screen.getByText('Sandwich')).toBeInTheDocument()
+    expect(screen.queryByText('No Word. Blend In.')).not.toBeInTheDocument()
+  })
+
   it('shows the category chip in wordless mode', () => {
     vi.mocked(useDiscussionState).mockReturnValue({
       discussionState: {
