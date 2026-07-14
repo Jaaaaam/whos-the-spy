@@ -523,11 +523,20 @@ export function ResultsPage() {
           <div className="mt-3 font-headline text-4xl font-black text-primary">{resultsState.civilianWord}</div>
           <p className="mt-2 text-sm text-on-surface-variant">Assigned to the citizens</p>
         </Card>
-        <Card tone="high" className="rounded-[2rem]">
-          <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Spy Word</p>
-          <div className="mt-3 font-headline text-4xl font-black text-error">{resultsState.spyWord}</div>
-          <p className="mt-2 text-sm text-on-surface-variant">Assigned to the spy</p>
-        </Card>
+        {resultsState.spyWord !== null ? (
+          <Card tone="high" className="rounded-[2rem]">
+            <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Spy Word</p>
+            <div className="mt-3 font-headline text-4xl font-black text-error">{resultsState.spyWord}</div>
+            <p className="mt-2 text-sm text-on-surface-variant">Assigned to the spy</p>
+          </Card>
+        ) : null}
+        {resultsState.category !== null ? (
+          <Card tone="high" className="rounded-[2rem]">
+            <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Category</p>
+            <div className="mt-3 font-headline text-4xl font-black text-tertiary">{resultsState.category}</div>
+            <p className="mt-2 text-sm text-on-surface-variant">The spy knew this much</p>
+          </Card>
+        ) : null}
       </div>
 
       <div className="mx-auto flex max-w-md flex-col gap-4 pb-8 sm:flex-row">

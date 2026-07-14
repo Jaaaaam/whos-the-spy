@@ -70,6 +70,7 @@ const discussionState = {
     totalTurns: 2,
     turnStartedAt: 1_000,
     turnEndsAt: 31_000,
+    category: null,
   },
 }
 
@@ -327,5 +328,23 @@ describe('DiscussionPage', () => {
     renderDiscussionPage()
 
     expect(screen.getByRole('alert')).toHaveTextContent('Unable to end discussion turn.')
+  })
+
+  it('shows the category chip in wordless mode', () => {
+    vi.mocked(useDiscussionState).mockReturnValue({
+      discussionState: {
+        ...discussionState,
+        round: {
+          ...discussionState.round,
+          category: 'Animals',
+        },
+      },
+      isLoading: false,
+      notFound: false,
+    })
+
+    renderDiscussionPage()
+
+    expect(screen.getByText(/Category: Animals/)).toBeInTheDocument()
   })
 })

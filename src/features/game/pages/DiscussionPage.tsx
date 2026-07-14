@@ -224,6 +224,11 @@ export function DiscussionPage() {
                   {isCurrentPlayerActive ? 'Give one clue about your word' : `${activePlayerName} is giving a clue`}
                 </p>
               </div>
+              {discussionState.round.category ? (
+                <p className="text-xs font-bold uppercase tracking-[0.35em] text-tertiary">
+                  Category: {discussionState.round.category}
+                </p>
+              ) : null}
               <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-on-surface-variant">
                 {isSpectating
                   ? 'You\'ve been eliminated. Watch the discussion unfold.'

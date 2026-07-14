@@ -274,4 +274,31 @@ describe('RoleRevealPage', () => {
     expect(screen.queryByText('YOU ARE THE SPY')).not.toBeInTheDocument()
     expect(screen.queryByText('YOU ARE A VILLAGER')).not.toBeInTheDocument()
   })
+
+  it('shows the category and word for a wordless civilian', () => {
+    vi.mocked(useMyReveal).mockReturnValue({
+      reveal: { word: 'Lion', category: 'Animals', seenAt: undefined },
+      isLoading: false,
+      notFound: false,
+    })
+
+    renderRoleRevealPage()
+
+    expect(screen.getByText('Lion')).toBeInTheDocument()
+    expect(screen.getByText('Animals')).toBeInTheDocument()
+  })
+
+  it('shows a no-word briefing for the wordless spy', () => {
+    vi.mocked(useMyReveal).mockReturnValue({
+      reveal: { word: null, category: 'Animals', seenAt: undefined },
+      isLoading: false,
+      notFound: false,
+    })
+
+    renderRoleRevealPage()
+
+    expect(screen.getByText('No Word. Blend In.')).toBeInTheDocument()
+    expect(screen.getByText('Animals')).toBeInTheDocument()
+    expect(screen.queryByText('Keep It Quiet')).not.toBeInTheDocument()
+  })
 })
