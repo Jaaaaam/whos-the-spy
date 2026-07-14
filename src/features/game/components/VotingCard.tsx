@@ -51,18 +51,18 @@ export function VotingCard({ player, isSelf, isSelected, isAbstained, disabled, 
       ) : isSubmitting ? (
         <button
           disabled
-          className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-primary-container px-4 py-2 text-xs font-extrabold text-on-primary-container shadow-lg shadow-primary/10 animate-pulse"
+          className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-primary to-primary-container px-4 py-2 text-xs font-extrabold text-on-primary-container shadow-lg shadow-primary/10 animate-pulse"
           type="button"
         >
           <span className="material-symbols-outlined text-sm animate-spin" style={{ fontSize: '14px' }}>sync</span>
-          Transmitting...
+          Sending...
         </button>
       ) : (
         <button
           disabled={disabled}
           onClick={onVote}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-primary-container px-4 py-2 text-xs font-extrabold text-on-primary-container shadow-lg shadow-primary/10 active:scale-95 transition-all',
+            'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-primary to-primary-container px-4 py-2 text-xs font-extrabold text-on-primary-container shadow-lg shadow-primary/10 active:scale-95 transition-all',
             disabled && 'opacity-40 pointer-events-none',
           )}
           type="button"

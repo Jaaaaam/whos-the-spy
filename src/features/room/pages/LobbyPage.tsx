@@ -137,9 +137,24 @@ export function LobbyPage() {
             ))}
             <Card tone="low" className="rounded-[1.5rem]">
               <span className="material-symbols-outlined text-tertiary">stylus_note</span>
-              <p className="mt-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
-                Mode
-              </p>
+              <div className="mt-4 flex items-center gap-1.5">
+                <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                  Mode
+                </p>
+                <div className="group relative flex">
+                  <span className="material-symbols-outlined cursor-help text-sm text-on-surface-variant/60 hover:text-tertiary" style={{ fontSize: '16px' }}>
+                    info
+                  </span>
+                  <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-64 -translate-x-1/2 rounded-[1rem] bg-surface-container-highest p-4 text-left text-xs normal-case tracking-normal text-on-surface opacity-0 shadow-2xl ring-1 ring-outline-variant/20 transition-opacity duration-150 group-hover:opacity-100">
+                    <p className="mb-2">
+                      <strong className="text-tertiary">Similar Words:</strong> civilians share one word, the spy gets a related-but-different word.
+                    </p>
+                    <p>
+                      <strong className="text-tertiary">Wordless Spy:</strong> players suggest and vote on a category, then submit words under it. One submitted word becomes the secret word — the spy gets none and must blend in.
+                    </p>
+                  </div>
+                </div>
+              </div>
               {isCurrentPlayerHost ? (
                 <div className="mt-2 flex flex-col gap-2">
                   {([
